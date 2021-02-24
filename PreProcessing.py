@@ -22,7 +22,32 @@ def import_eeg(filename):
     return raw
 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-f = filenames[0]
-edf = import_eeg(f)
-data = np.array(edf._data)
+f = filenames[3]
+raw = import_eeg(f)
+
+f_stop = np.arange(50, 128, 50)
+f_low = 1
+f_high = 100
+raw.notch_filter(f_stop)
+raw.filter(f_low, f_high)
+
+print(raw.info)
+
+# set up and fit the ICA
+ica = mne.preprocessing.ICA(n_components=15, random_state=43)
+ica.fit(raw)
+ica.plot_components()
+
+# blinks artifacts
+ica.exclude = [0]  # exclude EOG artifacts
+
+# to-do: ECG artifacts
+
+orig_raw = raw.copy()
+ica.apply(raw)
+
+orig_raw.plot(duration=10, n_channels = 19, title="Original", remove_dc=False)
+raw.plot(duration=10, n_channels = 19, title="After ICA", remove_dc=False)
+
+
 
