@@ -41,10 +41,10 @@ raw.plot_psd()
 print(raw.info)
 
 #%% ICA
-ica = mne.preprocessing.ICA(n_components=7, random_state=43)
-ica.fit(raw)
-ica.plot_components()
-ica.plot_sources(raw)
+# ica = mne.preprocessing.ICA(n_components=7, random_state=43)
+# ica.fit(raw)
+# ica.plot_components()
+# ica.plot_sources(raw)
 
 #%% Blinks artifacts
 
@@ -52,22 +52,30 @@ raws = list()
 icas = list()
 
 for subj in range(1):
+    # import signal
     raw = import_eeg(filenames[subj])
+    # filter signal
+    raw.notch_filter(f_stop)
+    raw.filter(f_low, f_high)
+    raw.plot_psd()
     # fit ICA
     ica = mne.preprocessing.ICA(n_components=7, random_state=43)
     ica.fit(raw)
-    raws.append(raw)
-    icas.append(ica)
+    ica.plot_components()
+    if(subj<=1):
+        icas.append(ica)
+        raws.append(raw)
+    else:
+        icas[1]=ica
+        raws[1]=raw
+    mne.preprocessing.corrmap(icas, template=(0, 0), threshold=0.9, label='blink')
+    mne.preprocessing.corrmap(icas, template=(0, 3), threshold=0.9, label='ecg')
 
-mne.preprocessing.corrmap(icas, template=(0, 0), threshold=0.9, label='blink')
-mne.preprocessing.corrmap(icas, template=(0, 3), threshold=0.9, label='ecg')
-
-for subj in range(1):
     icas[subj].plot_overlay(raws[subj], exclude=icas[subj].labels_['blink'],picks='eeg')
     icas[subj].plot_overlay(raws[subj], exclude=icas[subj].labels_['ecg'],picks='eeg')
 
 #%% ECG artifacts
-ica.plot_overlay(raw, exclude=[3], picks='eeg')
+# ica.plot_overlay(raw, exclude=[3], picks='eeg')
 
 #%% Exclude
 # ica.exclude = [0, 1, 3]
