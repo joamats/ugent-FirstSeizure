@@ -49,5 +49,18 @@ ica.apply(raw)
 orig_raw.plot(duration=10, n_channels = 19, title="Original", remove_dc=False)
 raw.plot(duration=10, n_channels = 19, title="After ICA", remove_dc=False)
 
+# raws = list()
+# icas = list()
 
+# for subj in range(4):
+#     raw = import_eeg(filenames[subj])
+#     # fit ICA
+#     ica = mne.preprocessing.ICA(n_components=15, random_state=43)
+#     ica.fit(raw)
+#     raws.append(raw)
+#     icas.append(ica)
 
+# mne.preprocessing.corrmap(icas, template=(0, 0), threshold=0.9, label='blink')
+
+# for subj in range(4):
+#     icas[subj].plot_overlay(raws[subj], exclude=icas[subj].labels_['blink'],picks='eeg')
