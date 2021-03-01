@@ -87,17 +87,7 @@ def eeg_preprocessing(filename, icas, plot = False):
     
     epochs = mne.make_fixed_length_epochs(raw, duration=5.0, verbose = False)
     
+    
     return epochs
 
     
-#%% Run
-filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-icas = get_ica_template(filenames[0])
-
-plvs = []
-
-for filename in filenames:
-   epoch = eeg_preprocessing(filename, icas, plot = False)
-   plv = mne.connectivity.spectral_connectivity(epoch, method = "plv", 
-                                          sfreq = 256,verbose = False )
-   plvs.append(plv)
