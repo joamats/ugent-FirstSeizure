@@ -1,6 +1,7 @@
 import mne
 import numpy as np
 import pandas as pd
+from autoreject import AutoReject, get_rejection_threshold
 
 #%% Imports EEG from EDF files
 def import_eeg(filename):
@@ -85,9 +86,16 @@ def eeg_preprocessing(filename, icas, plot = False):
         orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
         raw.plot(duration=15, n_channels = 19, title="Preprocessed" + filename, remove_dc = False)
     
-    epochs = mne.make_fixed_length_epochs(raw, duration=5.0, verbose = False)
+    epochs = mne.make_fixed_length_epochs(raw, duration=5.0, verbose = False, preload=True)
     
     
     return epochs
+
+#%% Removes noisy epochs
+def clean_epochs(epochs):
+    ar = AutoReject(verbose=False)
+    epochs_clean = ar.fit_transform(epochs)
+    reject = get_rejection_threshold(epochs)
+    return epochs_clean, reject
 
     
