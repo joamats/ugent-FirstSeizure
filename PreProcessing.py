@@ -2,7 +2,7 @@ import mne
 import numpy as np
 import pandas as pd
 
-#%%
+#%% Imports EEG from EDF files
 def import_eeg(filename):
     raw = mne.io.read_raw_edf('../Dataset/{}_0000.Export.edf'
                               .format(filename), preload=True, verbose=False)
@@ -29,7 +29,7 @@ def import_eeg(filename):
     
     return raw
 
-#%%
+#%% Filter EEG
 def filter_eeg(raw):
     f_stop = 50
     f_low = 1
@@ -42,49 +42,58 @@ def filter_eeg(raw):
 #%% Load Filenames
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-#%%
-raws = list()
-icas = list()
-idxs = list()
-li = 0
-
-for subj in filenames.index:
+#%% Gets the file at filename, for component template purpose
+def get_ica_template(filename):
+    
     # import signal
-    raw = import_eeg(filenames[subj])
+    raw = import_eeg(filename)
+    
+    # filter signal
+    raw = filter_eeg(raw)
+    
+    # fit ICA
+    ica = mne.preprocessing.ICA(n_components=15, random_state=42)
+    ica.fit(raw, verbose = False)
+    
+    icas = [ica, ica]
+    
+    return icas
+
+#%% Filter, artifact removal and epochs file at filename
+def eeg_preprocessing(filename, icas, plot = False):
+    
+    raw = import_eeg(filename)
     
     # filter signal
     raw = filter_eeg(raw)
 
     # fit ICA
-    ica = mne.preprocessing.ICA(n_components=7, random_state=42)
+    ica = mne.preprocessing.ICA(n_components=15, random_state=42)
     ica.fit(raw, verbose=False)
     
-    # ica.plot_components()
-    # ica.plot_sources(raw)
-    
-    if(subj <= 1):
-        icas.append(ica)
-        raws.append(raw)
-    else:
-        icas[1] = ica
-        raws[1] = raw
+    icas[1] = ica
         
     mne.preprocessing.corrmap(icas, template=(0, 0), threshold=0.8, label='blink', plot = False, verbose = False)
-        
-    idx = [icas[li].labels_['blink']]
-    idxs.append(idx)
+    mne.preprocessing.corrmap(icas, template=(0, 1), threshold=0.8, label='blink', plot = False, verbose = False)
+   
+    ica.exclude = icas[1].labels_['blink']
     
-    
-    # aqui verificar se o idx é vazio ou tem mais que 1 ICA component
-    # se sim, meter os plots, senão avançar!
-    
-    
-    ica.exclude = [item for sublist in idx for item in sublist]
     orig_raw = raw.copy()
     ica.apply(raw, verbose=False)
     
-    # orig_raw.plot(duration=10, n_channels = 19, title="Original", remove_dc = False)
-    #raw.plot(duration=10, n_channels = 19, title="After ICA", remove_dc = False)
+    if plot == True:
+        ica.plot_components(title="ICA Components " + filename)
+        ica.plot_sources(raw, title="ICA Sources " + filename)
+        orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
+        raw.plot(duration=15, n_channels = 19, title="Preprocessed" + filename, remove_dc = False)
     
-    li=1
+    epochs = mne.make_fixed_length_epochs(raw, duration=5.0, verbose = False)
     
+    return epochs
+
+    
+#%% Run
+icas = get_ica_template(filenames[0])
+
+for filename in filenames:
+   epoch = eeg_preprocessing(filename, icas, plot = False)
