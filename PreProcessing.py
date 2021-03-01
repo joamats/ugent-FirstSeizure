@@ -39,8 +39,6 @@ def filter_eeg(raw):
     raw.filter(f_low, f_high)
     return raw
 
-#%% Load Filenames
-filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 #%% Gets the file at filename, for component template purpose
 def get_ica_template(filename):
@@ -93,7 +91,13 @@ def eeg_preprocessing(filename, icas, plot = False):
 
     
 #%% Run
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 icas = get_ica_template(filenames[0])
+
+plvs = []
 
 for filename in filenames:
    epoch = eeg_preprocessing(filename, icas, plot = False)
+   plv = mne.connectivity.spectral_connectivity(epoch, method = "plv", 
+                                          sfreq = 256,verbose = False )
+   plvs.append(plv)
