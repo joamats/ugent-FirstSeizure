@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar  2 15:16:28 2021
-
-@author: João Matos
-"""
-
 import pickle
 
 #%% Definition of function that creates pickle file

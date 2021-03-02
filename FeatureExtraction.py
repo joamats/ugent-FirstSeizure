@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Mar  1 14:58:06 2021
-
-@author: Guilherme
-"""
 import mne
 import pandas as pd
 from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
-
+from Pickle import createPickleFile, getPickleFile
 
 #%% Run
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
@@ -32,4 +26,7 @@ for filename in filenames:
            
         imcohs.append(imcoh)
         plvs.append(plv)
-   
+
+#%% Save Measures
+
+

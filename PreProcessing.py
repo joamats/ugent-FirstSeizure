@@ -2,6 +2,7 @@ import mne
 import numpy as np
 import pandas as pd
 from autoreject import AutoReject
+from Pickle import createPickleFile, getPickleFile
 
 #%% Imports EEG from EDF files
 def import_eeg(filename):
@@ -83,7 +84,7 @@ def eeg_preprocessing(filename, icas, plot = False):
     # exclude EOG artifacts
     ica.exclude = icas[1].labels_['blink']
     
-    orig_raw = raw.copy()
+    orig_raw = raw.copy()<
     ica.apply(raw, verbose=False)
     
     if plot == True:
@@ -106,6 +107,16 @@ def clean_epochs(epochs):
     # reject_log.plot_epochs(epochs)
     
     return epochs_clean, reject_log
+
+#%% Run and Save Epochs
+
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+icas = get_ica_template(filenames[0])
+
+for filename in filenames:
+    epochs = eeg_preprocessing(filename, icas, plot = False)
+    epochs, reject_log = clean_epochs(epochs)
+    createPickleFile(epochs, '../PreProcessed_Data/' + filename)
 
 
 
