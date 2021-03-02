@@ -1,7 +1,7 @@
 import mne
 import numpy as np
 import pandas as pd
-from autoreject import AutoReject, get_rejection_threshold
+from autoreject import AutoReject
 
 #%% Imports EEG from EDF files
 def import_eeg(filename):
@@ -66,15 +66,21 @@ def eeg_preprocessing(filename, icas, plot = False):
     # filter signal
     raw = filter_eeg(raw)
 
+    # drop signals with too low peak-to-peak
+    flat_criteria = dict(eeg = 1e-6)
+
     # fit ICA
     ica = mne.preprocessing.ICA(n_components=15, random_state=42)
     ica.fit(raw, verbose=False)
     
+    # replace new ICA in ICAS list
     icas[1] = ica
         
+    # template matching
     mne.preprocessing.corrmap(icas, template=(0, 0), threshold=0.8, label='blink', plot = False, verbose = False)
     mne.preprocessing.corrmap(icas, template=(0, 1), threshold=0.8, label='blink', plot = False, verbose = False)
    
+    # exclude EOG artifacts
     ica.exclude = icas[1].labels_['blink']
     
     orig_raw = raw.copy()
@@ -86,16 +92,23 @@ def eeg_preprocessing(filename, icas, plot = False):
         orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
         raw.plot(duration=15, n_channels = 19, title="Preprocessed" + filename, remove_dc = False)
     
-    epochs = mne.make_fixed_length_epochs(raw, duration=5.0, verbose = False, preload=True)
-    
+    # create epochs with 2sec
+    epochs = mne.make_fixed_length_epochs(raw, duration=2.0, verbose = False, preload=True)
+    epochs.drop_bad(flat=flat_criteria)
     
     return epochs
 
 #%% Removes noisy epochs
 def clean_epochs(epochs):
-    ar = AutoReject(verbose=False)
-    epochs_clean = ar.fit_transform(epochs)
-    reject = get_rejection_threshold(epochs)
-    return epochs_clean, reject
+    ar = AutoReject(verbose=False, random_state=42)
+    epochs_clean, reject_log = ar.fit_transform(epochs, return_log=True)
+    
+    # reject_log.plot_epochs(epochs)
+    
+    return epochs_clean, reject_log
+
+
+
+
 
     

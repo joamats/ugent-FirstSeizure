@@ -14,14 +14,22 @@ filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 icas = get_ica_template(filenames[0])
 
 imcohs = []
-epochss = []
-rejects = []
+plvs = []
+reject_logs = []
 
-for filename in filenames[0:9]:
-   epochs = eeg_preprocessing(filename, icas, plot = False)
-   epochs, reject = clean_epochs(epochs)
-   epochss.append(epochs)
-   rejects.append(reject)
-   imcoh = mne.connectivity.spectral_connectivity(epochs, method = "imcoh", 
-                                                 sfreq = 256, faverage=True, verbose = False )
-   imcohs.append(imcoh)
+for filename in filenames:
+    epochs = eeg_preprocessing(filename, icas, plot = False)
+    epochs, reject_log = clean_epochs(epochs)
+    reject_logs.append(reject_log)
+    
+    if not all(reject_log.bad_epochs):
+    
+        imcoh = mne.connectivity.spectral_connectivity(epochs, method = "imcoh", 
+                                 sfreq = 256, faverage=True, verbose = False)
+           
+        plv = mne.connectivity.spectral_connectivity(epochs, method = "plv", 
+                                 sfreq = 256, faverage=True, verbose = False)
+           
+        imcohs.append(imcoh)
+        plvs.append(plv)
+   
