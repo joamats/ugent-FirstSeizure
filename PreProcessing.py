@@ -95,7 +95,7 @@ def eeg_preprocessing(filename, icas, plot = False):
 def clean_epochs(epochs):
     ar = AutoReject(verbose=False)
     epochs_clean = ar.fit_transform(epochs)
-    reject = get_rejection_threshold(epochs)
+    reject = get_rejection_threshold(epochs, random_state=42)
     return epochs_clean, reject
 
     
