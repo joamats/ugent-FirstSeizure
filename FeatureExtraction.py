@@ -5,28 +5,31 @@ from Pickle import createPickleFile, getPickleFile
 
 #%% Run
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-icas = get_ica_template(filenames[0])
 
 imcohs = []
 plvs = []
-reject_logs = []
+pdcs = []
 
-for filename in filenames:
-    epochs = eeg_preprocessing(filename, icas, plot = False)
-    epochs, reject_log = clean_epochs(epochs)
-    reject_logs.append(reject_log)
+for filename in filenames[0:1]:
+    epochs = getPickleFile(filename)
     
-    if not all(reject_log.bad_epochs):
+    # guarantee epochs are not empty
+    # if epochs._data.shape[0] != 0:
     
-        imcoh = mne.connectivity.spectral_connectivity(epochs, method = "imcoh", 
-                                 sfreq = 256, faverage=True, verbose = False)
-           
-        plv = mne.connectivity.spectral_connectivity(epochs, method = "plv", 
-                                 sfreq = 256, faverage=True, verbose = False)
-           
-        imcohs.append(imcoh)
-        plvs.append(plv)
+    # imcoh = mne.connectivity.spectral_connectivity(epochs, method = "imcoh", 
+    #                          sfreq = 256, faverage=True, verbose = False)
+    # imcohs.append(imcoh)
+       
+    # plv = mne.connectivity.spectral_connectivity(epochs, method = "plv", 
+    #                          sfreq = 256, faverage=True, verbose = False)    
+    # plvs.append(plv)
+    
+         
+    
+    
 
 #%% Save Measures
 
+createPickleFile(imcohs, '../Features/' + 'IMCOH')
+createPickleFile(plvs, '../Features/' + 'PLV')
 
