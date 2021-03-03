@@ -10,3 +10,5 @@ for filename in filenames[0:1]:
     epochs, reject_log = clean_epochs(filename, epochs, plot=True)
     createPickleFile(epochs, '../PreProcessed_Data/' + filename)
 
+
+
