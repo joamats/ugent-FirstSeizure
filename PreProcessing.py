@@ -33,18 +33,17 @@ def import_eeg(filename):
 
 #%% Filter EEG
 def filter_eeg(raw):
-    f_stop = 50
+    # f_stop = 50
     f_low = 1
-    f_high = 100
+    f_high = 40
     
-    raw.notch_filter(f_stop)
+    # raw.notch_filter(f_stop)
     raw.filter(f_low, f_high)
     return raw
 
 
 #%% Gets the file at filename, for component template purpose
 def get_ica_template(filename):
-    
     # import signal
     raw = import_eeg(filename)
     
@@ -60,10 +59,10 @@ def get_ica_template(filename):
     return icas
 
 #%% Filter, artifact removal and epochs file at filename
-def eeg_preprocessing(filename, icas, plot = False):
+def eeg_preprocessing(filename, icas, plot=False):
     
     raw = import_eeg(filename)
-    
+        
     # filter signal
     raw = filter_eeg(raw)
 
@@ -83,28 +82,40 @@ def eeg_preprocessing(filename, icas, plot = False):
    
     # exclude EOG artifacts
     ica.exclude = icas[1].labels_['blink']
-    
+
+    # backup filtered raw eeg variable
     orig_raw = raw.copy()
     ica.apply(raw, verbose=False)
-    
-    if plot == True:
-        ica.plot_components(title="ICA Components " + filename)
-        ica.plot_sources(raw, title="ICA Sources " + filename)
-        orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
-        raw.plot(duration=15, n_channels = 19, title="Preprocessed" + filename, remove_dc = False)
     
     # create epochs with 2sec
     epochs = mne.make_fixed_length_epochs(raw, duration=2.0, verbose = False, preload=True)
     epochs.drop_bad(flat=flat_criteria)
     
+    if plot == True:
+        # Plot Sensors Scalp
+        orig_raw.plot_sensors(ch_type='eeg')
+        # PSD Plot
+        orig_raw.plot_psd()
+        # Filtered EEG Plot
+        orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
+        # ICA Components in Scalp
+        ica.plot_components(title="ICA Components " + filename)
+        # ICA Sources Time Series
+        ica.plot_sources(orig_raw, title="ICA Sources " + filename)
+        # Without Artifacts EEG Plot
+        raw.plot(duration=15, n_channels = 19, title="Preprocessed " + filename, remove_dc = False)
+        # Epochs Plot
+        epochs.plot(n_epochs=10, n_channels=19, title="EEG 2s Epochs " + filename)     
+    
     return epochs
 
 #%% Removes noisy epochs
-def clean_epochs(epochs):
+def clean_epochs(filename, epochs, plot=False):
     ar = AutoReject(verbose=False, random_state=42)
     epochs_clean, reject_log = ar.fit_transform(epochs, return_log=True)
     
-    # reject_log.plot_epochs(epochs)
+    if plot == True:
+        reject_log.plot_epochs(epochs, title="Clean Epochs "  + filename)
     
     return epochs_clean, reject_log
 
@@ -117,10 +128,3 @@ def clean_epochs(epochs):
 #     epochs = eeg_preprocessing(filename, icas, plot = False)
 #     epochs, reject_log = clean_epochs(epochs)
 #     createPickleFile(epochs, '../PreProcessed_Data/' + filename)
-
-
-
-
-
-
-    
