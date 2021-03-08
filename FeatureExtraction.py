@@ -1,10 +1,12 @@
 import mne
 import pandas as pd
 import numpy as np
+import scipy
+import yasa
 from sklearn.feature_selection import mutual_info_regression
 from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
 from Pickle import createPickleFile, getPickleFile
-import scot
+# import scot
 
 #%% Mutual Information
 
@@ -36,7 +38,6 @@ pdcs = []
 
 for filename in filenames[0:1]:
     epochs = getPickleFile('../PreProcessed_Data/' + filename)
-    
     # IMOCH
     imcoh = mne.connectivity.spectral_connectivity(epochs, method = "imcoh", 
                               sfreq = 256, faverage=False, verbose = False)
