@@ -1,8 +1,12 @@
 import mne
+import yasa
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 from autoreject import AutoReject
 from Pickle import createPickleFile, getPickleFile
+from scipy.fft import fft, ifft, fftfreq
+
 
 #%% Imports EEG from EDF files
 def import_eeg(filename):
@@ -41,7 +45,6 @@ def filter_eeg(raw):
     raw.filter(f_low, f_high)
     return raw
 
-
 #%% Gets the file at filename, for component template purpose
 def get_ica_template(filename):
     # import signal
@@ -62,10 +65,10 @@ def get_ica_template(filename):
 def eeg_preprocessing(filename, icas, plot=False):
     
     raw = import_eeg(filename)
-        
+    
     # filter signal
     raw = filter_eeg(raw)
-
+    
     # drop signals with too low peak-to-peak
     flat_criteria = dict(eeg = 1e-6)
 
@@ -95,7 +98,7 @@ def eeg_preprocessing(filename, icas, plot=False):
         # Plot Sensors Scalp
         orig_raw.plot_sensors(ch_type='eeg')
         # PSD Plot
-        orig_raw.plot_psd()
+        raw.plot_psd()
         # Filtered EEG Plot
         orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
         # ICA Components in Scalp
@@ -107,7 +110,7 @@ def eeg_preprocessing(filename, icas, plot=False):
         # Epochs Plot
         epochs.plot(n_epochs=10, n_channels=19, title="EEG 2s Epochs " + filename)     
     
-    return epochs
+    return raw, epochs
 
 #%% Removes noisy epochs
 def clean_epochs(filename, epochs, plot=False):
@@ -119,12 +122,35 @@ def clean_epochs(filename, epochs, plot=False):
     
     return epochs_clean, reject_log
 
-# #%% Run and Save Epochs
+#%% Get bandpowers from Epochs
+
+def epochs_selection_bandpower(epochs):
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'), (8, 12, 'Alpha'), (12, 30, 'Beta')]
+    ch = epochs.ch_names
+    ms = []
+    for i in range (np.shape(epochs._data)[0]):
+        # compute bandpower
+        bd = yasa.bandpower(data=epochs._data[i,:,:], sf=256, ch_names=ch,
+                            hypno=None, relative=True, bands=bands)
+        
+        bd_means = bd.mean(axis=0)
+        b = np.array([bd_means['Delta'], bd_means['Theta'], bd_means['Alpha'], bd_means['Beta']])
+        
+        var = np.var(b)
+        power = bd_means['TotalAbsPow']
+        
+        # selection measure
+        measure = power / var * 10e9
+        ms.append(measure)
+    
+    return ms
+
+#%% Run and Tests
 
 # filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 # icas = get_ica_template(filenames[0])
 
-# for filename in filenames:
-#     epochs = eeg_preprocessing(filename, icas, plot = False)
-#     epochs, reject_log = clean_epochs(epochs)
-#     createPickleFile(epochs, '../PreProcessed_Data/' + filename)
+# for filename in filenames[0:1]:
+#     _, epochs = eeg_preprocessing(filename, icas, plot=False)
+#     epochs, _ = clean_epochs(filename, epochs, plot=False)
+#     ms = epochs_selection_bandpower(epochs)

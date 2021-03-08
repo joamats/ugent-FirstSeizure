@@ -32,7 +32,6 @@ filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 imcohs = []
 plvs = []
-pdcs = []
 mis = []
 pdcs = []
 
@@ -53,7 +52,7 @@ for filename in filenames[0:1]:
     mis.append(mi)
     
     # PDC
-    ws = scot.Workspace({'model_order': 40}, reducedim='no_pca', fs=256, nfft=1024)
+    ws = scot.Workspace({'model_order': 40}, reducedim='no_pca', fs=256, nfft=512)
     ws.set_data(epochs._data)
     ws.do_mvarica()
     pdc = ws.get_connectivity(measure_name='PDC', plot=None)
