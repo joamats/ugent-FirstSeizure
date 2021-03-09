@@ -140,17 +140,39 @@ def epochs_selection_bandpower(epochs):
         power = bd_means['TotalAbsPow']
         
         # selection measure
-        measure = power / var * 10e9
+        measure = np.log10(power / var * 10e9)
         ms.append(measure)
     
     return ms
 
-#%% Run and Tests
+# %% Run and Tests
 
-# filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-# icas = get_ica_template(filenames[0])
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+icas = get_ica_template(filenames[0])
 
-# for filename in filenames[0:1]:
-#     _, epochs = eeg_preprocessing(filename, icas, plot=False)
-#     epochs, _ = clean_epochs(filename, epochs, plot=False)
-#     ms = epochs_selection_bandpower(epochs)
+for filename in filenames[0:1]:
+    _, epochs = eeg_preprocessing(filename, icas, plot=False)
+    epochs, _ = clean_epochs(filename, epochs, plot=False)
+    # ms = epochs_selection_bandpower(epochs)
+    # plt.hist(ms)
+    
+#%%
+# Import the module for estimating an ARMA model
+from statsmodels.tsa.arima_model import ARMA
+
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+for filename in filenames[0:1]:
+    epochs = getPickleFile('../PreProcessed_Data/' + filename)
+    # Fit the data to an AR(p) for p = 0,...,100 , and save the BIC
+    Bic = np.zeros(100)
+    for p in range(0,100):
+        mod = ARMA(epochs._data, order=(p,p))
+        res = mod.fit()
+        # Save BIC for AR(p)    
+        Bic[p] = res.bic
+        
+    # Plot the BIC as a function of p
+    plt.plot(range(0,100), Bic[0:100], marker='o')
+    plt.xlabel('Order of AR Model')
+    plt.ylabel('Bayesian Information Criterion')
+    plt.show()

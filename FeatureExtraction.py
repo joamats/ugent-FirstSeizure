@@ -2,6 +2,7 @@ import mne
 import pandas as pd
 import numpy as np
 import scipy
+import scot
 import yasa
 from sklearn.feature_selection import mutual_info_regression
 from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
@@ -65,7 +66,6 @@ createPickleFile(plvs, '../Features/' + 'PLV')
 createPickleFile(mis, '../Features/' + 'MI')
 createPickleFile(pdcs, '../Features/' + 'PDC')
 
-                
                 
                 
                 
