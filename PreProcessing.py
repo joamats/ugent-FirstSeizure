@@ -19,13 +19,13 @@ def import_eeg(filename):
         raw.rename_channels({'T7': 'T3', 'P7': 'T5', 'T8': 'T4', 'P8': 'T6'})
 
     # Select relevant channels: EEG only
-    raw.pick_types(eeg=True, exclude=['ECG','EMG', 'EOG', 'SLI', 'ABD', 'ABDO', 'Status',
+    raw.pick_types(eeg=True, exclude=['ECG', 'EMG', 'EOG', 'SLI', 'ABD', 'ABDO', 'Status',
                                       'T1', 'T2', 'CP1', 'CP2', 'CP5', 'CP6', 'FC1', 'FC2', 'FC5', 'FC6'])
     
     # Reorder Channels if needed
     raw.reorder_channels(['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
                           'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6'])
-    
+
     # Average referencing
     raw.set_eeg_reference()
     
@@ -100,17 +100,17 @@ def eeg_preprocessing(filename, icas, plot=False):
         # PSD Plot
         raw.plot_psd()
         # Filtered EEG Plot
-        orig_raw.plot(duration=15, n_channels = 19, title="Original " + filename, remove_dc = False)
+        orig_raw.plot(duration=15, n_channels = 20, title="Original " + filename, remove_dc = False)
         # ICA Components in Scalp
         ica.plot_components(title="ICA Components " + filename)
         # ICA Sources Time Series
         ica.plot_sources(orig_raw, title="ICA Sources " + filename)
         # Without Artifacts EEG Plot
-        raw.plot(duration=15, n_channels = 19, title="Preprocessed " + filename, remove_dc = False)
+        raw.plot(duration=15, n_channels = 20, title="Preprocessed " + filename, remove_dc = False)
         # Epochs Plot
-        epochs.plot(n_epochs=10, n_channels=19, title="EEG 2s Epochs " + filename)     
+        epochs.plot(n_epochs=10, n_channels= 20, title="EEG 2s Epochs " + filename)     
     
-    return raw, epochs
+    return raw, ica
 
 #%% Removes noisy epochs
 def clean_epochs(filename, epochs, plot=False):
@@ -119,35 +119,118 @@ def clean_epochs(filename, epochs, plot=False):
     
     if plot == True:
         reject_log.plot_epochs(epochs, title="Clean Epochs "  + filename)
-    
     return epochs_clean, reject_log
 
 #%% Get bandpowers from Epochs
 
-def epochs_selection_bandpower(epochs):
-    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'), (8, 12, 'Alpha'), (12, 30, 'Beta')]
+def epochs_selection_bandpower(epochs, allVars=False):
+    # bands names
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
+    
+    # bands ranges
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
+             (8, 12, 'Alpha'), (12, 30, 'Beta')]
+    # channel names
     ch = epochs.ch_names
-    ms = []
-    for i in range (np.shape(epochs._data)[0]):
-        # compute bandpower
+    
+    n_epochs = np.shape(epochs._data)[0]
+    
+    # initialize arrays 
+    ms = np.zeros((n_epochs, 4))
+    ms_dist = np.zeros((n_epochs, 1))
+    
+    for i in range (n_epochs):
+        # compute bandpowers
         bd = yasa.bandpower(data=epochs._data[i,:,:], sf=256, ch_names=ch,
                             hypno=None, relative=True, bands=bands)
         
+        # compute means
         bd_means = bd.mean(axis=0)
-        b = np.array([bd_means['Delta'], bd_means['Theta'], bd_means['Alpha'], bd_means['Beta']])
+        b = np.array([bd_means['Delta'], bd_means['Theta'], 
+                      bd_means['Alpha'], bd_means['Beta']])
+              
+        # add means to array with all epochs
+        ms[i,:] = b 
         
+        # compute variance and power
         var = np.var(b)
         power = bd_means['TotalAbsPow']
-        
+
         # selection measure
+<<<<<<< HEAD
         measure = np.log10(power / var * 10e9)
         ms.append(measure)
+=======
+        measure = power / var * 10e9
+        
+        # add measure to array
+        ms_dist[i,0] = measure
+          
     
-    return ms
+    # transform to DataFrame
+    bd_powers = pd.DataFrame(ms, columns=bd_names)
+    ms_dist = pd.DataFrame(ms_dist, columns=['Measure'])
+    
+    # select threshold for all bands
+    th = int(np.rint(n_epochs / 4))
+    
+    # sort epochs by distribution measure
+    ms_dist_sorted = ms_dist.sort_values(by='Measure', ascending=False)
+    
+    # get first N indexes
+    idx_n = np.array(ms_dist_sorted[:th].index)
+    
+    # create new object with selected epochs
+    s_epoch = epochs.copy()
+    s_epoch._data = epochs._data[idx_n,:,:]
+    s_epochs = [s_epoch]
+    
+    # compute powers means over all epochs
+    ms_means = np.mean(ms, axis=0)
+        
+    # compute thresholds per band
+    bd_th = []
+    
+    for m in ms_means:
+        th = int(np.rint(m * n_epochs))
+        bd_th.append(th)
+    
+    # select N highest ranked values for each band 
+    idxs = []
+    min_powers = []
+    
+    for bd_n, th in zip(bd_names, bd_th):
+        # sort epochs by power
+        bd_n_sorted = bd_powers.sort_values(by=bd_n, ascending=False)
+        # get indexes of highest th epochs
+        idx_n = np.array(bd_n_sorted[:th].index)
+        idxs.append(idx_n)
+        
+        # save minimum power in selected epochs
+        min_power = bd_n_sorted[bd_n].iloc[[th-1]].values.item()
+        min_powers.append(min_power)
+        
+        # create new epochs object, with selected ones
+        s_epoch = epochs.copy()
+        s_epoch._data = epochs._data[idx_n,:,:]
+        s_epochs.append(s_epoch)
+        
+    # conversion to array    
+    min_powers = np.array(min_powers)
+    
+    # insert "global" in bands names, for the record
+    bd_names.insert(0, 'Global')
+>>>>>>> abb087266157f04b59d34adc2f8662c649dff000
+    
+    if allVars == True:
+        return bd_names, bd_th, ms_means, ms_dist_sorted, idxs, min_powers, s_epochs
+    else:
+        return bd_names, s_epochs
 
 # %% Run and Tests
 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+<<<<<<< HEAD
 icas = get_ica_template(filenames[0])
 
 for filename in filenames[0:1]:
@@ -176,3 +259,10 @@ for filename in filenames[0:1]:
     plt.xlabel('Order of AR Model')
     plt.ylabel('Bayesian Information Criterion')
     plt.show()
+=======
+
+for filename in filenames[[0]]:
+    epochs = getPickleFile('../PreProcessed_Data/' + filename)
+    bd_names, s_epochs = epochs_selection_bandpower(epochs, allVars=False)
+    
+>>>>>>> abb087266157f04b59d34adc2f8662c649dff000

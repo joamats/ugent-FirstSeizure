@@ -7,7 +7,7 @@ import yasa
 from sklearn.feature_selection import mutual_info_regression
 from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
 from Pickle import createPickleFile, getPickleFile
-# import scot
+import scot
 
 #%% Mutual Information
 
@@ -65,9 +65,6 @@ createPickleFile(imcohs, '../Features/' + 'IMCOH')
 createPickleFile(plvs, '../Features/' + 'PLV')
 createPickleFile(mis, '../Features/' + 'MI')
 createPickleFile(pdcs, '../Features/' + 'PDC')
-
-                
-                
-                
+              
                 
                 
