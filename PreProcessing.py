@@ -157,10 +157,6 @@ def epochs_selection_bandpower(epochs, allVars=False):
         power = bd_means['TotalAbsPow']
 
         # selection measure
-<<<<<<< HEAD
-        measure = np.log10(power / var * 10e9)
-        ms.append(measure)
-=======
         measure = power / var * 10e9
         
         # add measure to array
@@ -220,25 +216,13 @@ def epochs_selection_bandpower(epochs, allVars=False):
     
     # insert "global" in bands names, for the record
     bd_names.insert(0, 'Global')
->>>>>>> abb087266157f04b59d34adc2f8662c649dff000
     
     if allVars == True:
         return bd_names, bd_th, ms_means, ms_dist_sorted, idxs, min_powers, s_epochs
     else:
         return bd_names, s_epochs
 
-# %% Run and Tests
 
-filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-<<<<<<< HEAD
-icas = get_ica_template(filenames[0])
-
-for filename in filenames[0:1]:
-    _, epochs = eeg_preprocessing(filename, icas, plot=False)
-    epochs, _ = clean_epochs(filename, epochs, plot=False)
-    # ms = epochs_selection_bandpower(epochs)
-    # plt.hist(ms)
-    
 #%%
 # Import the module for estimating an ARMA model
 from statsmodels.tsa.arima_model import ARMA
@@ -259,10 +243,3 @@ for filename in filenames[0:1]:
     plt.xlabel('Order of AR Model')
     plt.ylabel('Bayesian Information Criterion')
     plt.show()
-=======
-
-for filename in filenames[[0]]:
-    epochs = getPickleFile('../PreProcessed_Data/' + filename)
-    bd_names, s_epochs = epochs_selection_bandpower(epochs, allVars=False)
-    
->>>>>>> abb087266157f04b59d34adc2f8662c649dff000
