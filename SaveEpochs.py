@@ -5,9 +5,9 @@ from Pickle import createPickleFile
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 icas = get_ica_template(filenames[0])
 
-for filename in filenames[0:1]:
+for filename in filenames:
     epochs = eeg_preprocessing(filename, icas, plot=False)
-    epochs, reject_log = clean_epochs(filename, epochs, plot=True)
+    epochs, _ = clean_epochs(filename, epochs, plot=False)
     createPickleFile(epochs, '../PreProcessed_Data/' + filename)
 
 
