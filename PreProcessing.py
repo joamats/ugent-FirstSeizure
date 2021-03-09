@@ -124,12 +124,20 @@ def clean_epochs(filename, epochs, plot=False):
 #%% Get bandpowers from Epochs
 
 def epochs_selection_bandpower(epochs, allVars=False):
+    # bands names
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
+    
+    # bands ranges
     bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
-    
+    # channel names
     ch = epochs.ch_names
+    
     n_epochs = np.shape(epochs._data)[0]
+    
+    # initialize arrays 
     ms = np.zeros((n_epochs, 4))
+    ms_dist = np.zeros((n_epochs, 1))
     
     for i in range (n_epochs):
         # compute bandpowers
@@ -140,28 +148,53 @@ def epochs_selection_bandpower(epochs, allVars=False):
         bd_means = bd.mean(axis=0)
         b = np.array([bd_means['Delta'], bd_means['Theta'], 
                       bd_means['Alpha'], bd_means['Beta']])
-        
-        # add to array with all epochs
+              
+        # add means to array with all epochs
         ms[i,:] = b 
+        
+        # compute variance and power
+        var = np.var(b)
+        power = bd_means['TotalAbsPow']
+
+        # selection measure
+        measure = power / var * 10e9
+        
+        # add measure to array
+        ms_dist[i,0] = measure
+          
     
-    # compute thresholds per band
+    # transform to DataFrame
+    bd_powers = pd.DataFrame(ms, columns=bd_names)
+    ms_dist = pd.DataFrame(ms_dist, columns=['Measure'])
+    
+    # select threshold for all bands
+    th = int(np.rint(n_epochs / 4))
+    
+    # sort epochs by distribution measure
+    ms_dist_sorted = ms_dist.sort_values(by='Measure', ascending=False)
+    
+    # get first N indexes
+    idx_n = np.array(ms_dist_sorted[:th].index)
+    
+    # create new object with selected epochs
+    s_epoch = epochs.copy()
+    s_epoch._data = epochs._data[idx_n,:,:]
+    s_epochs = [s_epoch]
+    
+    # compute powers means over all epochs
     ms_means = np.mean(ms, axis=0)
+        
+    # compute thresholds per band
     bd_th = []
     
     for m in ms_means:
         th = int(np.rint(m * n_epochs))
         bd_th.append(th)
     
-    # bands names
-    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
-    
-    # transform to DataFrame
-    bd_powers = pd.DataFrame(ms, columns=bd_names)
-    
     # select N highest ranked values for each band 
     idxs = []
     min_powers = []
-    s_epochs = []
+    
     for bd_n, th in zip(bd_names, bd_th):
         # sort epochs by power
         bd_n_sorted = bd_powers.sort_values(by=bd_n, ascending=False)
@@ -169,7 +202,7 @@ def epochs_selection_bandpower(epochs, allVars=False):
         idx_n = np.array(bd_n_sorted[:th].index)
         idxs.append(idx_n)
         
-        # get minimum power in selected epochs
+        # save minimum power in selected epochs
         min_power = bd_n_sorted[bd_n].iloc[[th-1]].values.item()
         min_powers.append(min_power)
         
@@ -181,16 +214,19 @@ def epochs_selection_bandpower(epochs, allVars=False):
     # conversion to array    
     min_powers = np.array(min_powers)
     
+    # insert "global" in bands names, for the record
+    bd_names.insert(0, 'Global')
+    
     if allVars == True:
-        return bd_names, bd_th, ms_means, idxs, min_powers, s_epochs
+        return bd_names, bd_th, ms_means, ms_dist_sorted, idxs, min_powers, s_epochs
     else:
         return bd_names, s_epochs
 
 #%% Run and Tests
 
-# filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# for filename in filenames[[0]]:
-#     epochs = getPickleFile('../PreProcessed_Data/' + filename)
-#     bd_names, s_epochs = epochs_selection_bandpower(epochs)
-#     # epochs.plot(title=filename, epoch_colors=cl)
+for filename in filenames[[0]]:
+    epochs = getPickleFile('../PreProcessed_Data/' + filename)
+    bd_names, s_epochs = epochs_selection_bandpower(epochs, allVars=False)
+    
