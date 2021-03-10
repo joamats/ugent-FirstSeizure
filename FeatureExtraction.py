@@ -5,7 +5,7 @@ import scipy
 import scot
 import yasa
 from sklearn.feature_selection import mutual_info_regression
-from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
+from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs, epochs_selection_bandpower
 from Pickle import createPickleFile, getPickleFile
 import scot
 
@@ -14,6 +14,7 @@ import scot
 def mutual_information(epochs):
     
     mutual_infos = np.zeros((np.shape(epochs._data)[1], np.shape(epochs._data)[1], 1))
+    std = np.zeros((np.shape(epochs._data)[1], np.shape(epochs._data)[1], 1))
                 
     for channel_1 in range (1, np.shape(epochs._data)[1]):
         for channel_2 in range (channel_1):
@@ -25,46 +26,72 @@ def mutual_information(epochs):
                 mi = mutual_info_regression(x, y, random_state=42)
                 all_mi.append(mi)
             mutual_infos[channel_1][channel_2][0]=np.mean(all_mi)
-    
-    return mutual_infos
+            std[channel_1][channel_2][0]=np.std(all_mi)
+            
+    mi_2D=np.zeros((19,19))
+    for i in range(0,np.shape(mutual_infos)[0]):
+        mi_2D[i,:]=np.matrix.transpose(mutual_infos[i,:,:])
+    std_2D=np.zeros((19,19))
+    for i in range(0,np.shape(std)[0]):
+        std_2D[i,:]=np.matrix.transpose(std[i,:,:])
+    return mi_2D, std_2D
 
 #%% Run
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-imcohs = []
-plvs = []
+imcohs = {}
+plvs = {}
 mis = []
 pdcs = []
+bands = {'Delta': [1, 4], 'Theta': [4, 8], 'Alpha': [8,12],
+             'Beta': [12, 30], 'Global': [1,30]}
 
 for filename in filenames[0:1]:
-    epochs = getPickleFile('../PreProcessed_Data/' + filename)
-    # IMOCH
-    imcoh = mne.connectivity.spectral_connectivity(epochs, method = "imcoh", 
-                              sfreq = 256, faverage=False, verbose = False)
-    imcohs.append(imcoh)
-       
-    # PLV
-    plv = mne.connectivity.spectral_connectivity(epochs, method = "plv", 
-                              sfreq = 256, faverage=False, verbose = False)    
-    plvs.append(plv)
+    saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
+    bd_names, s_epochs=epochs_selection_bandpower(saved_epochs)
     
-    # MI
-    mi = mutual_information(epochs)
-    mis.append(mi)
-    
-    # PDC
-    ws = scot.Workspace({'model_order': 40}, reducedim='no_pca', fs=256, nfft=512)
-    ws.set_data(epochs._data)
-    ws.do_mvarica()
-    pdc = ws.get_connectivity(measure_name='PDC', plot=None)
-    pdcs.append(pdc)
+    for k in range(0,5):
+        # # IMOCH
+        # f_min=bands[bd_names[k]][0]
+        # f_max=bands[bd_names[k]][1]
+        # imcoh_mean_std=[]
+        # imcoh = mne.connectivity.spectral_connectivity(s_epochs[k], method = "imcoh", 
+        #                           sfreq = 256, fmin=f_min, fmax=f_max, 
+        #                           faverage=False, verbose = False)
+        # std=np.std(imcoh[0], axis=2)
+        # imcoh=list(imcoh)
+        # imcoh_mean_std.append(np.mean(imcoh[0], axis=2))
+        # imcoh_mean_std.append(std)
+        # imcohs[bd_names[k]]=imcoh_mean_std
+           
+        # # PLV
+        # plv_mean_std=[]
+        # plv = mne.connectivity.spectral_connectivity(s_epochs[k], method = "plv", 
+        #                           sfreq = 256, fmin=f_min, fmax=f_max,
+        #                           faverage=False, verbose = False)    
+        # std=np.std(plv[0], axis=2)
+        # plv=list(plv)
+        # plv_mean_std.append(np.mean(imcoh[0], axis=2))
+        # plv_mean_std.append(std)
+        # plvs[bd_names[k]]=plv_mean_std
         
+        # MI
+        if(bd_names[k]=='Global'):
+            mi, std= mutual_information(s_epochs[k])
+            mis.append([mi,std])
+        
+        # # PDC
+        # ws = scot.Workspace({'model_order': 40}, reducedim='no_pca', fs=256, nfft=512)
+        # ws.set_data(epochs._data)
+        # ws.do_mvarica()
+        # pdc = ws.get_connectivity(measure_name='PDC', plot=None)
+        # pdcs.append(pdc)
 #%% Save Measures
 
-createPickleFile(imcohs, '../Features/' + 'IMCOH')
-createPickleFile(plvs, '../Features/' + 'PLV')
-createPickleFile(mis, '../Features/' + 'MI')
-createPickleFile(pdcs, '../Features/' + 'PDC')
+# createPickleFile(imcohs, '../Features/' + 'IMCOH')
+# createPickleFile(plvs, '../Features/' + 'PLV')
+# createPickleFile(mis, '../Features/' + 'MI')
+# createPickleFile(pdcs, '../Features/' + 'PDC')
               
                 
                 

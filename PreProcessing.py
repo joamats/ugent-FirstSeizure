@@ -223,23 +223,23 @@ def epochs_selection_bandpower(epochs, allVars=False):
         return bd_names, s_epochs
 
 
-#%%
-# Import the module for estimating an ARMA model
-from statsmodels.tsa.arima_model import ARMA
+# #%%
+# # Import the module for estimating an ARMA model
+# from statsmodels.tsa.arima_model import ARMA
 
-filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-for filename in filenames[0:1]:
-    epochs = getPickleFile('../PreProcessed_Data/' + filename)
-    # Fit the data to an AR(p) for p = 0,...,100 , and save the BIC
-    Bic = np.zeros(100)
-    for p in range(0,100):
-        mod = ARMA(epochs._data, order=(p,p))
-        res = mod.fit()
-        # Save BIC for AR(p)    
-        Bic[p] = res.bic
+# filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+# for filename in filenames[0:1]:
+#     epochs = getPickleFile('../PreProcessed_Data/' + filename)
+#     # Fit the data to an AR(p) for p = 0,...,100 , and save the BIC
+#     Bic = np.zeros(100)
+#     for p in range(0,100):
+#         mod = ARMA(epochs._data, order=(p,p))
+#         res = mod.fit()
+#         # Save BIC for AR(p)    
+#         Bic[p] = res.bic
         
-    # Plot the BIC as a function of p
-    plt.plot(range(0,100), Bic[0:100], marker='o')
-    plt.xlabel('Order of AR Model')
-    plt.ylabel('Bayesian Information Criterion')
-    plt.show()
+#     # Plot the BIC as a function of p
+#     plt.plot(range(0,100), Bic[0:100], marker='o')
+#     plt.xlabel('Order of AR Model')
+#     plt.ylabel('Bayesian Information Criterion')
+#     plt.show()
