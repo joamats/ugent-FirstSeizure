@@ -38,6 +38,12 @@ def mutual_information(epochs):
         std_2D[i,:]=np.matrix.transpose(std[i,:,:])
     return mi_2D, std_2D
 
+def compute_feature_mean_std(feature_data):
+    feature_data_mean_std=[]
+    feature_data_mean_std.append(np.mean(feature_data, axis=2))
+    feature_data_mean_std.append(np.std(feature_data, axis=2))
+    return feature_data_mean_std
+
 #%% Run
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
@@ -48,58 +54,43 @@ pdcs = []
 bands = {'Delta': [1, 4], 'Theta': [4, 8], 'Alpha': [8,12],
              'Beta': [12, 30], 'Global': [1,30]}
 
-for filename in filenames[0:1]:
+for filename in filenames[0:3]:
     saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
     bd_names, s_epochs=epochs_selection_bandpower(saved_epochs)
     imcohs = {}
     plvs = {}
     for k in range(0,5):
-        # IMOCH
         f_min=bands[bd_names[k]][0]
         f_max=bands[bd_names[k]][1]
+        
+        # IMCOH
         imcoh_mean_std=[]
         imcoh = mne.connectivity.spectral_connectivity(s_epochs[k], method = "imcoh", 
                                   sfreq = 256, fmin=f_min, fmax=f_max, 
                                   faverage=False, verbose = False)
-        std=np.std(imcoh[0], axis=2)
-        imcoh=list(imcoh)
-        imcoh_mean_std.append(np.mean(imcoh[0], axis=2))
-        imcoh_mean_std.append(std)
-        #Stores the subject mean and std per band power on a dict
-        imcohs[bd_names[k]]=imcoh_mean_std
+        # Saves on the respective bandwidth the mean and std
+        imcohs[bd_names[k]] = compute_feature_mean_std(imcoh[0])
            
         # PLV
         plv_mean_std=[]
         plv = mne.connectivity.spectral_connectivity(s_epochs[k], method = "plv", 
                                   sfreq = 256, fmin=f_min, fmax=f_max,
                                   faverage=False, verbose = False)    
-        std=np.std(plv[0], axis=2)
-        plv=list(plv)
-        plv_mean_std.append(np.mean(imcoh[0], axis=2))
-        plv_mean_std.append(std)
-        plvs[bd_names[k]]=plv_mean_std
+        plvs[bd_names[k]] = compute_feature_mean_std(plv[0])
         
         # MI
         if(bd_names[k]=='Global'):
             mi, std= mutual_information(s_epochs[k])
             mis_list.append([mi,std])
         
-        # # PDC
-        # ws = scot.Workspace({'model_order': 40}, reducedim='no_pca', fs=256, nfft=512)
-        # ws.set_data(epochs._data)
-        # ws.do_mvarica()
-        # pdc = ws.get_connectivity(measure_name='PDC', plot=None)
-        # pdcs.append(pdc)
-        
     #Stores 1 Dict per person on a list
     imcohs_list.append(imcohs)
     plvs_list.append(plvs)
 #%% Save Measures
 
-# createPickleFile(imcohs, '../Features/' + 'IMCOH')
-# createPickleFile(plvs, '../Features/' + 'PLV')
-# createPickleFile(mis, '../Features/' + 'MI')
-# createPickleFile(pdcs, '../Features/' + 'PDC')
+createPickleFile(imcohs_list, '../Features/' + 'IMCOH')
+createPickleFile(plvs_list, '../Features/' + 'PLV')
+createPickleFile(mis_list, '../Features/' + 'MI')
               
                 
                 
