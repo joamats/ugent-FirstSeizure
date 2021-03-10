@@ -133,7 +133,12 @@ def epochs_selection_bandpower(epochs, allVars=False):
     # channel names
     ch = epochs.ch_names
     
+    # number of epochs
     n_epochs = np.shape(epochs._data)[0]
+    
+    # only 0.25 * n_epochs highest ranked epochs are selected
+    N = 0.25
+    th = int(np.rint(N * n_epochs))
     
     # initialize arrays 
     ms = np.zeros((n_epochs, 4))
@@ -167,9 +172,6 @@ def epochs_selection_bandpower(epochs, allVars=False):
     bd_powers = pd.DataFrame(ms, columns=bd_names)
     ms_dist = pd.DataFrame(ms_dist, columns=['Measure'])
     
-    # select threshold for all bands
-    th = int(np.rint(n_epochs / 4))
-    
     # sort epochs by distribution measure
     ms_dist_sorted = ms_dist.sort_values(by='Measure', ascending=False)
     
@@ -181,10 +183,6 @@ def epochs_selection_bandpower(epochs, allVars=False):
     s_epoch._data = epochs._data[idx_n,:,:]
     s_epochs = [s_epoch]
     
-    # only 0.25 * n_epochs highest ranked epochs are selected
-    N = 0.25
-    th = int(np.rint(N * n_epochs))
-
     # select N highest ranked values for each band 
     idxs = []
     min_powers = []
