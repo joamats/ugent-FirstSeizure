@@ -181,21 +181,15 @@ def epochs_selection_bandpower(epochs, allVars=False):
     s_epoch._data = epochs._data[idx_n,:,:]
     s_epochs = [s_epoch]
     
-    # compute powers means over all epochs
-    ms_means = np.mean(ms, axis=0)
-        
-    # compute thresholds per band
-    bd_th = []
-    
-    for m in ms_means:
-        th = int(np.rint(m * n_epochs))
-        bd_th.append(th)
-    
+    # only 0.25 * n_epochs highest ranked epochs are selected
+    N = 0.25
+    th = int(np.rint(N * n_epochs))
+
     # select N highest ranked values for each band 
     idxs = []
     min_powers = []
     
-    for bd_n, th in zip(bd_names, bd_th):
+    for bd_n in bd_names:
         # sort epochs by power
         bd_n_sorted = bd_powers.sort_values(by=bd_n, ascending=False)
         # get indexes of highest th epochs
@@ -218,28 +212,15 @@ def epochs_selection_bandpower(epochs, allVars=False):
     bd_names.insert(0, 'Global')
     
     if allVars == True:
-        return bd_names, bd_th, ms_means, ms_dist_sorted, idxs, min_powers, s_epochs
+        return bd_names, th, ms_dist_sorted, idxs, min_powers, s_epochs
     else:
         return bd_names, s_epochs
 
-
-# #%%
-# # Import the module for estimating an ARMA model
-# from statsmodels.tsa.arima_model import ARMA
-
+   
+#%% Run
 # filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-# for filename in filenames[0:1]:
-#     epochs = getPickleFile('../PreProcessed_Data/' + filename)
-#     # Fit the data to an AR(p) for p = 0,...,100 , and save the BIC
-#     Bic = np.zeros(100)
-#     for p in range(0,100):
-#         mod = ARMA(epochs._data, order=(p,p))
-#         res = mod.fit()
-#         # Save BIC for AR(p)    
-#         Bic[p] = res.bic
-        
-#     # Plot the BIC as a function of p
-#     plt.plot(range(0,100), Bic[0:100], marker='o')
-#     plt.xlabel('Order of AR Model')
-#     plt.ylabel('Bayesian Information Criterion')
-#     plt.show()
+
+# for filename in filenames[[1]]:
+#     saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
+#     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+
