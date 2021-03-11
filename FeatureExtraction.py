@@ -26,17 +26,25 @@ def mutual_information(epochs):
             mutual_infos[channel_1][channel_2][0] = np.mean(all_mi)
             std[channel_1][channel_2][0] = np.std(all_mi)
     
-    # transforms the 3D matrix in 2D
-    mi_2D = np.zeros((19, 19))
-    for i in range(0, np.shape(mutual_infos)[0]):
-        mi_2D[i,:] = np.matrix.transpose(mutual_infos[i,:,:])
-    std_2D = np.zeros((19, 19))
-    for i in range(0, np.shape(std)[0]):
-        std_2D[i,:] = np.matrix.transpose(std[i,:,:])
+    # transforms the 3D matrix in 2D    
+    m_mi = _3D_to_triangular(mutual_infos)
+    std_mi = _3D_to_triangular(std)
         
-    return mi_2D, std_2D
+    return m_mi, std_mi
 
-def compute_feature_mean_std(feature_data):
+#%% Auxiliary function
+
+def _3D_to_triangular(m_3D):
+    n = np.shape(m_3D)[0]
+    m_2D = np.zeros((n,n))
+    
+    for i in range(n):
+        m_2D[i,:] = np.matrix.transpose(m_3D[i,:,:])
+    
+    return m_2D
+
+#Computes mean and standard deviation for the feature data matrix
+def _compute_feature_mean_std(feature_data):
     feature_data_mean_std = []
     feature_data_mean_std.append(np.mean(feature_data, axis=2))
     feature_data_mean_std.append(np.std(feature_data, axis=2))
@@ -50,10 +58,10 @@ imcohs_list = []
 plvs_list = []
 mis_list = []
 
-bands = {'Delta': [1, 4], 'Theta': [4, 8], 'Alpha': [8,12],
-             'Beta': [12, 30], 'Global': [1,30]}
+bands = {'Global': [2.5,30], 'Delta': [2.5, 4], 'Theta': [4, 8],
+         'Alpha': [8,12], 'Beta': [12, 30]}
 
-for filename in filenames[[0]]:
+for filename in filenames:
     saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
     imcohs = {}
@@ -69,7 +77,7 @@ for filename in filenames[[0]]:
                                   sfreq = 256, fmin=f_min, fmax=f_max, 
                                   faverage=False, verbose = False)
         # saves on the respective bandwidth the mean and std
-        imcohs[bd_names[k]] = compute_feature_mean_std(imcoh[0])
+        imcohs[bd_names[k]] = _compute_feature_mean_std(imcoh[0])
            
         # PLV
         plv_mean_std = []
@@ -77,7 +85,7 @@ for filename in filenames[[0]]:
                                   sfreq = 256, fmin=f_min, fmax=f_max,
                                   faverage=False, verbose = False)   
         # saves on the respective bandwidth the mean and std
-        plvs[bd_names[k]] = compute_feature_mean_std(plv[0])
+        plvs[bd_names[k]] = _compute_feature_mean_std(plv[0])
 
         # MI
         if(bd_names[k] == 'Global'):
@@ -89,9 +97,9 @@ for filename in filenames[[0]]:
     
 #%% Save Measures
 
-createPickleFile(imcohs_list, '../Features/' + 'IMCOH')
-createPickleFile(plvs_list, '../Features/' + 'PLV')
-createPickleFile(mis_list, '../Features/' + 'MI')
+createPickleFile(imcohs_list, '../Features/' + 'imcoh')
+createPickleFile(plvs_list, '../Features/' + 'plv')
+createPickleFile(mis_list, '../Features/' + 'mi')
               
                 
                 
