@@ -181,7 +181,7 @@ def epochs_selection_bandpower(epochs, allVars=False):
     # create new object with selected epochs
     s_epoch = epochs.copy()
     s_epoch._data = epochs._data[idx_n,:,:]
-    s_epochs = [s_epoch]
+    s_epochs = {'Global': s_epoch}
     
     # select N highest ranked values for each band 
     idxs = []
@@ -201,7 +201,7 @@ def epochs_selection_bandpower(epochs, allVars=False):
         # create new epochs object, with selected ones
         s_epoch = epochs.copy()
         s_epoch._data = epochs._data[idx_n,:,:]
-        s_epochs.append(s_epoch)
+        s_epochs[bd_n] = s_epoch
         
     # conversion to array    
     min_powers = np.array(min_powers)
