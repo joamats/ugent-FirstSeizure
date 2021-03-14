@@ -43,7 +43,7 @@ def partial_directed_coherence(epochs, plot=False, band=[]):
     locs = _get_scot_locations(epochs)
         
     # multivariate VAR
-    var = scot.var.VAR(model_order=7)
+    var = scot.var.VAR(model_order=8)
     var.fit(epochs._data)
     
     # workspace settings
@@ -160,7 +160,7 @@ def extract_features(bd_names, epochs):
                
         # PDC
         idxs_bd = _map_bins_to_indices(bands[bd_n])
-        pdc = partial_directed_coherence(epochs[bd_n], plot=True, band=bands[bd_n])
+        pdc = partial_directed_coherence(epochs[bd_n], plot=False)
         pdcs[bd_n] = _compute_feature_mean_std(pdc[:,:,idxs_bd])
         
     return imcohs, plvs, mi, pdcs
