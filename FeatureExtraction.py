@@ -43,7 +43,7 @@ def partial_directed_coherence(epochs, plot=False, band=[]):
     locs = _get_scot_locations(epochs)
         
     # multivariate VAR
-    var = scot.var.VAR(model_order=7)
+    var = scot.var.VAR(model_order=8)
     var.fit(epochs._data)
     
     # workspace settings

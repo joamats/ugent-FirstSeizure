@@ -11,7 +11,7 @@ MI = {}
 PDC = {}
 
 # over all subjects
-for filename in filenames[[0]]:
+for filename in filenames:
     saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
     IMCOH[filename], PLV[filename], \
