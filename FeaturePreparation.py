@@ -1,11 +1,12 @@
 from Pickle import getPickleFile, createPickleFile
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import StratifiedKFold
 
 #%% Auxiliary functions
 
 # retrieves all saved features (conn + graphs)
-def _get_saved_features():
+def get_saved_features():
     IMCOH = getPickleFile('../Features/' + 'imcoh')
     PLV = getPickleFile('../Features/' + 'plv')
     MI = getPickleFile('../Features/' + 'mi')
@@ -45,8 +46,9 @@ def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
     
     return gr_df
     
-#%% Produce Features Array for ML
+#%% 
 
+# Produce Features Array for ML
 def make_features_array(conn_ms, graph_ms):
         
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
@@ -58,7 +60,7 @@ def make_features_array(conn_ms, graph_ms):
         
     allFeatures = pd.DataFrame()
     
-    for filename in filenames[[0]]:
+    for filename in filenames:
         features_row = pd.DataFrame()
         for ms_conn in ms_conns:
             if ms_conn == 'mi':
@@ -91,17 +93,38 @@ def make_features_array(conn_ms, graph_ms):
     
     return allFeatures
 
-
-#%% Run
-
-conn_ms, graph_ms = _get_saved_features()
-allFeatures = make_features_array(conn_ms, graph_ms)
-# createPickleFile(allFeatures, '../Features/' + 'allFeatures')
-
-
-
-
-
+# Make Data Array: Features + Labels
+def add_labels_to_data_array(data):
+        
+    labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Diagnosis']
+    
+    labels[labels != 'epileptic seizure'] = 0
+    labels[labels == 'epileptic seizure'] = 1
+   
+    data.insert(loc=0, column='y', value=labels)
 
 
+# 5-fold outer cross-validation
+def dataset_split(data):
+
+    y = data['y'].to_numpy(dtype=int)
+    X = data.drop('y', axis=1).to_numpy()
+        
+    skf = StratifiedKFold(n_splits=5)
+        
+    datasets = []
+    
+    for train_index, test_index in skf.split(X, y):
+
+        X_train, X_test = X[train_index], X[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        
+        datasets.append({
+            'X_train': X_train, 
+            'X_test': X_test,
+            'y_train': y_train,
+            'y_test': y_test
+            })    
+                    
+    return datasets
 
