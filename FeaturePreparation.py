@@ -6,14 +6,18 @@ from sklearn.model_selection import StratifiedKFold
 #%% Auxiliary functions
 
 # retrieves all saved features (conn + graphs)
-def get_saved_features():
+def get_saved_features(withGraphs=False):
     IMCOH = getPickleFile('../Features/' + 'imcoh')
     PLV = getPickleFile('../Features/' + 'plv')
     MI = getPickleFile('../Features/' + 'mi')
     PDC = getPickleFile('../Features/' + 'pdc')
-    graph_ms = getPickleFile('../Features/' + 'graphMeasures')
     
-    return {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms
+    if withGraphs:
+        graph_ms = getPickleFile('../Features/' + 'graphMeasures')
+        return {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms
+    
+    else:
+        return {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
 
 
 # transforms connectivity array into flat DataFrame
