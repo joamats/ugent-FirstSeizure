@@ -54,9 +54,9 @@ mi = getPickleFile('../Features/' + 'mi')
 plv = getPickleFile('../Features/' + 'plv')
 pdc = getPickleFile('../Features/' + 'pdc')
 
-bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
+bd_names = ['Global'] #, 'Delta', 'Theta', 'Alpha', 'Beta']
 
-for filename in filenames[[45]]:
+for filename in filenames[[201]]:
     for bd in bd_names:
         plot_heatmap(imcoh[filename][bd]['Mean'], 'ImCoh', str(filename+'_'+bd))
         plt.figure()
