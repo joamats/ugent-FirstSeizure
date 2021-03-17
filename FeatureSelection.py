@@ -17,7 +17,7 @@ def select_features(X_train, y_train, X_test, method):
         fs = SelectKBest(score_func=mutual_info_classif, k='all')
        
     elif method == 'anova':
-        fs = SelectKBest(score_func=f_classif, k='all')
+        fs = SelectKBest(score_func=f_classif, k=50)
     
    	# learn relationship from training data
     fs.fit(X_train, y_train)
@@ -28,20 +28,26 @@ def select_features(X_train, y_train, X_test, method):
    	# transform test input data
     X_test_fs = fs.transform(X_test)
     
-    # what are scores for the features
-    for i in range(len(fs.scores_)):
-        print('Feature %d: %f' % (i, fs.scores_[i]))
+    # # what are scores for the features
+    # for i in range(len(fs.scores_)):
+    #     print('Feature %d: %f' % (i, fs.scores_[i]))
            
     # plot the scores
     fig = plt.bar([i for i in range(len(fs.scores_))], fs.scores_)
     plt.show()
  
-    return X_train_fs, X_test_fs, fs, fig
+    idx = fs.get_support(indices=True)   
+ 
+    return X_train_fs, X_test_fs, idx, fs, fig
 
 
 #%% Run 
 
 datasets = getPickleFile('../ML_Data/' + 'datasets')
+fts_names = getPickleFile('../Features/' + 'featuresNames')
+sbjs_names = getPickleFile('../Features/' + 'featuresNames')
+
+#%%
 
 X_tr = datasets[0]['train'][0]['X_tr']
 y_tr = datasets[0]['train'][0]['y_tr']
@@ -51,7 +57,13 @@ y_val = datasets[0]['train'][0]['y_val']
 norm_scaler = StandardScaler(with_mean=True, with_std=True)
 
 X_tr = norm_scaler.fit_transform(X_tr)
-X_val = norm_scaler.fit_transform(X_val)
+X_val = norm_scaler.fit_transform(X_val) 
 
-_, _, _, fig = select_features(X_tr, y_tr, X_val, method='mi')
-_, _, _, fig = select_features(X_tr, y_tr, X_val, method='anova')
+fig1 = plt.figure(1)
+
+X_tr_fs, X_val_fs, idx, fs, fig1 = select_features(X_tr, y_tr, X_val, method='anova')
+sl_fts_names = fts_names[idx]
+print(sl_fts_names)
+
+
+
