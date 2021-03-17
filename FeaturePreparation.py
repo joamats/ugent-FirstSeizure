@@ -32,7 +32,9 @@ def _triangular_to_1D(ft_arr, ch_names, filename, bd_name, ms_type, ms_name):
      
     ft_flat = np.reshape(ft_arr, newshape=(1,len(labels)), order='F')
     ft_df = pd.DataFrame(data=ft_flat, index=[filename], columns=labels)
+    
     return ft_df.loc[:, (ft_df != 0).any(axis=0)]
+    
 
 # transforms graph measures to flat DataFrame
 def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
@@ -95,7 +97,8 @@ def make_features_array(conn_ms, graph_ms):
                 
         allFeatures = pd.concat([allFeatures, features_row], axis=0)
     
-    return allFeatures
+    return allFeatures.fillna(0)
+    
 
 # Make Data Array: Features + Labels
 def add_labels_to_data_array(data):
@@ -108,26 +111,42 @@ def add_labels_to_data_array(data):
     data.insert(loc=0, column='y', value=labels)
 
 
-# 5-fold outer cross-validation
+# double 5-fold nested cross-validation
 def dataset_split(data):
 
-    y = data['y'].to_numpy(dtype=int)
+    y = data['y'].to_numpy(dtype=float)
     X = data.drop('y', axis=1).to_numpy()
         
     skf = StratifiedKFold(n_splits=5)
         
     datasets = []
     
-    for train_index, test_index in skf.split(X, y):
+    for train_index, ts_index in skf.split(X, y):
 
-        X_train, X_test = X[train_index], X[test_index]
-        y_train, y_test = y[train_index], y[test_index]
+        X_train, X_ts = X[train_index], X[ts_index]
+        y_train, y_ts = y[train_index], y[ts_index]
+        
+        test = {
+            'X_ts': X_ts,
+            'y_ts': y_ts
+        }
+        
+        train = []
+        
+        for train_index, val_index in skf.split(X_train, y_train):
+            X_tr, X_val = X[train_index], X[val_index]
+            y_tr, y_val = y[train_index], y[val_index]
+            
+            train.append({
+                'X_tr': X_tr,
+                'y_tr': y_tr,
+                'X_val': X_val,
+                'y_val': y_val
+            })
         
         datasets.append({
-            'X_train': X_train, 
-            'X_test': X_test,
-            'y_train': y_train,
-            'y_test': y_test
+            'train': train, 
+            'test': test
             })    
                     
     return datasets
