@@ -6,7 +6,6 @@ conn_ms, graph_ms = get_saved_features(withGraphs=True)
 data = make_features_array(conn_ms, graph_ms)
 fts_names = data.columns
 
-
 createPickleFile(data, '../Features/' + 'allFeatures')
 createPickleFile(fts_names, '../ML_Data/' + 'featuresNames')
 
