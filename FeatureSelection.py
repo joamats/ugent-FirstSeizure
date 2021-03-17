@@ -4,6 +4,7 @@ from sklearn.feature_selection import f_classif
 from sklearn.feature_selection import mutual_info_classif
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
+import operator
 
 #%% Feature Selection functions
 
@@ -14,10 +15,10 @@ def select_features(X_train, y_train, X_test, method):
     
     if method == 'mi':
     # configure to select all features
-        fs = SelectKBest(score_func=mutual_info_classif, k='all')
+        fs = SelectKBest(score_func=mutual_info_classif, k=150)
        
     elif method == 'anova':
-        fs = SelectKBest(score_func=f_classif, k=50)
+        fs = SelectKBest(score_func=f_classif, k=150)
     
    	# learn relationship from training data
     fs.fit(X_train, y_train)
@@ -34,6 +35,10 @@ def select_features(X_train, y_train, X_test, method):
            
     # plot the scores
     fig = plt.bar([i for i in range(len(fs.scores_))], fs.scores_)
+    plt.hlines(y=9.341803308, xmin=0, xmax=8395, linestyles='dashed')
+    plt.xlabel('Features')
+    plt.ylabel('Anova Score')
+    plt.title('Feature Selection')
     plt.show()
  
     idx = fs.get_support(indices=True)   
@@ -44,8 +49,7 @@ def select_features(X_train, y_train, X_test, method):
 #%% Run 
 
 datasets = getPickleFile('../ML_Data/' + 'datasets')
-fts_names = getPickleFile('../Features/' + 'featuresNames')
-sbjs_names = getPickleFile('../Features/' + 'featuresNames')
+fts_names = getPickleFile('../ML_Data/' + 'featuresNames')
 
 #%%
 
@@ -62,8 +66,19 @@ X_val = norm_scaler.fit_transform(X_val)
 fig1 = plt.figure(1)
 
 X_tr_fs, X_val_fs, idx, fs, fig1 = select_features(X_tr, y_tr, X_val, method='anova')
-sl_fts_names = fts_names[idx]
-print(sl_fts_names)
+
+
+scores=[]
+for i in idx:
+    scores.append([i, fs.scores_[i]])
+
+sl_fts_names=[]
+score_values=[]
+scores.sort(key=operator.itemgetter(1), reverse=True)
+for i, score in enumerate(scores):
+    sl_fts_names.append(fts_names[score[0]])
+    score_values.append(score[1])
+
 
 
 
