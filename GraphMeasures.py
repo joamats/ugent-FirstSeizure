@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import brainconn
-from FeaturePreparation import get_saved_features
+from DataPreparation import get_saved_features
 from Pickle import createPickleFile
 
 #%% Computes Graph Measures from connectivity features

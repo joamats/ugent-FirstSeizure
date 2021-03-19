@@ -1,5 +1,5 @@
 from Pickle import createPickleFile
-from FeaturePreparation import get_saved_features,  make_features_array, \
+from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
 conn_ms, graph_ms = get_saved_features(withGraphs=True)

@@ -123,31 +123,17 @@ def dataset_split(data):
     
     for train_index, ts_index in skf.split(X, y):
 
-        X_train, X_ts = X[train_index], X[ts_index]
-        y_train, y_ts = y[train_index], y[ts_index]
+        X_tr, X_ts = X[train_index], X[ts_index]
+        y_tr, y_ts = y[train_index], y[ts_index]
         
-        test = {
+        d = {
+            'X_tr': X_tr,
+            'y_tr': y_tr,
             'X_ts': X_ts,
             'y_ts': y_ts
         }
-        
-        train = []
-        
-        for train_index, val_index in skf.split(X_train, y_train):
-            X_tr, X_val = X[train_index], X[val_index]
-            y_tr, y_val = y[train_index], y[val_index]
-            
-            train.append({
-                'X_tr': X_tr,
-                'y_tr': y_tr,
-                'X_val': X_val,
-                'y_val': y_val
-            })
-        
-        datasets.append({
-            'train': train, 
-            'test': test
-            })    
+               
+        datasets.append(d)    
                     
     return datasets
 
