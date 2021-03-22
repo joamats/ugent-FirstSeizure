@@ -22,6 +22,10 @@ def _find_feature_indices(fts_names, conn_ms, bd_name, graph_ms):
 def _get_features_mean(data, idxs):
     
     return np.mean(data[:,idxs], axis=1)
+
+def _get_features_max(data, idxs):
+    
+    return np.max(data[:, idxs], axis=1)
     
 #%%
     
@@ -59,11 +63,12 @@ for ms_conn in ms_conns:
                              ms_conn, bd_name, gr_name)
             
             m = pd.DataFrame(data=_get_features_mean(data, idxs), columns=[t_str])
-            ft_gr = pd.concat([ft_gr, m], axis=1)
-            
+            maximum=pd.DataFrame(data=_get_features_max(data, idxs), columns=[t_str])
+            # ft_gr = pd.concat([ft_gr, m], axis=1)
+            ft_gr = pd.concat([ft_gr, maximum], axis=1)
             
         ft_gr = pd.concat([ft_gr, labels], axis=1)
                 
         sb.pairplot(ft_gr, hue='labels', diag_kind='kde')
-        plt.suptitle(ms_conn + '-' + bd_name, y=1.05)
+        plt.suptitle('Max' + ms_conn + '-' + bd_name, y=1.05)
 
