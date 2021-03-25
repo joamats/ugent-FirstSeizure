@@ -19,23 +19,7 @@ for dset in datasets[0:1]:
 
     X_tr = dset['X_tr']
     y_tr = dset['y_tr']
-   
-    # X_embedded = TSNE(n_components=2).fit_transform(X_tr)
-     
-    # df = pd.DataFrame()
-    # df['one'] = X_embedded[:,0]
-    # df['two'] = X_embedded[:,1]
-    # df['y'] = y_tr
-    
-    # sb.scatterplot(
-    #     x="one", y="two",
-    #     hue="y",
-    #     palette=sb.color_palette("hls", 2),
-    #     data=df,
-    #     legend="full",
-    #     alpha=0.8
-    # )
-   
+      
     #Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
     minMax_scaler = MinMaxScaler()
@@ -82,9 +66,11 @@ for dset in datasets[0:1]:
     score_SVC = cross_validate(model_SVC, X_tr, y_tr, cv=skf,
                             scoring=('accuracy', 'balanced_accuracy', 'roc_auc'),
                             return_train_score=True)
+    
     score_RFC = cross_validate(model_RFC, X_tr, y_tr, cv=skf,
                             scoring=('accuracy', 'balanced_accuracy', 'roc_auc'),
                             return_train_score=True)
+    
     score_MLP = cross_validate(model_MLP, X_tr, y_tr, cv=skf,
                             scoring=('accuracy', 'balanced_accuracy', 'roc_auc'),
                             return_train_score=True)
