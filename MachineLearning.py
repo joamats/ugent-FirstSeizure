@@ -21,6 +21,7 @@ datasets = getPickleFile('../ML_Data/' + 'datasets_noStd')
 
 selector = SelectKBest(score_func=f_classif)
 
+
 parameters={'selector__k': [50, 70, 90, 100, 300, 700, 1000],
                 'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
                                                   (20,20),(50,50),(100,100), (150,150),
@@ -30,6 +31,13 @@ parameters={'selector__k': [50, 70, 90, 100, 300, 700, 1000],
                 'classifier__solver': ['adam'],
                 'classifier__learning_rate': ["constant", "invscaling", "adaptive"],
                 'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]}
+
+X_tr = dset['X_tr']
+y_tr = dset['y_tr']
+  
+#Feature Normalization
+norm_scaler = StandardScaler(with_mean=True, with_std=True)
+minMax_scaler = MinMaxScaler()
 
 score=[]
 random_feat=[[-1,-1,-1,-1]]
@@ -141,11 +149,35 @@ for i in range(50):
         precision_MLP.append(score_MLP['test_precision'])
         roc_auc_MLP.append(score_MLP['test_roc_auc'])
     
+
     score_dict = {'recall_mean': np.mean(recall_MLP), 'recall_std': np.std(recall_MLP),
                   'precision_mean': np.mean(precision_MLP), 'precision_std': np.std(precision_MLP),
                   'roc_auc_mean': np.mean(roc_auc_MLP), 'roc_auc_std': np.std(roc_auc_MLP),
                   'parameters': parameters_dict}
     score.append(score_dict)
+    
+    score_list = [x['roc_auc_mean'] for x in score]
+    print(max(score_list))
 
-score_list = [x['roc_auc_mean'] for x in score]
-print(max(score_list))
+    # models
+    model_SVC = make_pipeline(norm_scaler, minMax_scaler, selector,
+                              SVC_classifier)
+    model_RFC = make_pipeline(norm_scaler, minMax_scaler, selector,
+                              RFC_classifier)
+    model_MLP = make_pipeline(norm_scaler, minMax_scaler, selector,
+                              MLP_classifier)
+    
+    # Scores
+    score_SVC = cross_validate(model_SVC, X_tr, y_tr, cv=skf,
+                            scoring=('accuracy', 'balanced_accuracy', 'roc_auc'),
+                            return_train_score=True)
+    
+    score_RFC = cross_validate(model_RFC, X_tr, y_tr, cv=skf,
+                            scoring=('accuracy', 'balanced_accuracy', 'roc_auc'),
+                            return_train_score=True)
+    
+    score_MLP = cross_validate(model_MLP, X_tr, y_tr, cv=skf,
+                            scoring=('accuracy', 'balanced_accuracy', 'roc_auc'),
+                            return_train_score=True)
+    
+
