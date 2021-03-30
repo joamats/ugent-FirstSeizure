@@ -55,14 +55,17 @@ def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
 #%% 
 
 # Produce Features Array for ML
-def make_features_array(conn_ms, graph_ms):
+def make_features_array(conn_ms, graph_ms, std=True):
         
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
                           'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
     
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
     ms_conns = ['imcoh', 'plv', 'mi', 'pdc']
-    ms_types = ['Mean', 'Std']
+    if std:
+        ms_types = ['Mean', 'Std']
+    else:
+        ms_types = ['Mean']
         
     allFeatures = pd.DataFrame()
     
