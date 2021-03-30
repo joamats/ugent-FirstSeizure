@@ -136,9 +136,8 @@ def epochs_selection_bandpower(epochs, allVars=False):
     # number of epochs
     n_epochs = np.shape(epochs._data)[0]
     
-    # only 0.25 * n_epochs highest ranked epochs are selected
-    N = 0.25
-    th = int(np.rint(N * n_epochs))
+    # only 50 highest ranked epochs are selected
+    th = 50
     
     # initialize arrays 
     ms = np.zeros((n_epochs, 4))
@@ -167,7 +166,6 @@ def epochs_selection_bandpower(epochs, allVars=False):
         # add measure to array
         ms_dist[i,0] = measure
           
-    
     # transform to DataFrame
     bd_powers = pd.DataFrame(ms, columns=bd_names)
     ms_dist = pd.DataFrame(ms_dist, columns=['Measure'])

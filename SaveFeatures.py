@@ -11,15 +11,15 @@ MI = {}
 PDC = {}
 
 # over all subjects
-for filename in filenames:
-    saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
+for i, filename in enumerate(filenames):
+    saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
     IMCOH[filename], PLV[filename], \
     MI[filename], PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    createPickleFile(IMCOH, '../Features/' + 'imcoh')
-    createPickleFile(PLV, '../Features/' + 'plv')
-    createPickleFile(MI, '../Features/' + 'mi')
-    createPickleFile(PDC, '../Features/' + 'pdc')          
+    createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
+    createPickleFile(PLV, '../Features/128Hz/' + 'plv')
+    createPickleFile(MI, '../Features/128Hz/' + 'mi')
+    createPickleFile(PDC, '../Features/128Hz/' + 'pdc')          
                 
