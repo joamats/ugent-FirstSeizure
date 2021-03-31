@@ -25,45 +25,45 @@ from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
 #%% Save Features - just change PDC's order to 12
-filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+# filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# IMCOH = {}
-# PLV = {}
-# MI = {}
-PDC = {}
+# # IMCOH = {}
+# # PLV = {}
+# # MI = {}
+# PDC = {}
 
-# over all subjects
-for i, filename in enumerate(filenames):
-    saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
-    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
-    # IMCOH[filename], PLV[filename], MI[filename],\
-    PDC[filename] = extract_features(bd_names, s_epochs)
+# # over all subjects
+# for i, filename in enumerate(filenames):
+#     saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
+#     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+#     # IMCOH[filename], PLV[filename], MI[filename],\
+#     PDC[filename] = extract_features(bd_names, s_epochs)
     
-    # save features in pickle
-    # createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../Features/128Hz/' + 'plv')
-    # createPickleFile(MI, '../Features/128Hz/' + 'mi')
-    createPickleFile(PDC, '../Features/128Hz/' + 'pdc')         
+#     # save features in pickle
+#     # createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
+#     # createPickleFile(PLV, '../Features/128Hz/' + 'plv')
+#     # createPickleFile(MI, '../Features/128Hz/' + 'mi')
+#     createPickleFile(PDC, '../Features/128Hz/' + 'pdc')         
 
-#%% Graph Measures
+# #%% Graph Measures
 
-fts = get_saved_features(withGraphs=False)
-graph_ms = compute_graph_measures(fts)
-createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
+# fts = get_saved_features(withGraphs=False)
+# graph_ms = compute_graph_measures(fts)
+# createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
 
-#%% Save Data
-conn_ms, graph_ms = get_saved_features(withGraphs=True)
+# #%% Save Data
+# conn_ms, graph_ms = get_saved_features(withGraphs=True)
 
-data = make_features_array(conn_ms, graph_ms, std = True)
-fts_names = data.columns
+# data = make_features_array(conn_ms, graph_ms, std = True)
+# fts_names = data.columns
 
-createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
-createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
+# createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
+# createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
 
-add_labels_to_data_array(data)
-datasets = dataset_split(data)
+# add_labels_to_data_array(data)
+# datasets = dataset_split(data)
 
-createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
+# createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
 
 #%%
 datasets = getPickleFile('../ML_Data/128Hz/datasets')
@@ -106,8 +106,7 @@ clf = GridSearchCV( estimator=model_SVC,
                     scoring='roc_auc', 
                     n_jobs=-1,
                     cv=skf,
-                    return_train_score=True,
-                    random_state=42 )
+                    return_train_score=True )
 
 clfs = []
 scores = []
@@ -166,8 +165,7 @@ clf = GridSearchCV( estimator=model_SVC,
                     scoring='roc_auc', 
                     n_jobs=-1,
                     cv=skf,
-                    return_train_score=True,
-                    random_state=42 )
+                    return_train_score=True )
 
 clfs = []
 scores = []
@@ -231,8 +229,7 @@ clf = GridSearchCV( estimator=model_MLP,
                     scoring='roc_auc', 
                     n_jobs=-1,
                     cv=skf,
-                    return_train_score=True,
-                    random_state=42 )
+                    return_train_score=True )
 
 clfs = []
 scores = []
@@ -297,8 +294,7 @@ clf = GridSearchCV( estimator=model_MLP,
                     scoring='roc_auc', 
                     n_jobs=-1,
                     cv=skf,
-                    return_train_score=True,
-                    random_state=42 )
+                    return_train_score=True )
 
 clfs = []
 scores = []
@@ -360,8 +356,7 @@ clf = GridSearchCV( estimator=model_RFC,
                     scoring='roc_auc', 
                     n_jobs=-1,
                     cv=skf,
-                    return_train_score=True,
-                    random_state=42 )
+                    return_train_score=True )
 
 clfs = []
 scores = []
@@ -423,8 +418,7 @@ clf = GridSearchCV( estimator=model_RFC,
                     scoring='roc_auc', 
                     n_jobs=-1,
                     cv=skf,
-                    return_train_score=True,
-                    random_state=42 )
+                    return_train_score=True )
 
 clfs = []
 scores = []
