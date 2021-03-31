@@ -86,15 +86,15 @@ skf = StratifiedKFold(n_splits=5)
 
 # Parameters for Grid Search
 space = dict({
-    'classifier__C': [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 7, 10, 20, 50, 100],
-    'classifier__gamma': [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 7, 10, 20, 50, 100],
-    'classifier__kernel': ['rbf', 'sigmoid'] #, 'linear']
+    'classifier__C': [0.01, 0.1, 1, 10, 100],
+    'classifier__gamma': [0.01, 0.1, 1, 10, 100],
+    'classifier__kernel': ['rbf', 'linear']
 })
 
 # Feature Selection
 dim_red = SelectKBest(score_func=f_classif)
 
-space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
+space['dim_red__k'] = [20, 50, 70]
 
 # Pipeline
 model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -147,15 +147,15 @@ skf = StratifiedKFold(n_splits=5)
 
 # Parameters for Grid Search
 space = dict({
-    'classifier__C': [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 7, 10, 20, 50, 100],
-    'classifier__gamma': [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 7, 10, 20, 50, 100],
-    'classifier__kernel': ['rbf', 'sigmoid']#, 'linear']
+    'classifier__C': [0.01, 0.1, 1, 10, 100],
+    'classifier__gamma': [0.01, 0.1, 1, 10, 100],
+    'classifier__kernel': ['rbf', 'linear']
 })
 
 # Dimensionality Reduction
 dim_red = PCA(random_state=42)
 
-space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
+space['dim_red__n_components'] = [10, 15, 20]
 
 # Pipeline
 model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -208,21 +208,19 @@ skf = StratifiedKFold(n_splits=5)
 
 # Parameters for Grid Search
 space = dict({
-    'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
-                                      (20,20),(50,50),(100,100), (150,150),
-                                      (20,20,20),(50,50,50), (100,100,100),
-                                      (150,150,150), (500), (1000), (500,500),
-                                      (1000,1000), (500,500,500),(1000,1000,1000)],
+    'classifier__hidden_layer_sizes':[(100), (150), (500), (1000),
+                                      (50,50), (100,100), (150,150),(500,500),
+                                      (50,50,50), (100,100,100),(150,150,150)],
     'classifier__activation': ['relu'],
     'classifier__solver': ['adam'],
     'classifier__learning_rate': ["invscaling"],
-    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
+    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 })
 
 # Feature Selection
 dim_red = SelectKBest(score_func=f_classif)
 
-space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
+space['dim_red__k'] = [20, 50, 70]
 
 # Pipeline
 model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -276,21 +274,20 @@ skf = StratifiedKFold(n_splits=5)
 
 # Parameters for Grid Search
 space = dict({
-    'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
-                                      (20,20),(50,50),(100,100), (150,150),
-                                      (20,20,20),(50,50,50), (100,100,100),
-                                      (150,150,150), (500), (1000), (500,500),
-                                      (1000,1000), (500,500,500),(1000,1000,1000)],
+    'classifier__hidden_layer_sizes':[(100), (150), (500), (1000),
+                                      (50,50), (100,100), (150,150),(500,500),
+                                      (50,50,50), (100,100,100),(150,150,150)],
     'classifier__activation': ['relu'],
     'classifier__solver': ['adam'],
-    'classifier__learning_rate': ["invscaling"],
-    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
+    'classifier__learning_rate': ['adaptive'],
+    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 })
 
 # Dimensionality Reduction
 dim_red = PCA(random_state=42)
 
-space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
+space['dim_red__n_components'] = [10, 15, 20]
+
 
 # Pipeline
 model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -343,19 +340,19 @@ skf = StratifiedKFold(n_splits=5)
 
 # Parameters for Grid Search
 space = dict({
-    'classifier__bootstrap': [True, False],
-    'classifier__max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
-    'classifier__max_features': ['auto', 'sqrt'],
-    'classifier__min_samples_leaf': [1, 2, 4],
-    'classifier__min_samples_split': [2, 5, 10],
-    'classifier__n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
-    'classifier__criterion': ('gini', 'entropy')
+    'classifier__bootstrap': [True],
+    'classifier__max_depth': [50, 70, 90, None],
+    'classifier__max_features': ['auto'],
+    'classifier__min_samples_leaf': [1, 5],
+    'classifier__min_samples_split': [2, 5],
+    'classifier__n_estimators': [500, 1000, 1500],
+    'classifier__criterion': ['gini']
 })
 
 # Feature Selection
 dim_red = SelectKBest(score_func=f_classif)
 
-space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
+space['dim_red__k'] = [20, 50, 70]
 
 # Pipeline
 model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -407,19 +404,19 @@ skf = StratifiedKFold(n_splits=5)
 
 # Parameters for Grid Search
 space = dict({
-    'classifier__bootstrap': [True, False],
-    'classifier__max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
-    'classifier__max_features': ['auto', 'sqrt'],
-    'classifier__min_samples_leaf': [1, 2, 4],
-    'classifier__min_samples_split': [2, 5, 10],
-    'classifier__n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
-    'classifier__criterion': ('gini', 'entropy')
+    'classifier__bootstrap': [True],
+    'classifier__max_depth': [50, 70, 90, None],
+    'classifier__max_features': ['auto'],
+    'classifier__min_samples_leaf': [1, 5],
+    'classifier__min_samples_split': [2, 5],
+    'classifier__n_estimators': [500, 1000, 1500],
+    'classifier__criterion': ['gini']
 })
 
 # Dimensionality Reduction
 dim_red = PCA(random_state=42)
 
-space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
+space['dim_red__n_components'] = [10, 15, 20]
 
 # Pipeline
 model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),

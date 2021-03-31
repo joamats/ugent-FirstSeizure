@@ -71,8 +71,8 @@ def compute_graph_measures(fts):
 
 #%% Run
 
-fts = get_saved_features(withGraphs=False)
-graph_ms = compute_graph_measures(fts)
-createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
+# fts = get_saved_features(withGraphs=False)
+# graph_ms = compute_graph_measures(fts)
+# createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
                 
                 
