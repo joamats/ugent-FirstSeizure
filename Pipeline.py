@@ -1,21 +1,69 @@
 import numpy as np
 import seaborn as sb
 import pandas as pd
-import pickle
 import matplotlib.pyplot as plt
-from Pickle import getPickleFile
+import pandas as pd
+
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.decomposition import PCA
+
 from sklearn.svm import SVC
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import cross_validate
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.decomposition import PCA
+
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import RandomizedSearchCV
+
+from Pickle import getPickleFile, createPickleFile
+from PreProcessing import epochs_selection_bandpower
+from FeatureExtraction import extract_features
+from GraphMeasures import compute_graph_measures
+
+from DataPreparation import get_saved_features,  make_features_array, \
+                            add_labels_to_data_array, dataset_split
+
+#%% Save Features - just change PDC's order to 12
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+
+# IMCOH = {}
+# PLV = {}
+# MI = {}
+PDC = {}
+
+# over all subjects
+for i, filename in enumerate(filenames):
+    saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
+    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    # IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
+    
+    # save features in pickle
+    # createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
+    # createPickleFile(PLV, '../Features/128Hz/' + 'plv')
+    # createPickleFile(MI, '../Features/128Hz/' + 'mi')
+    createPickleFile(PDC, '../Features/128Hz/' + 'pdc')         
+
+#%% Graph Measures
+
+fts = get_saved_features(withGraphs=False)
+graph_ms = compute_graph_measures(fts)
+createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
+
+#%% Save Data
+conn_ms, graph_ms = get_saved_features(withGraphs=True)
+
+data = make_features_array(conn_ms, graph_ms, std = True)
+fts_names = data.columns
+
+createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
+createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
+
+add_labels_to_data_array(data)
+datasets = dataset_split(data)
+
+createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
 
 #%%
 datasets = getPickleFile('../ML_Data/128Hz/datasets')
@@ -40,7 +88,7 @@ skf = StratifiedKFold(n_splits=5)
 space = dict({
     'classifier__C': [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 7, 10, 20, 50, 100],
     'classifier__gamma': [0.01, 0.05, 0.1, 0.5, 1, 2, 5, 7, 10, 20, 50, 100],
-    'classifier__kernel': ['rbf', 'sigmoid']#, 'linear']
+    'classifier__kernel': ['rbf', 'sigmoid'] #, 'linear']
 })
 
 # Feature Selection
@@ -144,266 +192,268 @@ print('\nMean Std Score: ', best_std)
 
 allVars.append((clfs,scores))
 
-# #%% MLP + SelectKBest
+#%% MLP + SelectKBest
 
-# print('\nMLP + SelectKBest\n')
+print('\nMLP + SelectKBest\n')
 
-# # Feature Normalization
-# norm_scaler = StandardScaler(with_mean=True, with_std=True)
-# minMax_scaler = MinMaxScaler()
+# Feature Normalization
+norm_scaler = StandardScaler(with_mean=True, with_std=True)
+minMax_scaler = MinMaxScaler()
 
-# # MLP Model
-# mlp = MLPClassifier(random_state=42, max_iter = 1000, early_stopping = True)
+# MLP Model
+mlp = MLPClassifier(random_state=42, max_iter = 1000, early_stopping = True)
 
-# # Cross-Validation
-# skf = StratifiedKFold(n_splits=5)
+# Cross-Validation
+skf = StratifiedKFold(n_splits=5)
 
-# # Parameters for Grid Search
-# space = dict({
-#     'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
-#                                      (20,20),(50,50),(100,100), (150,150),
-#                                      (20,20,20),(50,50,50), (100,100,100),
-#                                      (150,150,150), (500), (1000), (500,500),
-#                                      (1000,1000), (500,500,500),(1000,1000,1000)],
-#     'classifier__activation': ['relu'],
-#     'classifier__solver': ['adam'],
-#     'classifier__learning_rate': ["invscaling"],
-#     'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
-# })
+# Parameters for Grid Search
+space = dict({
+    'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
+                                      (20,20),(50,50),(100,100), (150,150),
+                                      (20,20,20),(50,50,50), (100,100,100),
+                                      (150,150,150), (500), (1000), (500,500),
+                                      (1000,1000), (500,500,500),(1000,1000,1000)],
+    'classifier__activation': ['relu'],
+    'classifier__solver': ['adam'],
+    'classifier__learning_rate': ["invscaling"],
+    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
+})
 
-# # Feature Selection
-# dim_red = SelectKBest(score_func=f_classif)
+# Feature Selection
+dim_red = SelectKBest(score_func=f_classif)
 
-# space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
+space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
 
-# # Pipeline
-# model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
-#                             ('min_max', minMax_scaler),
-#                             ('dim_red', dim_red),
-#                             ('classifier', mlp)])
+# Pipeline
+model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
+                            ('min_max', minMax_scaler),
+                            ('dim_red', dim_red),
+                            ('classifier', mlp)])
 
-# clf = RandomizedSearchCV(estimator=model_MLP,
-#                          param_distributions=space,
-#                          n_iter=100,
-#                          scoring='roc_auc', 
-#                          n_jobs=-1,
-#                          cv=skf,
-#                          return_train_score=True,
-#                          random_state=42)
+clf = RandomizedSearchCV(estimator=model_MLP,
+                          param_distributions=space,
+                          n_iter=100,
+                          scoring='roc_auc', 
+                          n_jobs=-1,
+                          cv=skf,
+                          return_train_score=True,
+                          random_state=42)
 
-# clfs = []
-# scores = []
+clfs = []
+scores = []
 
-# for dset in datasets:
-#   X_tr = dset['X_tr']
-#   y_tr = dset['y_tr']
-#   clf.fit(X_tr, y_tr)
-#   clfs.append(clf.best_params_)
-#   scores.append(clf.best_score_)
-#   print('Best Score: ')
-#   print(clf.best_score_)
-#   print('Best Parameters: ')
-#   print(clf.best_params_)
+for dset in datasets:
+  X_tr = dset['X_tr']
+  y_tr = dset['y_tr']
+  clf.fit(X_tr, y_tr)
+  clfs.append(clf.best_params_)
+  scores.append(clf.best_score_)
+  print('Best Score: ')
+  print(clf.best_score_)
+  print('Best Parameters: ')
+  print(clf.best_params_)
 
-# best_mean_score = np.mean(scores)
-# best_std = np.std(scores)
-# print('---\nMean Best Score: ', best_mean_score)
-# print('\nMean Std Score: ', best_std)
+best_mean_score = np.mean(scores)
+best_std = np.std(scores)
+print('---\nMean Best Score: ', best_mean_score)
+print('\nMean Std Score: ', best_std)
 
-# allVars.append((clfs,scores))
+allVars.append((clfs,scores))
 
-# #%% MLP + PCA
+#%% MLP + PCA
 
-# print('\nMLP + PCA\n')
+print('\nMLP + PCA\n')
 
-# # Feature Normalization
-# norm_scaler = StandardScaler(with_mean=True, with_std=True)
-# minMax_scaler = MinMaxScaler()
+# Feature Normalization
+norm_scaler = StandardScaler(with_mean=True, with_std=True)
+minMax_scaler = MinMaxScaler()
 
-# # MLP Model
-# mlp = MLPClassifier(random_state=42, max_iter = 1000, early_stopping = True)
+# MLP Model
+mlp = MLPClassifier(random_state=42, max_iter = 1000, early_stopping = True)
 
-# # Cross-Validation
-# skf = StratifiedKFold(n_splits=5)
+# Cross-Validation
+skf = StratifiedKFold(n_splits=5)
 
-# # Parameters for Grid Search
-# space = dict({
-#     'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
-#                                      (20,20),(50,50),(100,100), (150,150),
-#                                      (20,20,20),(50,50,50), (100,100,100),
-#                                      (150,150,150), (500), (1000), (500,500),
-#                                      (1000,1000), (500,500,500),(1000,1000,1000)],
-#     'classifier__activation': ['relu'],
-#     'classifier__solver': ['adam'],
-#     'classifier__learning_rate': ["invscaling"],
-#     'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
-# })
+# Parameters for Grid Search
+space = dict({
+    'classifier__hidden_layer_sizes':[(20,), (50,), (100,), (150,), 
+                                      (20,20),(50,50),(100,100), (150,150),
+                                      (20,20,20),(50,50,50), (100,100,100),
+                                      (150,150,150), (500), (1000), (500,500),
+                                      (1000,1000), (500,500,500),(1000,1000,1000)],
+    'classifier__activation': ['relu'],
+    'classifier__solver': ['adam'],
+    'classifier__learning_rate': ["invscaling"],
+    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10]
+})
 
-# # Dimensionality Reduction
-# dim_red = PCA(random_state=42)
+# Dimensionality Reduction
+dim_red = PCA(random_state=42)
 
-# space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
+space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
 
-# # Pipeline
-# model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
-#                             ('min_max', minMax_scaler),
-#                             ('dim_red', dim_red),
-#                             ('classifier', mlp)])
+# Pipeline
+model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
+                            ('min_max', minMax_scaler),
+                            ('dim_red', dim_red),
+                            ('classifier', mlp)])
 
-# clf = RandomizedSearchCV(estimator=model_MLP,
-#                          param_distributions=space,
-#                          n_iter=100,
-#                          scoring='roc_auc', 
-#                          n_jobs=-1,
-#                          cv=skf,
-#                          return_train_score=True,
-#                          random_state=42)
+clf = RandomizedSearchCV(estimator=model_MLP,
+                          param_distributions=space,
+                          n_iter=100,
+                          scoring='roc_auc', 
+                          n_jobs=-1,
+                          cv=skf,
+                          return_train_score=True,
+                          random_state=42)
 
-# clfs = []
-# scores = []
+clfs = []
+scores = []
 
-# for dset in datasets:
-#   X_tr = dset['X_tr']
-#   y_tr = dset['y_tr']
-#   clf.fit(X_tr, y_tr)
-#   clfs.append(clf.best_params_)
-#   scores.append(clf.best_score_)
-#   print('Best Score: ')
-#   print(clf.best_score_)
-#   print('Best Parameters: ')
-#   print(clf.best_params_)
+for dset in datasets:
+  X_tr = dset['X_tr']
+  y_tr = dset['y_tr']
+  clf.fit(X_tr, y_tr)
+  clfs.append(clf.best_params_)
+  scores.append(clf.best_score_)
+  print('Best Score: ')
+  print(clf.best_score_)
+  print('Best Parameters: ')
+  print(clf.best_params_)
 
-# best_mean_score = np.mean(scores)
-# best_std = np.std(scores)
-# print('---\nMean Best Score: ', best_mean_score)
-# print('\nMean Std Score: ', best_std)
+best_mean_score = np.mean(scores)
+best_std = np.std(scores)
+print('---\nMean Best Score: ', best_mean_score)
+print('\nMean Std Score: ', best_std)
 
-# allVars.append((clfs,scores))
+allVars.append((clfs,scores))
 
-# #%% RFC + SelectKBest
+#%% RFC + SelectKBest
 
-# print('\nRFC + SelectKBest\n')
+print('\nRFC + SelectKBest\n')
 
-# # Feature Normalization
-# norm_scaler = StandardScaler(with_mean=True, with_std=True)
+# Feature Normalization
+norm_scaler = StandardScaler(with_mean=True, with_std=True)
 
-# # RFC Model
-# rfc = RandomForestClassifier(random_state=42)
+# RFC Model
+rfc = RandomForestClassifier(random_state=42)
 
-# # Cross-Validation
-# skf = StratifiedKFold(n_splits=5)
+# Cross-Validation
+skf = StratifiedKFold(n_splits=5)
 
-# # Parameters for Grid Search
-# space = dict({
-#     'classifier__bootstrap': [True, False],
-#     'classifier__max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
-#     'classifier__max_features': ['auto', 'sqrt'],
-#     'classifier__min_samples_leaf': [1, 2, 4],
-#     'classifier__min_samples_split': [2, 5, 10],
-#     'classifier__n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
-#     'classifier__criterion': ('gini', 'entropy')
-# })
+# Parameters for Grid Search
+space = dict({
+    'classifier__bootstrap': [True, False],
+    'classifier__max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
+    'classifier__max_features': ['auto', 'sqrt'],
+    'classifier__min_samples_leaf': [1, 2, 4],
+    'classifier__min_samples_split': [2, 5, 10],
+    'classifier__n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
+    'classifier__criterion': ('gini', 'entropy')
+})
 
-# # Feature Selection
-# dim_red = SelectKBest(score_func=f_classif)
+# Feature Selection
+dim_red = SelectKBest(score_func=f_classif)
 
-# space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
+space['dim_red__k'] = [50, 60, 70, 80, 90, 100]
 
-# # Pipeline
-# model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
-#                             ('dim_red', dim_red),
-#                             ('classifier', rfc)])
+# Pipeline
+model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
+                            ('dim_red', dim_red),
+                            ('classifier', rfc)])
 
-# clf = RandomizedSearchCV(estimator=model_RFC,
-#                          param_distributions=space,
-#                          n_iter=100,
-#                          scoring='roc_auc', 
-#                          n_jobs=-1,
-#                          cv=skf,
-#                          return_train_score=True,
-#                          random_state=42)
+clf = RandomizedSearchCV(estimator=model_RFC,
+                          param_distributions=space,
+                          n_iter=100,
+                          scoring='roc_auc', 
+                          n_jobs=-1,
+                          cv=skf,
+                          return_train_score=True,
+                          random_state=42)
 
-# clfs = []
-# scores = []
+clfs = []
+scores = []
 
-# for dset in datasets:
-#   X_tr = dset['X_tr']
-#   y_tr = dset['y_tr']
-#   clf.fit(X_tr, y_tr)
-#   clfs.append(clf.best_params_)
-#   scores.append(clf.best_score_)
-#   print('Best Score: ')
-#   print(clf.best_score_)
-#   print('Best Parameters: ')
-#   print(clf.best_params_)
+for dset in datasets:
+  X_tr = dset['X_tr']
+  y_tr = dset['y_tr']
+  clf.fit(X_tr, y_tr)
+  clfs.append(clf.best_params_)
+  scores.append(clf.best_score_)
+  print('Best Score: ')
+  print(clf.best_score_)
+  print('Best Parameters: ')
+  print(clf.best_params_)
 
-# best_mean_score = np.mean(scores)
-# best_std = np.std(scores)
-# print('---\nMean Best Score: ', best_mean_score)
-# print('\nMean Std Score: ', best_std)
+best_mean_score = np.mean(scores)
+best_std = np.std(scores)
+print('---\nMean Best Score: ', best_mean_score)
+print('\nMean Std Score: ', best_std)
 
-# allVars.append((clfs,scores))
+allVars.append((clfs,scores))
 
-# #%% RFC + PCA
+#%% RFC + PCA
 
-# print('\nRFC + PCA\n')
+print('\nRFC + PCA\n')
 
-# # Feature Normalization
-# norm_scaler = StandardScaler(with_mean=True, with_std=True)
+# Feature Normalization
+norm_scaler = StandardScaler(with_mean=True, with_std=True)
 
-# # RFC Model
-# rfc = RandomForestClassifier(random_state=42)
+# RFC Model
+rfc = RandomForestClassifier(random_state=42)
 
-# # Cross-Validation
-# skf = StratifiedKFold(n_splits=5)
+# Cross-Validation
+skf = StratifiedKFold(n_splits=5)
 
-# # Parameters for Grid Search
-# space = dict({
-#     'classifier__bootstrap': [True, False],
-#     'classifier__max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
-#     'classifier__max_features': ['auto', 'sqrt'],
-#     'classifier__min_samples_leaf': [1, 2, 4],
-#     'classifier__min_samples_split': [2, 5, 10],
-#     'classifier__n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
-#     'classifier__criterion': ('gini', 'entropy')
-# })
+# Parameters for Grid Search
+space = dict({
+    'classifier__bootstrap': [True, False],
+    'classifier__max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
+    'classifier__max_features': ['auto', 'sqrt'],
+    'classifier__min_samples_leaf': [1, 2, 4],
+    'classifier__min_samples_split': [2, 5, 10],
+    'classifier__n_estimators': [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000],
+    'classifier__criterion': ('gini', 'entropy')
+})
 
-# # Dimensionality Reduction
-# dim_red = PCA(random_state=42)
+# Dimensionality Reduction
+dim_red = PCA(random_state=42)
 
-# space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
+space['dim_red__n_components'] = [2, 3, 5, 7, 8, 10, 12, 15, 17, 20, 50]
 
-# # Pipeline
-# model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
-#                             ('dim_red', dim_red),
-#                             ('classifier', rfc)])
+# Pipeline
+model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
+                            ('dim_red', dim_red),
+                            ('classifier', rfc)])
 
-# clf = RandomizedSearchCV(estimator=model_RFC,
-#                          param_distributions=space,
-#                          n_iter=100,
-#                          scoring='roc_auc', 
-#                          n_jobs=-1,
-#                          cv=skf,
-#                          return_train_score=True,
-#                          random_state=42)
+clf = RandomizedSearchCV(estimator=model_RFC,
+                          param_distributions=space,
+                          n_iter=100,
+                          scoring='roc_auc', 
+                          n_jobs=-1,
+                          cv=skf,
+                          return_train_score=True,
+                          random_state=42)
 
-# clfs = []
-# scores = []
+clfs = []
+scores = []
 
-# for dset in datasets:
-#   X_tr = dset['X_tr']
-#   y_tr = dset['y_tr']
-#   clf.fit(X_tr, y_tr)
-#   clfs.append(clf.best_params_)
-#   scores.append(clf.best_score_)
-#   print('Best Score: ')
-#   print(clf.best_score_)
-#   print('Best Parameters: ')
-#   print(clf.best_params_)
+for dset in datasets:
+  X_tr = dset['X_tr']
+  y_tr = dset['y_tr']
+  clf.fit(X_tr, y_tr)
+  clfs.append(clf.best_params_)
+  scores.append(clf.best_score_)
+  print('Best Score: ')
+  print(clf.best_score_)
+  print('Best Parameters: ')
+  print(clf.best_params_)
 
-# best_mean_score = np.mean(scores)
-# best_std = np.std(scores)
-# print('---\nMean Best Score: ', best_mean_score)
-# print('\nMean Std Score: ', best_std)
+best_mean_score = np.mean(scores) 
+best_std = np.std(scores)
+print('---\nMean Best Score: ', best_mean_score)
+print('\nMean Std Score: ', best_std)
 
-# allVars.append((clfs,scores))
+allVars.append((clfs,scores))
+
+#%% Markdown Table Making to be done

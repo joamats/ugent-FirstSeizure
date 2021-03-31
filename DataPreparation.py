@@ -7,13 +7,13 @@ from sklearn.model_selection import StratifiedKFold
 
 # retrieves all saved features (conn + graphs)
 def get_saved_features(withGraphs=False):
-    IMCOH = getPickleFile('../Features/' + 'imcoh')
-    PLV = getPickleFile('../Features/' + 'plv')
-    MI = getPickleFile('../Features/' + 'mi')
-    PDC = getPickleFile('../Features/' + 'pdc')
+    IMCOH = getPickleFile('../Features/128Hz/' + 'imcoh')
+    PLV = getPickleFile('../Features/128Hz/' + 'plv')
+    MI = getPickleFile('../Features/128Hz/' + 'mi')
+    PDC = getPickleFile('../Features/128Hz/' + 'pdc')
     
     if withGraphs:
-        graph_ms = getPickleFile('../Features/' + 'graphMeasures')
+        graph_ms = getPickleFile('../Features/128Hz/' + 'graphMeasures')
         return {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms
     
     else:
