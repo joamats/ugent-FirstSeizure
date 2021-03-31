@@ -14,7 +14,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import GridSearchCV
 
 from Pickle import getPickleFile, createPickleFile
 from PreProcessing import epochs_selection_bandpower
@@ -101,14 +101,13 @@ model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
                             ('dim_red', dim_red),
                             ('classifier', svc)])
 
-clf = RandomizedSearchCV(estimator=model_SVC,
-                         param_distributions=space,
-                         n_iter=100,
-                         scoring='roc_auc', 
-                         n_jobs=-1,
-                         cv=skf,
-                         return_train_score=True,
-                         random_state=42)
+clf = GridSearchCV( estimator=model_SVC,
+                    param_grid=space,
+                    scoring='roc_auc', 
+                    n_jobs=-1,
+                    cv=skf,
+                    return_train_score=True,
+                    random_state=42 )
 
 clfs = []
 scores = []
@@ -162,14 +161,13 @@ model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
                             ('dim_red', dim_red),
                             ('classifier', svc)])
 
-clf = RandomizedSearchCV(estimator=model_SVC,
-                         param_distributions=space,
-                         n_iter=100,
-                         scoring='roc_auc', 
-                         n_jobs=-1,
-                         cv=skf,
-                         return_train_score=True,
-                         random_state=42)
+clf = GridSearchCV( estimator=model_SVC,
+                    param_grid=space,
+                    scoring='roc_auc', 
+                    n_jobs=-1,
+                    cv=skf,
+                    return_train_score=True,
+                    random_state=42 )
 
 clfs = []
 scores = []
@@ -213,7 +211,7 @@ space = dict({
                                       (50,50,50), (100,100,100),(150,150,150)],
     'classifier__activation': ['relu'],
     'classifier__solver': ['adam'],
-    'classifier__learning_rate': ["invscaling"],
+    'classifier__learning_rate': ["adaptive"],
     'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
 })
 
@@ -228,14 +226,13 @@ model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
                             ('dim_red', dim_red),
                             ('classifier', mlp)])
 
-clf = RandomizedSearchCV(estimator=model_MLP,
-                          param_distributions=space,
-                          n_iter=100,
-                          scoring='roc_auc', 
-                          n_jobs=-1,
-                          cv=skf,
-                          return_train_score=True,
-                          random_state=42)
+clf = GridSearchCV( estimator=model_MLP,
+                    param_grid=space,
+                    scoring='roc_auc', 
+                    n_jobs=-1,
+                    cv=skf,
+                    return_train_score=True,
+                    random_state=42 )
 
 clfs = []
 scores = []
@@ -295,14 +292,13 @@ model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
                             ('dim_red', dim_red),
                             ('classifier', mlp)])
 
-clf = RandomizedSearchCV(estimator=model_MLP,
-                          param_distributions=space,
-                          n_iter=100,
-                          scoring='roc_auc', 
-                          n_jobs=-1,
-                          cv=skf,
-                          return_train_score=True,
-                          random_state=42)
+clf = GridSearchCV( estimator=model_MLP,
+                    param_grid=space,
+                    scoring='roc_auc', 
+                    n_jobs=-1,
+                    cv=skf,
+                    return_train_score=True,
+                    random_state=42 )
 
 clfs = []
 scores = []
@@ -359,14 +355,13 @@ model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
                             ('dim_red', dim_red),
                             ('classifier', rfc)])
 
-clf = RandomizedSearchCV(estimator=model_RFC,
-                          param_distributions=space,
-                          n_iter=100,
-                          scoring='roc_auc', 
-                          n_jobs=-1,
-                          cv=skf,
-                          return_train_score=True,
-                          random_state=42)
+clf = GridSearchCV( estimator=model_RFC,
+                    param_grid=space,
+                    scoring='roc_auc', 
+                    n_jobs=-1,
+                    cv=skf,
+                    return_train_score=True,
+                    random_state=42 )
 
 clfs = []
 scores = []
@@ -423,14 +418,13 @@ model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
                             ('dim_red', dim_red),
                             ('classifier', rfc)])
 
-clf = RandomizedSearchCV(estimator=model_RFC,
-                          param_distributions=space,
-                          n_iter=100,
-                          scoring='roc_auc', 
-                          n_jobs=-1,
-                          cv=skf,
-                          return_train_score=True,
-                          random_state=42)
+clf = GridSearchCV( estimator=model_RFC,
+                    param_grid=space,
+                    scoring='roc_auc', 
+                    n_jobs=-1,
+                    cv=skf,
+                    return_train_score=True,
+                    random_state=42 )
 
 clfs = []
 scores = []
