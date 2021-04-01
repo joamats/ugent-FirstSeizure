@@ -34,22 +34,22 @@ PDC = {}
 
 # over all subjects
 for i, filename in enumerate(filenames):
-    saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
     # IMCOH[filename], PLV[filename], MI[filename],\
     PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    # createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../Features/128Hz/' + 'plv')
-    # createPickleFile(MI, '../Features/128Hz/' + 'mi')
-    createPickleFile(PDC, '../Features/128Hz/' + 'pdc')         
+    # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
+    # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
+    # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
+    createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% Graph Measures
 
 fts = get_saved_features(withGraphs=False)
 graph_ms = compute_graph_measures(fts)
-createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
+createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
 #%% Save Data
 conn_ms, graph_ms = get_saved_features(withGraphs=True)
@@ -57,16 +57,16 @@ conn_ms, graph_ms = get_saved_features(withGraphs=True)
 data = make_features_array(conn_ms, graph_ms, std = True)
 fts_names = data.columns
 
-createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
-createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
+createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
 add_labels_to_data_array(data)
 datasets = dataset_split(data)
 
-createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
+createPickleFile(datasets, '../3_ML_Data/128Hz/' + 'datasets')
 
 #%%
-datasets = getPickleFile('../ML_Data/128Hz/datasets')
+datasets = getPickleFile('../3_ML_Data/128Hz/datasets')
 print('datasets loaded')
 
 allVars = []

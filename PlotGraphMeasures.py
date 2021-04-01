@@ -29,8 +29,8 @@ def _get_features_max(data, idxs):
     
 #%%
     
-fts_names = getPickleFile('../ML_Data/' + 'featuresNames')
-datasets = getPickleFile('../ML_Data/' + 'datasets')
+fts_names = getPickleFile('../3_ML_Data/' + 'featuresNames')
+datasets = getPickleFile('../3_ML_Data/' + 'datasets')
 
 data = datasets[0]['train'][0]['X_tr']
 labels = pd.DataFrame(datasets[0]['train'][0]['y_tr'], columns=['labels'])

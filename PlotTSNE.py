@@ -3,7 +3,7 @@ from Pickle import getPickleFile
 import pandas as pd
 import seaborn as sb
 
-datasets = getPickleFile('../ML_Data/' + 'datasets')
+datasets = getPickleFile('../3_ML_Data/' + 'datasets')
 
 X_tr = datasets[0]['X_tr']
 y_tr = datasets[0]['y_tr']

@@ -49,10 +49,10 @@ def plot_heatmap(data_array, bar_label, band_title):
 #%%
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-imcoh = getPickleFile('../Features/' + 'imcoh')
-mi = getPickleFile('../Features/' + 'mi')
-plv = getPickleFile('../Features/' + 'plv')
-pdc = getPickleFile('../Features/' + 'pdc')
+imcoh = getPickleFile('../2_Features_Data/' + 'imcoh')
+mi = getPickleFile('../2_Features_Data/' + 'mi')
+plv = getPickleFile('../2_Features_Data/' + 'plv')
+pdc = getPickleFile('../2_Features_Data/' + 'pdc')
 
 bd_names = ['Global'] #, 'Delta', 'Theta', 'Alpha', 'Beta']
 

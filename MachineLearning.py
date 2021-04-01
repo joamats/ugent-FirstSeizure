@@ -16,7 +16,7 @@ from datetime import datetime
 # import seaborn as sb
 # import pandas as pd
 
-datasets = getPickleFile('../ML_Data/' + 'datasets_noStd')
+datasets = getPickleFile('../3_ML_Data/' + 'datasets_noStd')
 # scores_MLP = []
 
 selector = SelectKBest(score_func=f_classif)

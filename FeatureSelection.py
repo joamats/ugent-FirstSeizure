@@ -45,8 +45,8 @@ def select_features(X_train, y_train, X_test, method):
 
 #%% Run 
 
-datasets = getPickleFile('../ML_Data/' + 'datasets')
-fts_names = getPickleFile('../ML_Data/' + 'featuresNames')
+datasets = getPickleFile('../3_ML_Data/' + 'datasets')
+fts_names = getPickleFile('../3_ML_Data/' + 'featuresNames')
 
 #%%
 

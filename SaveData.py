@@ -15,10 +15,10 @@ conn_ms, graph_ms = get_saved_features(withGraphs=True)
 data = make_features_array(conn_ms, graph_ms, std = True)
 fts_names = data.columns
 
-createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
-createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
+createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
 add_labels_to_data_array(data)
 datasets = dataset_split(data)
 
-createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
+createPickleFile(datasets, '../3_ML_Data/128Hz/' + 'datasets')

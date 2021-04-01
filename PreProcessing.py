@@ -217,6 +217,6 @@ def epochs_selection_bandpower(epochs, allVars=False):
 # filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 # for filename in filenames[[0]]:
-#     saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
+#     saved_epochs = getPickleFile('../1_PreProcessed_Data/' + filename)
 #     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
 

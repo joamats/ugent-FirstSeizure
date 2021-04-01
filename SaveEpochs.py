@@ -10,12 +10,12 @@ icas = get_ica_template(filenames[0])
 for filename in filenames:
     epochs = eeg_preprocessing(filename, icas, plot=False)
     epochs, _ = clean_epochs(filename, epochs, plot=False)
-    createPickleFile(epochs, '../PreProcessed_Data/' + filename)
+    createPickleFile(epochs, '../1_PreProcessed_Data/' + filename)
 
 #%% Downsample to 128Hz
 
 for filename in filenames:
-    epochs = getPickleFile('../PreProcessed_Data/' + filename)
+    epochs = getPickleFile('../1_PreProcessed_Data/' + filename)
     epochs.resample(sfreq=128)
-    createPickleFile(epochs, '../PreProcessed_Data/128Hz/' + filename)
+    createPickleFile(epochs, '../1_PreProcessed_Data/128Hz/' + filename)
 
