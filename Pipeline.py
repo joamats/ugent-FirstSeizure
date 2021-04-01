@@ -24,29 +24,32 @@ from GraphMeasures import compute_graph_measures
 from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
-#%% Save Features - just change PDC's order to 12
+'''
+    To check effect of 1/f correction in bandpower-based epoch selection
+'''
+
+#%% Save Features 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# IMCOH = {}
-# PLV = {}
-# MI = {}
+IMCOH = {}
+PLV = {}
+MI = {}
 PDC = {}
 
 # over all subjects
 for i, filename in enumerate(filenames):
     saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
-    # IMCOH[filename], PLV[filename], MI[filename],\
+    IMCOH[filename], PLV[filename], MI[filename],\
     PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
-    # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
+    createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
     createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% Graph Measures
-
 fts = get_saved_features(withGraphs=False)
 graph_ms = compute_graph_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
@@ -54,7 +57,7 @@ createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 #%% Save Data
 conn_ms, graph_ms = get_saved_features(withGraphs=True)
 
-data = make_features_array(conn_ms, graph_ms, std = True)
+data = make_features_array(conn_ms, graph_ms, std=True)
 fts_names = data.columns
 
 createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
