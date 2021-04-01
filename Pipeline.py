@@ -25,45 +25,45 @@ from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
 #%% Save Features - just change PDC's order to 12
-# filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# # IMCOH = {}
-# # PLV = {}
-# # MI = {}
-# PDC = {}
+# IMCOH = {}
+# PLV = {}
+# MI = {}
+PDC = {}
 
-# # over all subjects
-# for i, filename in enumerate(filenames):
-#     saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
-#     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
-#     # IMCOH[filename], PLV[filename], MI[filename],\
-#     PDC[filename] = extract_features(bd_names, s_epochs)
+# over all subjects
+for i, filename in enumerate(filenames):
+    saved_epochs = getPickleFile('../PreProcessed_Data/128Hz/' + filename)
+    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    # IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
     
-#     # save features in pickle
-#     # createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
-#     # createPickleFile(PLV, '../Features/128Hz/' + 'plv')
-#     # createPickleFile(MI, '../Features/128Hz/' + 'mi')
-#     createPickleFile(PDC, '../Features/128Hz/' + 'pdc')         
+    # save features in pickle
+    # createPickleFile(IMCOH, '../Features/128Hz/' + 'imcoh')
+    # createPickleFile(PLV, '../Features/128Hz/' + 'plv')
+    # createPickleFile(MI, '../Features/128Hz/' + 'mi')
+    createPickleFile(PDC, '../Features/128Hz/' + 'pdc')         
 
-# #%% Graph Measures
+#%% Graph Measures
 
-# fts = get_saved_features(withGraphs=False)
-# graph_ms = compute_graph_measures(fts)
-# createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
+fts = get_saved_features(withGraphs=False)
+graph_ms = compute_graph_measures(fts)
+createPickleFile(graph_ms, '../Features/128Hz/' + 'graphMeasures')
 
-# #%% Save Data
-# conn_ms, graph_ms = get_saved_features(withGraphs=True)
+#%% Save Data
+conn_ms, graph_ms = get_saved_features(withGraphs=True)
 
-# data = make_features_array(conn_ms, graph_ms, std = True)
-# fts_names = data.columns
+data = make_features_array(conn_ms, graph_ms, std = True)
+fts_names = data.columns
 
-# createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
-# createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
+createPickleFile(data, '../Features/128Hz/' + 'allFeatures')
+createPickleFile(fts_names, '../ML_Data/128Hz/' + 'featuresNames')
 
-# add_labels_to_data_array(data)
-# datasets = dataset_split(data)
+add_labels_to_data_array(data)
+datasets = dataset_split(data)
 
-# createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
+createPickleFile(datasets, '../ML_Data/128Hz/' + 'datasets')
 
 #%%
 datasets = getPickleFile('../ML_Data/128Hz/datasets')
@@ -88,7 +88,7 @@ skf = StratifiedKFold(n_splits=5)
 space = dict({
     'classifier__C': [0.01, 0.1, 1, 10, 100],
     'classifier__gamma': [0.01, 0.1, 1, 10, 100],
-    'classifier__kernel': ['rbf', 'linear']
+    'classifier__kernel': ['rbf', 'linear', 'sigmoid']
 })
 
 # Feature Selection
@@ -147,7 +147,7 @@ skf = StratifiedKFold(n_splits=5)
 space = dict({
     'classifier__C': [0.01, 0.1, 1, 10, 100],
     'classifier__gamma': [0.01, 0.1, 1, 10, 100],
-    'classifier__kernel': ['rbf', 'linear']
+    'classifier__kernel': ['rbf', 'linear', 'sigmoid']
 })
 
 # Dimensionality Reduction
@@ -209,8 +209,9 @@ space = dict({
                                       (50,50,50), (100,100,100),(150,150,150)],
     'classifier__activation': ['relu'],
     'classifier__solver': ['adam'],
-    'classifier__learning_rate': ["adaptive"],
-    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
+    'classifier__learning_rate': ['adaptive'],
+    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+    'classifier__early_stopping': [True, False]
 })
 
 # Feature Selection
@@ -261,7 +262,7 @@ norm_scaler = StandardScaler(with_mean=True, with_std=True)
 minMax_scaler = MinMaxScaler()
 
 # MLP Model
-mlp = MLPClassifier(random_state=42, max_iter = 1000, early_stopping = True)
+mlp = MLPClassifier(random_state=42, max_iter = 1000)
 
 # Cross-Validation
 skf = StratifiedKFold(n_splits=5)
@@ -274,7 +275,8 @@ space = dict({
     'classifier__activation': ['relu'],
     'classifier__solver': ['adam'],
     'classifier__learning_rate': ['adaptive'],
-    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1]
+    'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+    'classifier__early_stopping': [True, False]
 })
 
 # Dimensionality Reduction
@@ -317,7 +319,7 @@ print('\nMean Std Score: ', best_std)
 
 allVars.append((clfs,scores))
 
-#%% RFC + SelectKBest
+# RFC + SelectKBest
 
 print('\nRFC + SelectKBest\n')
 
@@ -379,7 +381,7 @@ print('\nMean Std Score: ', best_std)
 
 allVars.append((clfs,scores))
 
-#%% RFC + PCA
+# RFC + PCA
 
 print('\nRFC + PCA\n')
 
@@ -440,5 +442,3 @@ print('---\nMean Best Score: ', best_mean_score)
 print('\nMean Std Score: ', best_std)
 
 allVars.append((clfs,scores))
-
-#%% Markdown Table Making to be done

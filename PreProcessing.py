@@ -1,5 +1,5 @@
 import mne
-import yasa
+from BandpowerCorrection import bandpower_1f_correction
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -145,7 +145,7 @@ def epochs_selection_bandpower(epochs, allVars=False):
     
     for i in range (n_epochs):
         # compute bandpowers
-        bd = yasa.bandpower(data=epochs._data[i,:,:], sf=256, ch_names=ch,
+        bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], sf=256, ch_names=ch,
                             hypno=None, relative=True, bands=bands)
         
         # compute means
@@ -213,10 +213,10 @@ def epochs_selection_bandpower(epochs, allVars=False):
         return bd_names, s_epochs
 
    
-#%% Run
+# #%% Run
 # filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# for filename in filenames[[1]]:
+# for filename in filenames[[0]]:
 #     saved_epochs = getPickleFile('../PreProcessed_Data/' + filename)
 #     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
 
