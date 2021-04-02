@@ -7,6 +7,8 @@ from sklearn.model_selection import StratifiedKFold
 
 # retrieves all saved features (conn + graphs)
 def get_saved_features(withGraphs=False):
+    bdp_ms = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
+    
     IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
     PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
     MI = getPickleFile('../2_Features_Data/128Hz/' + 'mi')
@@ -14,11 +16,27 @@ def get_saved_features(withGraphs=False):
     
     if withGraphs:
         graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
-        return {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms
+        return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms
     
     else:
-        return {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
+        return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
 
+# transforms bandpowers array into flat DataFrame
+def _bandpowers_to_1D(ft_arr, filename):
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
+    ms_types = ['Max','Mean','Median','Min','Std']
+    labels = []
+    ft_flat = []
+    
+    for bd_n in bd_names:
+        for ms_t in ms_types:
+            labels.append('bdpALL' + '-' + bd_n + '-' + ms_t)
+            ft_flat.append(ft_arr[bd_n][ms_t])
+         
+    ft_flat = np.reshape(ft_flat, newshape=(1,len(labels)), order='F')
+    ft_df = pd.DataFrame(data=ft_flat, index=[filename], columns=labels)
+    
+    return ft_df #labels, ft_flat
 
 # transforms connectivity array into flat DataFrame
 def _triangular_to_1D(ft_arr, ch_names, filename, bd_name, ms_type, ms_name):
@@ -55,7 +73,7 @@ def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
 #%% 
 
 # Produce Features Array for ML
-def make_features_array(conn_ms, graph_ms, std=True):
+def make_features_array(bdp_ms, conn_ms, graph_ms, std=True):
         
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
                           'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
@@ -71,6 +89,9 @@ def make_features_array(conn_ms, graph_ms, std=True):
     
     for filename in filenames:
         features_row = pd.DataFrame()
+        ft_df = _bandpowers_to_1D(bdp_ms[filename], filename)
+        features_row = pd.concat([features_row, ft_df], axis=1)
+        
         for ms_conn in ms_conns:
             if ms_conn == 'mi':
                 bd_names = ['Global']
@@ -139,4 +160,3 @@ def dataset_split(data):
         datasets.append(d)    
                     
     return datasets
-

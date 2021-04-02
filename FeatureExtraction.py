@@ -3,6 +3,42 @@ import numpy as np
 import scot
 from scot.eegtopo import eegpos3d
 from sklearn.feature_selection import mutual_info_regression
+from BandpowerCorrection import bandpower_1f_correction
+
+#%% Band Power
+def band_power_measures(epochs):
+    # channel names
+    ch = epochs.ch_names
+    
+    # number of epochs
+    n_epochs = np.shape(epochs._data)[0]
+    
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
+             (8, 12, 'Alpha'), (12, 30, 'Beta')]
+    
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
+
+    bd_power_measures = {}
+    
+    for bd_n in bd_names:
+        bd_means = []
+        
+        for i in range (n_epochs):
+            # compute bandpowers
+            bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], 
+                                               sf=128, ch_names=ch,
+                                               hypno=None, relative=True,
+                                               bands=bands)
+            
+            bd_means.append(bd[bd_n].mean(axis=0))
+    
+        bd_power_measures[bd_n] = {'Mean': np.mean(bd_means), 
+                                   'Std': np.std(bd_means),
+                                   'Median': np.median(bd_means),
+                                   'Min': np.min(bd_means),
+                                   'Max': np.max(bd_means) }
+    
+    return bd_power_measures
 
 #%% Mutual Information
 
@@ -47,8 +83,8 @@ def partial_directed_coherence(epochs, plot=False, band=[]):
     var.fit(epochs._data)
     
     # workspace settings
-    fs = 256
-    bins_fft = 512
+    fs = 128
+    bins_fft = 256
     
     # SCoT workspace
     ws = scot.Workspace(var, reducedim='no_pca', fs=fs,
@@ -120,7 +156,7 @@ def _get_scot_locations(epochs):
         return locations
 
 # mapping of fft bins to subscriptable indices 
-def _map_bins_to_indices(band, fs=256, bins_fft=512):
+def _map_bins_to_indices(band, fs=128, bins_fft=256):
     f_step = 0.5 * fs / bins_fft
     limits = [int(b / f_step) for b in band]
     return range(limits[0], limits[1] + 1)
@@ -142,14 +178,14 @@ def extract_features(bd_names, epochs):
         
         # IMCOH
         imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
-                                  sfreq = 256, fmin=f_min, fmax=f_max, 
+                                  sfreq = 128, fmin=f_min, fmax=f_max, 
                                   faverage=False, verbose = False)
 
         imcohs[bd_n] = _compute_feature_mean_std(imcoh[0])
            
         # PLV
         plv = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "plv", 
-                                  sfreq = 256, fmin=f_min, fmax=f_max,
+                                  sfreq = 128, fmin=f_min, fmax=f_max,
                                   faverage=False, verbose = False)   
 
         plvs[bd_n] = _compute_feature_mean_std(plv[0])
@@ -162,6 +198,6 @@ def extract_features(bd_names, epochs):
         idxs_bd = _map_bins_to_indices(bands[bd_n])
         pdc = partial_directed_coherence(epochs[bd_n], plot=False)
         pdcs[bd_n] = _compute_feature_mean_std(pdc[:,:,idxs_bd])
-        
+                
     return imcohs, plvs, mi, pdcs
                 

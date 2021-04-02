@@ -145,7 +145,7 @@ def epochs_selection_bandpower(epochs, allVars=False):
     
     for i in range (n_epochs):
         # compute bandpowers
-        bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], sf=256, ch_names=ch,
+        bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], sf=128, ch_names=ch,
                             hypno=None, relative=True, bands=bands)
         
         # compute means
