@@ -36,6 +36,7 @@ def plot_heatmap(data_array, bar_label, band_title):
         #Change the order of the channels
         b=data_array[:,ch_indexes]
         b=b[ch_indexes,:]
+        data_array = b
         fig=sb.heatmap(data_array, cmap='viridis',
                     cbar_kws={'label': bar_label},
                     xticklabels=ch_names_new, yticklabels=ch_names_new)
