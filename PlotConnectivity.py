@@ -36,6 +36,7 @@ def plot_heatmap(data_array, bar_label, band_title):
         #Change the order of the channels
         b=data_array[:,ch_indexes]
         b=b[ch_indexes,:]
+        data_array = b
         fig=sb.heatmap(data_array, cmap='viridis',
                     cbar_kws={'label': bar_label},
                     xticklabels=ch_names_new, yticklabels=ch_names_new)
@@ -52,11 +53,11 @@ filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 imcoh = getPickleFile('../2_Features_Data/' + 'imcoh')
 mi = getPickleFile('../2_Features_Data/' + 'mi')
 plv = getPickleFile('../2_Features_Data/' + 'plv')
-pdc = getPickleFile('../2_Features_Data/' + 'pdc')
+pdc = getPickleFile('../2_Features_Data/128Hz/' + 'pdc')
 
 bd_names = ['Global'] #, 'Delta', 'Theta', 'Alpha', 'Beta']
 
-for filename in filenames[[201]]:
+for filename in filenames[[45]]:
     for bd in bd_names:
         plot_heatmap(imcoh[filename][bd]['Mean'], 'ImCoh', str(filename+'_'+bd))
         plt.figure()

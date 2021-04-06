@@ -20,12 +20,13 @@ from Pickle import getPickleFile, createPickleFile
 from PreProcessing import epochs_selection_bandpower
 from FeatureExtraction import band_power_measures, extract_features
 from GraphMeasures import compute_graph_measures
+from Asymmetry import compute_asymmetric_efficiencies
 
 from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
 '''
-    To extract bandpowers
+    To extract asymmetry measures
 '''
 
 #%% Save Features 
@@ -60,10 +61,18 @@ _, fts = get_saved_features(withGraphs=False)
 graph_ms = compute_graph_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
-#%% Save Data
-bdp_ms, conn_ms, graph_ms = get_saved_features(withGraphs=True)
+#%%
+graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
 
-data = make_features_array(bdp_ms, conn_ms, graph_ms, std=True)
+#%% Asymmetry Measures
+_, fts = get_saved_features(withGraphs=False)
+asymmetry_ms = compute_asymmetric_efficiencies(fts)
+createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
+
+#%% Save Data
+bdp_ms, conn_ms, graph_ms, asy_ms = get_saved_features(withGraphs=True)
+
+data = make_features_array(bdp_ms, conn_ms, asy_ms, graph_ms, std=True)
 fts_names = data.columns
 
 createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
