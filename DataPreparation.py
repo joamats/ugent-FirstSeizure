@@ -8,6 +8,7 @@ from sklearn.model_selection import StratifiedKFold
 # retrieves all saved features (conn + graphs)
 def get_saved_features(withGraphs=False):
     bdp_ms = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
+    asy_ms = getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures')
     
     IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
     PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
@@ -16,7 +17,7 @@ def get_saved_features(withGraphs=False):
     
     if withGraphs:
         graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
-        return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms
+        return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms, asy_ms
     
     else:
         return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
@@ -36,7 +37,7 @@ def _bandpowers_to_1D(ft_arr, filename):
     ft_flat = np.reshape(ft_flat, newshape=(1,len(labels)), order='F')
     ft_df = pd.DataFrame(data=ft_flat, index=[filename], columns=labels)
     
-    return ft_df #labels, ft_flat
+    return ft_df
 
 # transforms connectivity array into flat DataFrame
 def _triangular_to_1D(ft_arr, ch_names, filename, bd_name, ms_type, ms_name):
@@ -69,17 +70,29 @@ def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
     gr_df = pd.DataFrame(data=gr_flat, index=[filename], columns=labels)
     
     return gr_df
+
+
+# transforms asymmetry measures to flat DataFrame
+def _asymmetry_measures_to_1D(a_ms, filename, ms_conn, bd_name, asy_name):
+    
+    labels = [asy_name + '-' + ms_conn + '-' + bd_name]
+    asy_df = pd.DataFrame(data=a_ms, index=[filename], columns=labels)
+    
+    return asy_df
+    
     
 #%% 
 
 # Produce Features Array for ML
-def make_features_array(bdp_ms, conn_ms, graph_ms, std=True):
+def make_features_array(bdp_ms, conn_ms, asy_ms, graph_ms, std=True):
         
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
                           'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
     
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
     ms_conns = ['imcoh', 'plv', 'mi', 'pdc']
+    asy_names = ['right_efficiency', 'left_efficiency', 'ratio_left_right']
+    
     if std:
         ms_types = ['Mean', 'Std']
     else:
@@ -107,10 +120,17 @@ def make_features_array(bdp_ms, conn_ms, graph_ms, std=True):
                 bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
                 
             for bd_name in bd_names:
+                
                 for ms_type in ms_types:
                     ms_c = conn_ms[ms_conn][filename][bd_name][ms_type]
                     ft_df = _triangular_to_1D(ms_c, ch_names, filename, \
                                               bd_name, ms_type, ms_conn)
+                    features_row = pd.concat([features_row, ft_df], axis=1)
+                    
+                for asy_name in asy_names:
+                    a_ms = asy_ms[filename][ms_conn][bd_name][asy_name]
+                    ft_df = _asymmetry_measures_to_1D(a_ms, filename, \
+                                                      ms_conn, bd_name, asy_name)
                     features_row = pd.concat([features_row, ft_df], axis=1)
                 
                 for gr_name in gr_names:

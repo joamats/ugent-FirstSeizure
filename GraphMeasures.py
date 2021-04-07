@@ -38,6 +38,10 @@ def compute_graph_measures(fts):
                 if ms_name != 'pdc':
                     # transform triangular matrix to symmetric square
                     ft = ft + ft.T - np.diag(np.diag(ft))
+                  
+                # imcoh may have negative values, let's consider abs only
+                if ms_name == 'imcoh':
+                    ft = abs(ft)
                 
                 # compute graphs measures
                 global_efficiency = brainconn.distance.efficiency_wei(ft)

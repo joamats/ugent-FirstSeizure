@@ -53,11 +53,11 @@ filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 imcoh = getPickleFile('../2_Features_Data/' + 'imcoh')
 mi = getPickleFile('../2_Features_Data/' + 'mi')
 plv = getPickleFile('../2_Features_Data/' + 'plv')
-pdc = getPickleFile('../2_Features_Data/' + 'pdc')
+pdc = getPickleFile('../2_Features_Data/128Hz/' + 'pdc')
 
 bd_names = ['Global'] #, 'Delta', 'Theta', 'Alpha', 'Beta']
 
-for filename in filenames[[201]]:
+for filename in filenames[[45]]:
     for bd in bd_names:
         plot_heatmap(imcoh[filename][bd]['Mean'], 'ImCoh', str(filename+'_'+bd))
         plt.figure()
