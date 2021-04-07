@@ -1,8 +1,12 @@
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
+from FeatureExtraction import band_power_measures
+from Pickle import getPickleFile, createPickleFile
 import brainconn
 from Pickle import createPickleFile, getPickleFile
 from DataPreparation import get_saved_features
+            
 
 #%% Auxiliary Functions
 
@@ -73,7 +77,7 @@ def _compute_sub_stats(ms_left, ms_right, gr_name):
             gr_name + '_range_left_vs_right': ms_range_left_vs_right }
             
 
-#%% Local Efficiencies for Left and Right Electrode Groups
+#%% Local Graph Measures for Left and Right Electrode Groups
 
 def compute_asymmetric_efficiencies(fts):
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
@@ -192,8 +196,20 @@ def compute_asymmetric_efficiencies(fts):
     
     return asymmetry_ms
 
+#%% Local Bandpowers
+
+# Drops channels, calculates band powers 
+# chs_to_drop: list of channels to drop in the epochs
+def band_powers_subgroup(saved_epochs, chs_to_drop, subgroup):
+
+    saved_epochs.drop_channels(chs_to_drop) 
+    bd_powers = band_power_measures(saved_epochs)
+   
+    return bd_powers
+
 #%% Run
 
 # _, fts = get_saved_features(withGraphs=False)
 # asymmetry_ms = compute_asymmetric_efficiencies(fts)
 # # createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
+

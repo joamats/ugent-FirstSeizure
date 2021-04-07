@@ -16,7 +16,7 @@ def band_power_measures(epochs):
     bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
     
-    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
 
     bd_power_measures = {}
     
@@ -37,7 +37,7 @@ def band_power_measures(epochs):
                                    'Median': np.median(bd_means),
                                    'Min': np.min(bd_means),
                                    'Max': np.max(bd_means),
-                                   'Range': np.max(bd_means) - np.max(bd_means)}
+                                   'Range': np.max(bd_means) - np.min(bd_means)}
     
     return bd_power_measures
 

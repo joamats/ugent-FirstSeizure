@@ -20,7 +20,7 @@ from Pickle import getPickleFile, createPickleFile
 from PreProcessing import epochs_selection_bandpower
 from FeatureExtraction import band_power_measures, extract_features
 from GraphMeasures import compute_graph_measures
-from Asymmetry import compute_asymmetric_efficiencies
+from Asymmetry import compute_asymmetric_efficiencies, band_powers_subgroup
 
 from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
@@ -33,35 +33,44 @@ from DataPreparation import get_saved_features,  make_features_array, \
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 BDP = {}
-IMCOH = {}
-PLV = {}
-MI = {}
-PDC = {}
+BDP_left = {}
+BDP_right = {}
+# IMCOH = {}
+# PLV = {}
+# MI = {}
+# PDC = {}
 
 # over all subjects
 for i, filename in enumerate(filenames):
     saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
     
-    bd_powers = band_power_measures(saved_epochs)
-    BDP[filename] = bd_powers
+    BDP[filename] = band_power_measures(saved_epochs)
+    
+    ch_to_drop_left = ['Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5']
+    ch_to_drop_right = ['Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+
+    BDP_right[filename] = band_powers_subgroup(saved_epochs, ch_to_drop_right, 'right')
+    BDP_left[filename] = band_powers_subgroup(saved_epochs, ch_to_drop_left, 'left')
     
     # bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
     # IMCOH[filename], PLV[filename], MI[filename],\
     # PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    # createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
+    createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
+    createPickleFile(BDP_left, '../2_Features_Data/128Hz/' + 'bdp_right')
+    createPickleFile(BDP_left, '../2_Features_Data/128Hz/' + 'bdp_left')
     # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
     # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
     # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
     # createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
-#%% Graph Measures
+#%% Graph Global Measures
 _, fts = get_saved_features(withGraphs=False)
 graph_ms = compute_graph_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
-# Asymmetry Measures
+# Graph Asymmetry Measures
 _, fts = get_saved_features(withGraphs=False)
 asymmetry_ms = compute_asymmetric_efficiencies(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
