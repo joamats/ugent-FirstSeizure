@@ -25,7 +25,7 @@ from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
 '''
-    To extract bandpowers
+    With bandpowers extracted, epoch selection, 1/f, 128Hz, VAR model 8
 '''
 
 #%% Save Features 
@@ -44,16 +44,16 @@ for i, filename in enumerate(filenames):
     bd_powers = band_power_measures(saved_epochs)
     BDP[filename] = bd_powers
     
-    # bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
-    # IMCOH[filename], PLV[filename], MI[filename],\
-    # PDC[filename] = extract_features(bd_names, s_epochs)
+    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    # createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
-    # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
-    # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
-    # createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
+    createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
+    createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
+    createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% Graph Measures
 _, fts = get_saved_features(withGraphs=False)
