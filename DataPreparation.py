@@ -43,11 +43,11 @@ def _bandpowers_to_1D(ft_arr, filename):
 def _triangular_to_1D(ft_arr, ch_names, filename, bd_name, ms_type, ms_name):
     
     bd_n = bd_name
-    ms_t = ms_type[0]
+    ms_t = ms_type
     labels = []
     for ch_n in ch_names:
         for ch_i in ch_names:
-            labels.append(ms_name + '-' + bd_n + ms_t + '-' + ch_n + '-' + ch_i )
+            labels.append(ms_name + '-' + bd_n + '-' + ms_t + '-' + ch_n + '-' + ch_i )
      
     ft_flat = np.reshape(ft_arr, newshape=(1,len(labels)), order='F')
     ft_df = pd.DataFrame(data=ft_flat, index=[filename], columns=labels)
@@ -71,15 +71,12 @@ def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
     
     return gr_df
 
-
-# transforms asymmetry measures to flat DataFrame
-def _asymmetry_measures_to_1D(a_ms, filename, ms_conn, bd_name, asy_name):
+def _rename_dataframe_columns(stats, ms_conn, bd_name):
+    cols_orig = stats.columns
+    cols_new = [i + '-' +  ms_conn + '-' + bd_name for i in cols_orig]
     
-    labels = [asy_name + '-' + ms_conn + '-' + bd_name]
-    asy_df = pd.DataFrame(data=a_ms, index=[filename], columns=labels)
-    
-    return asy_df
-    
+    return stats.rename(columns=dict(zip(cols_orig, cols_new)))
+       
     
 #%% 
 
@@ -91,7 +88,6 @@ def make_features_array(bdp_ms, conn_ms, asy_ms, graph_ms, std=True):
     
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
     ms_conns = ['imcoh', 'plv', 'mi', 'pdc']
-    asy_names = ['right_efficiency', 'left_efficiency', 'ratio_left_right']
     
     if std:
         ms_types = ['Mean', 'Std']
@@ -121,24 +117,33 @@ def make_features_array(bdp_ms, conn_ms, asy_ms, graph_ms, std=True):
                 
             for bd_name in bd_names:
                 
+                # asymmetric graphs
+                a_ms = asy_ms[filename][ms_conn][bd_name]
+                # convert columns names
+                a_ms = _rename_dataframe_columns(a_ms, ms_conn, bd_name)
+                # concatenate it to all features vector
+                features_row = pd.concat([features_row, a_ms], axis=1)
+                
+                # global graphs stats
+                gr_ms = graph_ms[filename][ms_conn][bd_name]
+                st_df = gr_ms['stats']
+                st_df = _rename_dataframe_columns(st_df, ms_conn, bd_name)
+                features_row = pd.concat([features_row, st_df], axis=1)
+                
+                # individual graphs measures
+                for gr_name in gr_names:
+                    gr_df = _graph_measures_to_1D(gr_ms[gr_name], ch_names, filename, \
+                                                  ms_conn, bd_name, gr_name)
+                    
+                    features_row = pd.concat([features_row, gr_df], axis=1)
+                
+                # conn measures
                 for ms_type in ms_types:
                     ms_c = conn_ms[ms_conn][filename][bd_name][ms_type]
                     ft_df = _triangular_to_1D(ms_c, ch_names, filename, \
                                               bd_name, ms_type, ms_conn)
                     features_row = pd.concat([features_row, ft_df], axis=1)
-                    
-                for asy_name in asy_names:
-                    a_ms = asy_ms[filename][ms_conn][bd_name][asy_name]
-                    ft_df = _asymmetry_measures_to_1D(a_ms, filename, \
-                                                      ms_conn, bd_name, asy_name)
-                    features_row = pd.concat([features_row, ft_df], axis=1)
-                
-                for gr_name in gr_names:
-                    gr_ms = graph_ms[filename][ms_conn][bd_name][gr_name]
-                    gr_df = _graph_measures_to_1D(gr_ms, ch_names, filename, \
-                                                  ms_conn, bd_name, gr_name)
-                    features_row = pd.concat([features_row, gr_df], axis=1)
-                
+                            
         allFeatures = pd.concat([allFeatures, features_row], axis=0)
     
     return allFeatures.fillna(0)

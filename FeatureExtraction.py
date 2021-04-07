@@ -36,7 +36,8 @@ def band_power_measures(epochs):
                                    'Std': np.std(bd_means),
                                    'Median': np.median(bd_means),
                                    'Min': np.min(bd_means),
-                                   'Max': np.max(bd_means) }
+                                   'Max': np.max(bd_means),
+                                   'Range': np.max(bd_means) - np.max(bd_means)}
     
     return bd_power_measures
 

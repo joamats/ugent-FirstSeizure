@@ -61,10 +61,7 @@ _, fts = get_saved_features(withGraphs=False)
 graph_ms = compute_graph_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
-#%%
-graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
-
-#%% Asymmetry Measures
+# Asymmetry Measures
 _, fts = get_saved_features(withGraphs=False)
 asymmetry_ms = compute_asymmetric_efficiencies(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
