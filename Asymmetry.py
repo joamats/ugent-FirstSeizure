@@ -151,7 +151,7 @@ def compute_asymmetric_efficiencies(fts):
                 
                 # pdc is directed -> different functions
                 if ms_name == 'pdc':
-                    # clustering cofficients
+                    # clustering coefficients
                     cc_right = brainconn.clustering.clustering_coef_wd(ft_right)
                     cc_left = brainconn.clustering.clustering_coef_wd(ft_left)
                     # Mean, Std, Median, Ratios
@@ -200,7 +200,7 @@ def compute_asymmetric_efficiencies(fts):
 
 # Drops channels, calculates band powers 
 # chs_to_drop: list of channels to drop in the epochs
-def band_powers_subgroup(saved_epochs, chs_to_drop, subgroup):
+def band_powers_subgroup(saved_epochs, chs_to_drop):
 
     saved_epochs.drop_channels(chs_to_drop) 
     bd_powers = band_power_measures(saved_epochs)
