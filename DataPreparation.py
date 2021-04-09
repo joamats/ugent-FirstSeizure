@@ -1,15 +1,16 @@
 from Pickle import getPickleFile, createPickleFile
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import train_test_split
 
 #%% Auxiliary functions
 
 # retrieves all saved features (conn + graphs)
 def get_saved_features(withGraphs=False):
-    bdp_ms = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
-    asy_ms = getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures')
-    
+    bdp_global = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
+    bdp_right = getPickleFile('../2_Features_Data/128Hz/' + 'bdp_right')
+    bdp_left = getPickleFile('../2_Features_Data/128Hz/' + 'bdp_left')
+        
     IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
     PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
     MI = getPickleFile('../2_Features_Data/128Hz/' + 'mi')
@@ -17,21 +18,22 @@ def get_saved_features(withGraphs=False):
     
     if withGraphs:
         graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
-        return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms, asy_ms
+        asy_ms = getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures')
+        return bdp_global, bdp_right, bdp_left, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms, asy_ms
     
     else:
-        return bdp_ms, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
+        return bdp_global, bdp_right, bdp_left, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
 
 # transforms bandpowers array into flat DataFrame
-def _bandpowers_to_1D(ft_arr, filename):
-    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
-    ms_types = ['Max','Mean','Median','Min','Std']
+def _bandpowers_to_1D(ft_arr, group, filename):
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
+    ms_types = ['Max','Mean','Median','Min','Std', 'Range']
     labels = []
     ft_flat = []
     
     for bd_n in bd_names:
         for ms_t in ms_types:
-            labels.append('bdpALL' + '-' + bd_n + '-' + ms_t)
+            labels.append('bdp' + '-' + group + '-' + bd_n + '-' + ms_t)
             ft_flat.append(ft_arr[bd_n][ms_t])
          
     ft_flat = np.reshape(ft_flat, newshape=(1,len(labels)), order='F')
@@ -81,7 +83,7 @@ def _rename_dataframe_columns(stats, ms_conn, bd_name):
 #%% 
 
 # Produce Features Array for ML
-def make_features_array(bdp_ms, conn_ms, asy_ms, graph_ms, std=True):
+def make_features_array(bdp_ms, bdp_right, bdp_left, conn_ms, asy_ms, graph_ms, std=True):
         
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
                           'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
@@ -98,7 +100,13 @@ def make_features_array(bdp_ms, conn_ms, asy_ms, graph_ms, std=True):
     
     for filename in filenames:
         features_row = pd.DataFrame()
-        ft_df = _bandpowers_to_1D(bdp_ms[filename], filename)
+        ft_df = _bandpowers_to_1D(bdp_ms[filename], 'global', filename)
+        features_row = pd.concat([features_row, ft_df], axis=1)
+        
+        ft_df = _bandpowers_to_1D(bdp_right[filename], 'right', filename)
+        features_row = pd.concat([features_row, ft_df], axis=1)
+        
+        ft_df = _bandpowers_to_1D(bdp_left[filename], 'left', filename)
         features_row = pd.concat([features_row, ft_df], axis=1)
         
         for ms_conn in ms_conns:
@@ -163,25 +171,9 @@ def add_labels_to_data_array(data):
 # double 5-fold nested cross-validation
 def dataset_split(data):
 
-    y = data['y'].to_numpy(dtype=float)
-    X = data.drop('y', axis=1).to_numpy()
+    y = data['y']#.to_numpy(dtype=float)
+    X = data.drop('y', axis=1)#.to_numpy()
         
-    skf = StratifiedKFold(n_splits=5)
+    X_tr, X_ts, y_tr, y_ts = train_test_split(X, y, test_size=0.20, shuffle=True, random_state=42)
         
-    datasets = []
-    
-    for train_index, ts_index in skf.split(X, y):
-
-        X_tr, X_ts = X[train_index], X[ts_index]
-        y_tr, y_ts = y[train_index], y[ts_index]
-        
-        d = {
-            'X_tr': X_tr,
-            'y_tr': y_tr,
-            'X_ts': X_ts,
-            'y_ts': y_ts
-        }
-               
-        datasets.append(d)    
-                    
-    return datasets
+    return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts}

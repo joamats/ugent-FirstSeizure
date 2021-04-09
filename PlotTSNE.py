@@ -3,10 +3,10 @@ from Pickle import getPickleFile
 import pandas as pd
 import seaborn as sb
 
-datasets = getPickleFile('../3_ML_Data/' + 'datasets')
+datasets = getPickleFile('../3_ML_Data/128Hz/' + 'datasets')
 
-X_tr = datasets[0]['X_tr']
-y_tr = datasets[0]['y_tr']
+X_tr = datasets[1]['X_tr']
+y_tr = datasets[1]['y_tr']
 
 X_embedded = TSNE(n_components=2).fit_transform(X_tr)
      

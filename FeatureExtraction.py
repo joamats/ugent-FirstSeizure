@@ -1,9 +1,54 @@
 import mne
+import pandas as pd
 import numpy as np
 import scot
 from scot.eegtopo import eegpos3d
 from sklearn.feature_selection import mutual_info_regression
 from BandpowerCorrection import bandpower_1f_correction
+from Pickle import getPickleFile
+
+#%% Auxiliary functions
+
+# transforms 2D matrix to 3D
+def _3D_to_triangular(m_3D):
+    n = np.shape(m_3D)[0]
+    m_2D = np.zeros((n,n))
+    
+    for i in range(n):
+        m_2D[i,:] = np.matrix.transpose(m_3D[i,:,:])
+    
+    return m_2D
+
+# computes mean and standard deviation for the feature data matrix
+def _compute_feature_mean(feature_data):
+    
+    return np.mean(feature_data, axis=2)
+
+# get electrode location
+def _get_scot_locations(epochs):
+        # construct positions struct
+        pos = eegpos3d.construct_1020_easycap(variant=0)
+        # channels renamed as {'T7': 'T3', 'P7': 'T5', 'T8': 'T4', 'P8': 'T6'}
+        ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T7', 
+                   'P7', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T8', 'P8']
+        
+        locs = [pos[i] for i in ch_names]
+        
+        n_channels = len(epochs.ch_names)
+        locations = np.zeros((n_channels, 3))
+        
+        for i in range(n_channels):
+            locations[i,0] = locs[i].list[0]
+            locations[i,1] = locs[i].list[1]
+            locations[i,2] = locs[i].list[2]
+        
+        return locations
+
+# mapping of fft bins to subscriptable indices 
+def _map_bins_to_indices(band, fs=128, bins_fft=256):
+    f_step = 0.5 * fs / bins_fft
+    limits = [int(b / f_step) for b in band]
+    return range(limits[0], limits[1] + 1)
 
 #%% Band Power
 def band_power_measures(epochs):
@@ -116,52 +161,6 @@ def partial_directed_coherence(epochs, plot=False, band=[]):
     return pdc
     
 
-#%% Auxiliary functions
-
-# transforms 2D matrix to 3D
-def _3D_to_triangular(m_3D):
-    n = np.shape(m_3D)[0]
-    m_2D = np.zeros((n,n))
-    
-    for i in range(n):
-        m_2D[i,:] = np.matrix.transpose(m_3D[i,:,:])
-    
-    return m_2D
-
-# computes mean and standard deviation for the feature data matrix
-def _compute_feature_mean_std(feature_data):
-    feature_data_mean_std = {}
-    feature_data_mean_std['Mean'] = np.mean(feature_data, axis=2)
-    feature_data_mean_std['Std'] = np.std(feature_data, axis=2)
-    
-    return feature_data_mean_std
-
-# get electrode location
-def _get_scot_locations(epochs):
-        # construct positions struct
-        pos = eegpos3d.construct_1020_easycap(variant=0)
-        # channels renamed as {'T7': 'T3', 'P7': 'T5', 'T8': 'T4', 'P8': 'T6'}
-        ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T7', 
-                   'P7', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T8', 'P8']
-        
-        locs = [pos[i] for i in ch_names]
-        
-        n_channels = len(epochs.ch_names)
-        locations = np.zeros((n_channels, 3))
-        
-        for i in range(n_channels):
-            locations[i,0] = locs[i].list[0]
-            locations[i,1] = locs[i].list[1]
-            locations[i,2] = locs[i].list[2]
-        
-        return locations
-
-# mapping of fft bins to subscriptable indices 
-def _map_bins_to_indices(band, fs=128, bins_fft=256):
-    f_step = 0.5 * fs / bins_fft
-    limits = [int(b / f_step) for b in band]
-    return range(limits[0], limits[1] + 1)
-
 
 #%% Final Feature Extractor
 
@@ -179,17 +178,17 @@ def extract_features(bd_names, epochs):
         
         # IMCOH
         imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
-                                  sfreq = 128, fmin=f_min, fmax=f_max, 
-                                  faverage=False, verbose = False)
+                                  sfreq=128, fmin=f_min, fmax=f_max, 
+                                  faverage=False, verbose=False)
 
-        imcohs[bd_n] = _compute_feature_mean_std(imcoh[0])
+        imcohs[bd_n] = _compute_feature_mean(imcoh[0])
            
         # PLV
         plv = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "plv", 
                                   sfreq = 128, fmin=f_min, fmax=f_max,
-                                  faverage=False, verbose = False)   
+                                  faverage=False, verbose=False)   
 
-        plvs[bd_n] = _compute_feature_mean_std(plv[0])
+        plvs[bd_n] = _compute_feature_mean(plv[0])
 
         # MI (only for Global band)
         if(bd_n == 'Global'):
@@ -198,7 +197,7 @@ def extract_features(bd_names, epochs):
         # PDC
         idxs_bd = _map_bins_to_indices(bands[bd_n])
         pdc = partial_directed_coherence(epochs[bd_n], plot=False)
-        pdcs[bd_n] = _compute_feature_mean_std(pdc[:,:,idxs_bd])
+        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return imcohs, plvs, mi, pdcs
                 
