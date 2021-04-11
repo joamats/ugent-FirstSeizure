@@ -87,8 +87,6 @@ createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 #%% Get Dataset
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 
-allVars = []
-
 #%% SVM + SelectKBest
 
 print('\nSVM + SelectKBest\n')
@@ -126,26 +124,14 @@ clf = GridSearchCV( estimator=model_SVC,
                     cv=skf,
                     return_train_score=True )
 
-clfs = []
-scores = []
+X_tr = dataset['X_tr']
+y_tr = dataset['y_tr']
+clf.fit(X_tr, y_tr)
+print('Best Score: ')
+print(clf.best_score_)
+print('Best Parameters: ')
+print(clf.best_params_)
 
-for dset in datasets:
-  X_tr = dset['X_tr']
-  y_tr = dset['y_tr']
-  clf.fit(X_tr, y_tr)
-  clfs.append(clf.best_params_)
-  scores.append(clf.best_score_)
-  print('Best Score: ')
-  print(clf.best_score_)
-  print('Best Parameters: ')
-  print(clf.best_params_)
-
-best_mean_score = np.mean(scores)
-best_std = np.std(scores)
-print('---\nMean Best Score: ', best_mean_score)
-print('\nMean Std Score: ', best_std)
-
-allVars.append((clfs,scores))
 
 
 #% SVM + PCA
@@ -188,23 +174,13 @@ clf = GridSearchCV( estimator=model_SVC,
 clfs = []
 scores = []
 
-for dset in datasets:
-  X_tr = dset['X_tr']
-  y_tr = dset['y_tr']
-  clf.fit(X_tr, y_tr)
-  clfs.append(clf.best_params_)
-  scores.append(clf.best_score_)
-  print('Best Score: ')
-  print(clf.best_score_)
-  print('Best Parameters: ')
-  print(clf.best_params_)
-
-best_mean_score = np.mean(scores)
-best_std = np.std(scores)
-print('---\nMean Best Score: ', best_mean_score)
-print('\nMean Std Score: ', best_std)
-
-allVars.append((clfs,scores))
+X_tr = dataset['X_tr']
+y_tr = dataset['y_tr']
+clf.fit(X_tr, y_tr)
+print('Best Score: ')
+print(clf.best_score_)
+print('Best Parameters: ')
+print(clf.best_params_)
 
 #%% MLP + SelectKBest
 
@@ -250,26 +226,13 @@ clf = GridSearchCV( estimator=model_MLP,
                     cv=skf,
                     return_train_score=True )
 
-clfs = []
-scores = []
-
-for dset in datasets:
-  X_tr = dset['X_tr']
-  y_tr = dset['y_tr']
-  clf.fit(X_tr, y_tr)
-  clfs.append(clf.best_params_)
-  scores.append(clf.best_score_)
-  print('Best Score: ')
-  print(clf.best_score_)
-  print('Best Parameters: ')
-  print(clf.best_params_)
-
-best_mean_score = np.mean(scores)
-best_std = np.std(scores)
-print('---\nMean Best Score: ', best_mean_score)
-print('\nMean Std Score: ', best_std)
-
-allVars.append((clfs,scores))
+X_tr = dataset['X_tr']
+y_tr = dataset['y_tr']
+clf.fit(X_tr, y_tr)
+print('Best Score: ')
+print(clf.best_score_)
+print('Best Parameters: ')
+print(clf.best_params_)
 
 #%% MLP + PCA
 
@@ -316,26 +279,13 @@ clf = GridSearchCV( estimator=model_MLP,
                     cv=skf,
                     return_train_score=True )
 
-clfs = []
-scores = []
-
-for dset in datasets:
-  X_tr = dset['X_tr']
-  y_tr = dset['y_tr']
-  clf.fit(X_tr, y_tr)
-  clfs.append(clf.best_params_)
-  scores.append(clf.best_score_)
-  print('Best Score: ')
-  print(clf.best_score_)
-  print('Best Parameters: ')
-  print(clf.best_params_)
-
-best_mean_score = np.mean(scores)
-best_std = np.std(scores)
-print('---\nMean Best Score: ', best_mean_score)
-print('\nMean Std Score: ', best_std)
-
-allVars.append((clfs,scores))
+X_tr = dataset['X_tr']
+y_tr = dataset['y_tr']
+clf.fit(X_tr, y_tr)
+print('Best Score: ')
+print(clf.best_score_)
+print('Best Parameters: ')
+print(clf.best_params_)
 
 #%% RFC + SelectKBest
 
@@ -378,28 +328,15 @@ clf = GridSearchCV( estimator=model_RFC,
                     cv=skf,
                     return_train_score=True )
 
-clfs = []
-scores = []
+X_tr = dataset['X_tr']
+y_tr = dataset['y_tr']
+clf.fit(X_tr, y_tr)
+print('Best Score: ')
+print(clf.best_score_)
+print('Best Parameters: ')
+print(clf.best_params_)
 
-for dset in datasets:
-  X_tr = dset['X_tr']
-  y_tr = dset['y_tr']
-  clf.fit(X_tr, y_tr)
-  clfs.append(clf.best_params_)
-  scores.append(clf.best_score_)
-  print('Best Score: ')
-  print(clf.best_score_)
-  print('Best Parameters: ')
-  print(clf.best_params_)
-
-best_mean_score = np.mean(scores)
-best_std = np.std(scores)
-print('---\nMean Best Score: ', best_mean_score)
-print('\nMean Std Score: ', best_std)
-
-allVars.append((clfs,scores))
-
-#% RFC + PCA
+#%% RFC + PCA
 
 print('\nRFC + PCA\n')
 
@@ -440,23 +377,10 @@ clf = GridSearchCV( estimator=model_RFC,
                     cv=skf,
                     return_train_score=True )
 
-clfs = []
-scores = []
-
-for dset in datasets:
-  X_tr = dset['X_tr']
-  y_tr = dset['y_tr']
-  clf.fit(X_tr, y_tr)
-  clfs.append(clf.best_params_)
-  scores.append(clf.best_score_)
-  print('Best Score: ')
-  print(clf.best_score_)
-  print('Best Parameters: ')
-  print(clf.best_params_)
-
-best_mean_score = np.mean(scores) 
-best_std = np.std(scores)
-print('---\nMean Best Score: ', best_mean_score)
-print('\nMean Std Score: ', best_std)
-
-allVars.append((clfs,scores))
+X_tr = dataset['X_tr']
+y_tr = dataset['y_tr']
+clf.fit(X_tr, y_tr)
+print('Best Score: ')
+print(clf.best_score_)
+print('Best Parameters: ')
+print(clf.best_params_)
