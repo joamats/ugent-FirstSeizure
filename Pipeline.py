@@ -39,21 +39,22 @@ MI = {}
 PDC = {}
 
 # over all subjects
-for i, filename in enumerate(filenames[[0]]):
+for i, filename in enumerate(filenames):
     saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
         
     BDP[filename] = extract_bandpowers(saved_epochs, filename)
     
-    # bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
-    # IMCOH[filename], PLV[filename], MI[filename],\
-    # PDC[filename] = extract_features(bd_names, s_epochs)
+    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    
+    IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
     createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
-    # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
-    # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
-    # createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
+    createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
+    createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% Subgroups Connectivity Features
 _, _, _, fts = get_saved_features(withGraphs=False)

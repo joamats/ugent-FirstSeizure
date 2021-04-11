@@ -27,68 +27,29 @@ def _compute_feature_mean(feature_data):
 
 # get electrode location
 def _get_scot_locations(epochs):
-        # construct positions struct
-        pos = eegpos3d.construct_1020_easycap(variant=0)
-        # channels renamed as {'T7': 'T3', 'P7': 'T5', 'T8': 'T4', 'P8': 'T6'}
-        ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T7', 
-                   'P7', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T8', 'P8']
-        
-        locs = [pos[i] for i in ch_names]
-        
-        n_channels = len(epochs.ch_names)
-        locations = np.zeros((n_channels, 3))
-        
-        for i in range(n_channels):
-            locations[i,0] = locs[i].list[0]
-            locations[i,1] = locs[i].list[1]
-            locations[i,2] = locs[i].list[2]
-        
-        return locations
+    # construct positions struct
+    pos = eegpos3d.construct_1020_easycap(variant=0)
+    # channels renamed as {'T7': 'T3', 'P7': 'T5', 'T8': 'T4', 'P8': 'T6'}
+    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T7', 
+               'P7', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T8', 'P8']
+    
+    locs = [pos[i] for i in ch_names]
+    
+    n_channels = len(epochs.ch_names)
+    locations = np.zeros((n_channels, 3))
+    
+    for i in range(n_channels):
+        locations[i,0] = locs[i].list[0]
+        locations[i,1] = locs[i].list[1]
+        locations[i,2] = locs[i].list[2]
+    
+    return locations
 
 # mapping of fft bins to subscriptable indices 
 def _map_bins_to_indices(band, fs=128, bins_fft=256):
     f_step = 0.5 * fs / bins_fft
     limits = [int(b / f_step) for b in band]
     return range(limits[0], limits[1] + 1)
-
-#%% Band Power
-def band_power_measures(epochs, sub_name, filename):
-    # channel names
-    ch = epochs.ch_names
-    
-    # number of epochs
-    n_epochs = np.shape(epochs._data)[0]
-    
-    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
-             (8, 12, 'Alpha'), (12, 30, 'Beta')]
-    
-    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
-
-    bd_power_measures = pd.DataFrame()
-    
-    for bd_n in bd_names:
-        bd_means = []
-        
-        for i in range (n_epochs):
-            # compute bandpowers
-            bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], 
-                                               sf=128, ch_names=ch,
-                                               hypno=None, relative=True,
-                                               bands=bands)
-            
-            bd_means.append(bd[bd_n].mean(axis=0))
-    
-        m = np.mean(bd_means)
-        s = np.std(bd_means)
-        
-        m_name = 'bdp-' + bd_n + '-' + sub_name + '-Mean'
-        s_name = 'bdp-' + bd_n + '-' + sub_name + '-Std'
-        
-        bd_power_band = pd.DataFrame(data=[m,s], columns=[filename], index=[m_name, s_name])
-        bd_power_measures = pd.concat([bd_power_measures, bd_power_band], axis=0)
-                                     
-    return bd_power_measures
-
 
 #%% Mutual Information
 
@@ -160,6 +121,7 @@ def partial_directed_coherence(epochs, plot=False, band=[]):
     
     return pdc
     
+
     
 #%% Connectivity Features Extractor
 
@@ -199,48 +161,6 @@ def extract_features(bd_names, epochs):
         pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return imcohs, plvs, mi, pdcs
-
-#%% Subgroups' Bandpowers
-
-# Drops channels, calculates band powers 
-def _band_powers_subgroup(saved_epochs, chs_subgroup, sub_name, filename):
-
-    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
-                'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
-
-    chs_to_drop = [i for i in ch_names if i not in chs_subgroup]    
-
-    epochs_use = saved_epochs.copy()
-    epochs_use.drop_channels(chs_to_drop) 
-    bd_powers = band_power_measures(epochs_use, sub_name, filename)
-   
-    return bd_powers
-
-def extract_bandpowers(epochs, filename):
-    
-    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
-                'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
-    
-    subgroups = {
-        'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
-        'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
-        'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
-        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'],
-        'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
-        'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
-        'ALL': ch_names }
-       
-    subgroups_names = ['FR', 'FL', 'BR', 'BL', 'R', 'L', 'ALL']
-    
-    df_all = pd.DataFrame()
-    
-    for sub_n in subgroups_names:
-        chs = subgroups[sub_n]
-        df_single = _band_powers_subgroup(epochs, chs, sub_n, filename)
-        df_all = pd.concat([df_all, df_single], axis=0)
-        
-    return df_all
-
 
 #%% Subrgroups' connectivity features 
 
@@ -290,7 +210,7 @@ def compute_connectivity_measures(fts):
                 bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
                 
             for bd_n in bd_names:
-                ft = fts[conn_n][filename][bd_n]['Mean'] #Mean will disapear!
+                ft = fts[conn_n][filename][bd_n]
     
                 for sub_n in subgroups_names:
                     chs = subgroups[sub_n]
@@ -302,3 +222,81 @@ def compute_connectivity_measures(fts):
     
     return conn_ms 
                 
+
+#%% Bandpower
+def band_power_measures(epochs, sub_name, filename):
+    # channel names
+    ch = epochs.ch_names
+    
+    # number of epochs
+    n_epochs = np.shape(epochs._data)[0]
+    
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
+             (8, 12, 'Alpha'), (12, 30, 'Beta')]
+    
+    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
+
+    bd_power_measures = pd.DataFrame()
+    
+    for bd_n in bd_names:
+        bd_means = []
+        
+        for i in range (n_epochs):
+            # compute bandpowers
+            bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], 
+                                               sf=128, ch_names=ch,
+                                               hypno=None, relative=True,
+                                               bands=bands)
+            
+            bd_means.append(bd[bd_n].mean(axis=0))
+    
+        m = np.mean(bd_means)
+        s = np.std(bd_means)
+        
+        m_name = 'bdp-' + bd_n + '-' + sub_name + '-Mean'
+        s_name = 'bdp-' + bd_n + '-' + sub_name + '-Std'
+        
+        bd_power_band = pd.DataFrame(data=[m,s], columns=[filename], index=[m_name, s_name])
+        bd_power_measures = pd.concat([bd_power_measures, bd_power_band], axis=0)
+                                     
+    return bd_power_measures
+
+
+#%% Subgroups' Bandpowers
+
+# Drops channels, calculates band powers 
+def _band_powers_subgroup(saved_epochs, chs_subgroup, sub_name, filename):
+
+    ch_names = saved_epochs.ch_names
+
+    chs_to_drop = [i for i in ch_names if i not in chs_subgroup]    
+
+    epochs_use = saved_epochs.copy()
+    epochs_use.drop_channels(chs_to_drop) 
+    bd_powers = band_power_measures(epochs_use, sub_name, filename)
+   
+    return bd_powers
+
+def extract_bandpowers(epochs, filename):
+    
+    ch_names = epochs.ch_names
+    
+    subgroups = {
+        'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+        'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+        'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'],
+        'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
+        'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
+        'ALL': ch_names }
+       
+    subgroups_names = ['FR', 'FL', 'BR', 'BL', 'R', 'L', 'ALL']
+    
+    df_all = pd.DataFrame()
+    
+    for sub_n in subgroups_names:
+        chs = subgroups[sub_n]
+        df_single = _band_powers_subgroup(epochs, chs, sub_n, filename)
+        df_all = pd.concat([df_all, df_single], axis=0)
+        
+    return df_all
