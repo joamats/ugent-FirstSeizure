@@ -206,7 +206,7 @@ def compute_connectivity_measures(fts):
     
     conn_ms = {}
     
-    for i, filename in enumerate(filenames):
+    for filename in filenames[0:10]:
         df_all = pd.DataFrame()
         for conn_n in conn_names:
             if conn_n == 'mi':

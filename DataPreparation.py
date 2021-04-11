@@ -6,150 +6,57 @@ from sklearn.model_selection import train_test_split
 #%% Auxiliary functions
 
 # retrieves all saved features (conn + graphs)
-def get_saved_features(withGraphs=False):
-    bdp = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
+def get_saved_features(bdp=False, rawConn=False, conn=False, graphs=False, asy=False):
+    
+    features = []
+    
+    if bdp:
+        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'bdp'))
+    
+    if rawConn:
+        IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
+        PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
+        MI = getPickleFile('../2_Features_Data/128Hz/' + 'mi')
+        PDC = getPickleFile('../2_Features_Data/128Hz/' + 'pdc')
+        features.append({'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC})
+    
+    if conn:
+        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'connectivityMeasures'))
+    
+    if graphs:
+        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures'))
         
-    IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
-    PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
-    MI = getPickleFile('../2_Features_Data/128Hz/' + 'mi')
-    PDC = getPickleFile('../2_Features_Data/128Hz/' + 'pdc')
-    
-    if withGraphs:
-        graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
-        asy_ms = getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures')
-        return bdp,  {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms, asy_ms
-    
+    if asy:    
+        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures'))
+
+    if len(features)==1:
+        return features[0]
     else:
-        return bdp, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
+        return features
 
-# transforms bandpowers array into flat DataFrame
-def _bandpowers_to_1D(ft_arr, group, filename):
-    bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
-    ms_types = ['Max','Mean','Median','Min','Std', 'Range']
-    labels = []
-    ft_flat = []
-    
-    for bd_n in bd_names:
-        for ms_t in ms_types:
-            labels.append('bdp' + '-' + group + '-' + bd_n + '-' + ms_t)
-            ft_flat.append(ft_arr[bd_n][ms_t])
-         
-    ft_flat = np.reshape(ft_flat, newshape=(1,len(labels)), order='F')
-    ft_df = pd.DataFrame(data=ft_flat, index=[filename], columns=labels)
-    
-    return ft_df
-
-# transforms connectivity array into flat DataFrame
-def _triangular_to_1D(ft_arr, ch_names, filename, bd_name, ms_type, ms_name):
-    
-    bd_n = bd_name
-    ms_t = ms_type
-    labels = []
-    for ch_n in ch_names:
-        for ch_i in ch_names:
-            labels.append(ms_name + '-' + bd_n + '-' + ms_t + '-' + ch_n + '-' + ch_i )
-     
-    ft_flat = np.reshape(ft_arr, newshape=(1,len(labels)), order='F')
-    ft_df = pd.DataFrame(data=ft_flat, index=[filename], columns=labels)
-    
-    return ft_df.loc[:, (ft_df != 0).any(axis=0)]
-    
-
-# transforms graph measures to flat DataFrame
-def _graph_measures_to_1D(gr_ms, ch_names, filename, ms_conn, bd_name, gr_name):
-    
-    labels = []
-    templ_str = gr_name + '-' + ms_conn + '-' + bd_name
-    if gr_name == 'global_efficiency':
-        labels.append(templ_str)
-    else:
-        for gm, cn in zip(gr_ms, ch_names):
-            labels.append(templ_str + '-' + cn)
-    
-    gr_flat = np.reshape(gr_ms, newshape=(1,len(labels)), order='F')
-    gr_df = pd.DataFrame(data=gr_flat, index=[filename], columns=labels)
-    
-    return gr_df
-
-def _rename_dataframe_columns(stats, ms_conn, bd_name):
-    cols_orig = stats.columns
-    cols_new = [i + '-' +  ms_conn + '-' + bd_name for i in cols_orig]
-    
-    return stats.rename(columns=dict(zip(cols_orig, cols_new)))
-       
-    
+      
 #%% 
 
 # Produce Features Array for ML
-def make_features_array(bdp_ms, bdp_right, bdp_left, conn_ms, asy_ms, graph_ms, std=True):
+def make_features_array(bdp_ms, conn_ms, gr_ms, asy_ms=[]):
         
-    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
-                          'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
-    
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-    ms_conns = ['imcoh', 'plv', 'mi', 'pdc']
     
-    if std:
-        ms_types = ['Mean', 'Std']
-    else:
-        ms_types = ['Mean']
-        
     allFeatures = pd.DataFrame()
     
-    for filename in filenames:
+    for filename in filenames[0:10]:
+        
         features_row = pd.DataFrame()
-        ft_df = _bandpowers_to_1D(bdp_ms[filename], 'global', filename)
+        # concatenate bandpowers
+        ft_df = bdp_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
-        
-        ft_df = _bandpowers_to_1D(bdp_right[filename], 'right', filename)
+        # concatenate connectivity measures
+        ft_df = conn_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
-        
-        ft_df = _bandpowers_to_1D(bdp_left[filename], 'left', filename)
+        # concatenate graph measures
+        ft_df = gr_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
-        
-        for ms_conn in ms_conns:
-            if ms_conn == 'mi':
-                bd_names = ['Global']
-                
-            elif ms_conn == 'pdc':
-                gr_names = ['betweness_centrality', 'clustering_coefficient',
-                        'global_efficiency', 'incoming_flow', 'outgoing_flow']
-                bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
-            else:
-                gr_names = ['betweness_centrality', 'clustering_coefficient',
-                        'global_efficiency', 'node_strengths']
-                
-                bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
-                
-            for bd_name in bd_names:
-                
-                # asymmetric graphs
-                a_ms = asy_ms[filename][ms_conn][bd_name]
-                # convert columns names
-                a_ms = _rename_dataframe_columns(a_ms, ms_conn, bd_name)
-                # concatenate it to all features vector
-                features_row = pd.concat([features_row, a_ms], axis=1)
-                
-                # global graphs stats
-                gr_ms = graph_ms[filename][ms_conn][bd_name]
-                st_df = gr_ms['stats']
-                st_df = _rename_dataframe_columns(st_df, ms_conn, bd_name)
-                features_row = pd.concat([features_row, st_df], axis=1)
-                
-                # individual graphs measures
-                for gr_name in gr_names:
-                    gr_df = _graph_measures_to_1D(gr_ms[gr_name], ch_names, filename, \
-                                                  ms_conn, bd_name, gr_name)
-                    
-                    features_row = pd.concat([features_row, gr_df], axis=1)
-                
-                # conn measures
-                for ms_type in ms_types:
-                    ms_c = conn_ms[ms_conn][filename][bd_name][ms_type]
-                    ft_df = _triangular_to_1D(ms_c, ch_names, filename, \
-                                              bd_name, ms_type, ms_conn)
-                    features_row = pd.concat([features_row, ft_df], axis=1)
-                            
+        # join this subject's row to all subjects
         allFeatures = pd.concat([allFeatures, features_row], axis=0)
     
     return allFeatures.fillna(0)

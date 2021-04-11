@@ -19,17 +19,17 @@ from sklearn.model_selection import GridSearchCV
 from Pickle import getPickleFile, createPickleFile
 from PreProcessing import epochs_selection_bandpower
 from FeatureExtraction import extract_bandpowers, extract_features, compute_connectivity_measures
-from GraphMeasures import compute_graph_measures
+from GraphMeasures import compute_graph_subgroup_measures
 from Asymmetry import compute_asymmetry_measures
 
 from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split
 
 '''
-    Subgroupings of connectivity matrix
+    Subgroupings of connectivity matrix and graph measures
 '''
 
-#%% Save Features 
+#%% Bandpower and Connectivity Features 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 BDP = {}
@@ -57,24 +57,23 @@ for i, filename in enumerate(filenames):
     createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% Subgroups Connectivity Features
-_, _, _, fts = get_saved_features(withGraphs=False)
+fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/128Hz/' + 'connectivityMeasures')
 
-#%% Graph Global Measures
-_, _, _, fts = get_saved_features(withGraphs=False)
-graph_ms = compute_graph_measures(fts)
+#%% Subgroups Graph Measures
+fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
+graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
 #%% Graph Asymmetry Measures
-_, _, _, fts = get_saved_features(withGraphs=False)
+fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
 
-#%% Save Data
-bdp_ms, bdp_right, bdp_left, conn_ms, graph_ms, asy_ms = get_saved_features(withGraphs=True)
-
-data = make_features_array(bdp_ms, bdp_right, bdp_left, conn_ms, asy_ms, graph_ms, std=True)
+#%% Generate All Features Matrix
+bdp_ms, conn_ms, gr_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=False)
+data = make_features_array(bdp_ms, conn_ms, gr_ms)
 fts_names = data.columns
 
 createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
@@ -85,9 +84,8 @@ dataset = dataset_split(data)
 
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 
-#%%
-datasets = getPickleFile('../3_ML_Data/128Hz/dataset')
-print('datasets loaded')
+#%% Get Dataset
+dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 
 allVars = []
 
