@@ -6,6 +6,7 @@ from scot.eegtopo import eegpos3d
 from sklearn.feature_selection import mutual_info_regression
 from BandpowerCorrection import bandpower_1f_correction
 from Pickle import getPickleFile
+from DataPreparation import get_saved_features
 
 #%% Auxiliary functions
 
@@ -51,7 +52,7 @@ def _map_bins_to_indices(band, fs=128, bins_fft=256):
     return range(limits[0], limits[1] + 1)
 
 #%% Band Power
-def band_power_measures(epochs):
+def band_power_measures(epochs, sub_name, filename):
     # channel names
     ch = epochs.ch_names
     
@@ -63,7 +64,7 @@ def band_power_measures(epochs):
     
     bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
 
-    bd_power_measures = {}
+    bd_power_measures = pd.DataFrame()
     
     for bd_n in bd_names:
         bd_means = []
@@ -77,14 +78,17 @@ def band_power_measures(epochs):
             
             bd_means.append(bd[bd_n].mean(axis=0))
     
-        bd_power_measures[bd_n] = {'Mean': np.mean(bd_means), 
-                                   'Std': np.std(bd_means),
-                                   'Median': np.median(bd_means),
-                                   'Min': np.min(bd_means),
-                                   'Max': np.max(bd_means),
-                                   'Range': np.max(bd_means) - np.min(bd_means)}
-    
+        m = np.mean(bd_means)
+        s = np.std(bd_means)
+        
+        m_name = 'bdp-' + bd_n + '-' + sub_name + '-Mean'
+        s_name = 'bdp-' + bd_n + '-' + sub_name + '-Std'
+        
+        bd_power_band = pd.DataFrame(data=[m,s], columns=[filename], index=[m_name, s_name])
+        bd_power_measures = pd.concat([bd_power_measures, bd_power_band], axis=0)
+                                     
     return bd_power_measures
+
 
 #%% Mutual Information
 
@@ -107,13 +111,9 @@ def mutual_information(epochs):
             mutual_infos[channel_1][channel_2][0] = np.mean(all_mi)
             std[channel_1][channel_2][0] = np.std(all_mi)
     
-    m = {}
-    
     # transforms the 3D matrix in 2D    
-    m['Mean'] = _3D_to_triangular(mutual_infos)
-    m['Std'] = _3D_to_triangular(std)
-        
-    return m
+    
+    return _3D_to_triangular(mutual_infos)
 
 #%% Partial Directed Coherence
 
@@ -160,9 +160,8 @@ def partial_directed_coherence(epochs, plot=False, band=[]):
     
     return pdc
     
-
-
-#%% Final Feature Extractor
+    
+#%% Connectivity Features Extractor
 
 def extract_features(bd_names, epochs):
     
@@ -200,4 +199,106 @@ def extract_features(bd_names, epochs):
         pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return imcohs, plvs, mi, pdcs
+
+#%% Subgroups' Bandpowers
+
+# Drops channels, calculates band powers 
+def _band_powers_subgroup(saved_epochs, chs_subgroup, sub_name, filename):
+
+    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
+                'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+
+    chs_to_drop = [i for i in ch_names if i not in chs_subgroup]    
+
+    epochs_use = saved_epochs.copy()
+    epochs_use.drop_channels(chs_to_drop) 
+    bd_powers = band_power_measures(epochs_use, sub_name, filename)
+   
+    return bd_powers
+
+def extract_bandpowers(epochs, filename):
+    
+    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
+                'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+    
+    subgroups = {
+        'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+        'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+        'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'],
+        'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
+        'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
+        'ALL': ch_names }
+       
+    subgroups_names = ['FR', 'FL', 'BR', 'BL', 'R', 'L', 'ALL']
+    
+    df_all = pd.DataFrame()
+    
+    for sub_n in subgroups_names:
+        chs = subgroups[sub_n]
+        df_single = _band_powers_subgroup(epochs, chs, sub_n, filename)
+        df_all = pd.concat([df_all, df_single], axis=0)
+        
+    return df_all
+
+
+#%% Subrgroups' connectivity features 
+
+# Filter of connectivity matrix
+def _features_subgroup_combination(conn, subgroup):
+    
+    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
+                'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+    
+    conn = conn + conn.T - np.diag(np.diag(conn))
+    conn_df = pd.DataFrame(data=conn, index=ch_names, columns=ch_names)
+    return conn_df.filter(items=subgroup, axis=1).filter(items=subgroup, axis=0)
+    
+# Compute connectivity mean and std
+def _conn_mean_std(conn_df, filename, conn_name, bd_name, sub_name):
+    
+    tr = np.tril(conn_df)
+    m = np.mean(tr[tr!=0])
+    s = np.std(tr[tr!=0])
+    
+    m_name = conn_name + '-' + bd_name + '-' + sub_name + '-Mean'
+    s_name = conn_name + '-' + bd_name + '-' + sub_name + '-Std'
+    
+    return pd.DataFrame(data=[m,s], index=[m_name, s_name], columns=[filename])
+
+# Final Computation for subgroups
+def compute_connectivity_measures(fts):
+    filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+    
+    subgroups = {   'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+                    'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+                    'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+                    'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
+    
+    subgroups_names = ['FR', 'FL', 'BR', 'BL']
+    
+    conn_names = ['imcoh', 'plv', 'mi', 'pdc']
+    
+    conn_ms = {}
+    
+    for i, filename in enumerate(filenames):
+        df_all = pd.DataFrame()
+        for conn_n in conn_names:
+            if conn_n == 'mi':
+                bd_names = ['Global']
+            else:                           
+                bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
+                
+            for bd_n in bd_names:
+                ft = fts[conn_n][filename][bd_n]['Mean'] #Mean will disapear!
+    
+                for sub_n in subgroups_names:
+                    chs = subgroups[sub_n]
+                    ft_comb = _features_subgroup_combination(ft, chs)
+                    df_single = _conn_mean_std(ft_comb, filename, conn_n, bd_n, sub_n)
+                    df_all = pd.concat([df_all, df_single], axis=0)
+                    
+        conn_ms[filename] = df_all
+    
+    return conn_ms 
                 

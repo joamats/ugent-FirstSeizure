@@ -79,7 +79,7 @@ def _compute_sub_stats(ms_left, ms_right, gr_name):
 
 #%% Local Graph Measures for Left and Right Electrode Groups
 
-def compute_asymmetric_efficiencies(fts):
+def compute_asymmetry_measures(fts):
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
     
     ms_names = ['imcoh', 'plv', 'mi', 'pdc']
@@ -196,16 +196,7 @@ def compute_asymmetric_efficiencies(fts):
     
     return asymmetry_ms
 
-#%% Local Bandpowers
 
-# Drops channels, calculates band powers 
-# chs_to_drop: list of channels to drop in the epochs
-def band_powers_subgroup(saved_epochs, chs_to_drop):
-
-    saved_epochs.drop_channels(chs_to_drop) 
-    bd_powers = band_power_measures(saved_epochs)
-   
-    return bd_powers
 
 #%% Run
 
