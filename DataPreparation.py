@@ -7,9 +7,7 @@ from sklearn.model_selection import train_test_split
 
 # retrieves all saved features (conn + graphs)
 def get_saved_features(withGraphs=False):
-    bdp_global = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
-    bdp_right = getPickleFile('../2_Features_Data/128Hz/' + 'bdp_right')
-    bdp_left = getPickleFile('../2_Features_Data/128Hz/' + 'bdp_left')
+    bdp = getPickleFile('../2_Features_Data/128Hz/' + 'bdp')
         
     IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
     PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
@@ -19,10 +17,10 @@ def get_saved_features(withGraphs=False):
     if withGraphs:
         graph_ms = getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures')
         asy_ms = getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures')
-        return bdp_global, bdp_right, bdp_left, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms, asy_ms
+        return bdp,  {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}, graph_ms, asy_ms
     
     else:
-        return bdp_global, bdp_right, bdp_left, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
+        return bdp, {'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC}
 
 # transforms bandpowers array into flat DataFrame
 def _bandpowers_to_1D(ft_arr, group, filename):

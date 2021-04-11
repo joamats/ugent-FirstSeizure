@@ -3,6 +3,7 @@ import numpy as np
 import brainconn
 from DataPreparation import get_saved_features
 from Pickle import createPickleFile
+from FeatureExtraction import _features_subgroup_combination
 
 #%% Auxiliary functions
 
@@ -118,7 +119,108 @@ def compute_graph_measures(fts):
         
     return graph_ms
 
-#%% Run
+#%% Subgroups Graph Measures
+
+# Compute mean, std, median, ratio for left and right subgroups
+def _compute_graph_mean_std(graph_ms, gr_n, conn_n, bd_n, sub_n, filename):
+
+    m = np.mean(graph_ms)
+    s = np.std(graph_ms)
+    
+    m_name = gr_n + '-' + conn_n + '-' + bd_n + '-' + sub_n + '-Mean'
+    s_name = gr_n + '-' + conn_n + '-' + bd_n + '-' + sub_n + '-Std'
+
+    return pd.DataFrame(data=[m,s], index=[m_name, s_name], columns=[filename])
+
+
+_, fts = get_saved_features(withGraphs=False)
+
+# def compute_subgroups_graph_measures(fts):
+filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+
+ms_names = ['imcoh', 'plv', 'mi', 'pdc']
+bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
+
+ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1','F7',
+            'T3', 'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+
+subgroups = {
+        'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+        'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+        'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'],
+        'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
+        'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
+        'ALL': ch_names }
+       
+subgroups_names = ['FR', 'FL', 'BR', 'BL', 'R', 'L', 'ALL']
+
+# dict to store all measures from all subjects
+graph_ms = {}
+
+for filename in filenames[[0]]:
+    # dict to store each subject's measures
+    gr_ms = pd.DataFrame()
+    
+    for ms_name in ms_names:
+        
+        # MI does not have frequency bands
+        if ms_name == 'mi':
+            bd_names = ['Global']
+        else:
+            bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
+        
+        for bd_name in bd_names:
+            ft = fts[ms_name][filename][bd_name]
+            
+            for sub_n in subgroups_names:
+                chs = subgroups[sub_n]
+                ft_df_subgroup = _features_subgroup_combination(ft, chs, ms_name, imcohAbs=True)
+                ft_np_subgroup = ft_df_subgroup.to_numpy()
+            
+                # efficiency
+                efficiency = brainconn.distance.efficiency_wei(ft_np_subgroup)
+                eff_name = 'efficiency' + '-' + ms_name + '-' + bd_name + '-' + sub_n
+                gr_df = pd.DataFrame(data=efficiency, index=[eff_name], columns=[filename])
+                gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+
+                # betweenness centrality
+                betweeness = brainconn.centrality.betweenness_wei(ft_np_subgroup)
+                gr_df = _compute_graph_mean_std(betweeness, 'betweness_centr', ms_name, bd_name, sub_n, filename)
+                gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+                
+                # pdc is directed -> different functions
+                if ms_name == 'pdc':
+                    # clustering coefficient
+                    clustering_coef = brainconn.clustering.clustering_coef_wd(ft_np_subgroup)
+                    gr_df = _compute_graph_mean_std(clustering_coef, 'clustering_coef', ms_name, bd_name, sub_n, filename)
+                    gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+                    
+                    # incoming and outgoing flows
+                    in_str, out_str, _ = brainconn.degree.strengths_dir(ft_np_subgroup)
+                    gr_df = _compute_graph_mean_std(in_str, 'incoming_flow', ms_name, bd_name, sub_n, filename)
+                    gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+                    gr_df = _compute_graph_mean_std(out_str, 'outgoing_flow', ms_name, bd_name, sub_n, filename)
+                    gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+                    
+                    
+                # conn measures not pdc
+                else:
+                    # clustering cofficients
+                    clustering_coef = brainconn.clustering.clustering_coef_wu(ft_np_subgroup)
+                    gr_df = _compute_graph_mean_std(clustering_coef, 'clustering_coef', ms_name, bd_name, sub_n, filename)
+                    gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+                    
+                    # strengths
+                    strength = brainconn.degree.strengths_und(ft_np_subgroup)
+                    gr_df = _compute_graph_mean_std(strength, 'node_strengths', ms_name, bd_name, sub_n, filename)
+                    gr_ms = pd.concat([gr_ms, gr_df], axis=0)
+                    
+    graph_ms[filename] = gr_ms
+
+                
+    # return asymmetry_ms
+    
 
 # _, fts = get_saved_features(withGraphs=False)
 # graph_ms = compute_graph_measures(fts)

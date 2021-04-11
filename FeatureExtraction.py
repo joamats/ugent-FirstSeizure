@@ -165,12 +165,17 @@ def extract_features(bd_names, epochs):
 #%% Subrgroups' connectivity features 
 
 # Filter of connectivity matrix
-def _features_subgroup_combination(conn, subgroup):
+def _features_subgroup_combination(conn, subgroup, conn_name, imcohAbs=False):
     
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
                 'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
     
-    conn = conn + conn.T - np.diag(np.diag(conn))
+    if conn_name != 'pdc':
+        conn = conn + conn.T - np.diag(np.diag(conn))
+    
+    if imcohAbs:
+        conn = abs(conn)
+        
     conn_df = pd.DataFrame(data=conn, index=ch_names, columns=ch_names)
     return conn_df.filter(items=subgroup, axis=1).filter(items=subgroup, axis=0)
     
@@ -214,7 +219,7 @@ def compute_connectivity_measures(fts):
     
                 for sub_n in subgroups_names:
                     chs = subgroups[sub_n]
-                    ft_comb = _features_subgroup_combination(ft, chs)
+                    ft_comb = _features_subgroup_combination(ft, chs, conn_n)
                     df_single = _conn_mean_std(ft_comb, filename, conn_n, bd_n, sub_n)
                     df_all = pd.concat([df_all, df_single], axis=0)
                     
