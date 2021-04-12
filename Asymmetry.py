@@ -32,7 +32,7 @@ def compute_asymmetry_measures(graph_ms):
     
     asy_ms = {}
     
-    for filename in filenames[0:5]:
+    for filename in filenames:
         
         allPairs = pd.DataFrame()
         
@@ -42,16 +42,15 @@ def compute_asymmetry_measures(graph_ms):
             
             # get features' of interest
             fts_names = gr_df.index.to_list()
-            sub1_names = [i for i in fts_names if i.endswith(pair[0]) or i.endswith(pair[0] + '-Mean') ]
-            sub2_names = [i for i in fts_names if i.endswith(pair[1]) or i.endswith(pair[1] + '-Mean') ]
+            sub1_names = [i for i in fts_names if i.endswith(pair[0]) or i.endswith(pair[0] + '-Mean') or i.endswith(pair[0] + '-Max') ]
+            sub2_names = [i for i in fts_names if i.endswith(pair[1]) or i.endswith(pair[1] + '-Mean') or i.endswith(pair[0] + '-Max') ]
             
             # get this pair's features 
             sub1_fts = gr_df.copy().filter(items=sub1_names, axis=0).values
             sub2_fts = gr_df.copy().filter(items=sub2_names, axis=0).values
             
             # build new ratio names
-            ratios_names = [i[:-5] if i.endswith('-Mean') else i for i in sub1_names]
-            ratios_names = [i + 'vs' + pair[1] for i in ratios_names]
+            ratios_names = [i.replace(pair[0], pair[0]  + 'vs' + pair[1]) for i in sub1_names]
             
             # compute asymmetry ratios
             ratios_vals = [_compute_ratio(s1, s2) for s1, s2 in zip(sub1_fts, sub2_fts)]

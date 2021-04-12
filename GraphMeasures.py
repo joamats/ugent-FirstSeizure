@@ -64,7 +64,7 @@ def compute_graph_subgroup_measures(fts):
     # dict to store all measures from all subjects
     graph_ms = {}
     
-    for filename in filenames[0:10]:
+    for filename in filenames:
         # df to store each subject's measures
         gr_ms = pd.DataFrame()
         

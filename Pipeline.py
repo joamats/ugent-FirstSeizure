@@ -39,7 +39,7 @@ MI = {}
 PDC = {}
 
 # over all subjects
-for i, filename in enumerate(filenames[[0]]):
+for i, filename in enumerate(filenames):
     saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
         
     BDP[filename] = extract_bandpowers(saved_epochs, filename)
