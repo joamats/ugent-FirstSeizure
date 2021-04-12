@@ -72,8 +72,8 @@ asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
 
 #%% Generate All Features Matrix
-bdp_ms, conn_ms, gr_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=False)
-data = make_features_array(bdp_ms, conn_ms, gr_ms)
+bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
+data = make_features_array(bdp_ms, conn_ms, gr_ms, asy_ms)
 fts_names = data.columns
 
 createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
