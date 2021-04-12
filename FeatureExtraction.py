@@ -165,7 +165,7 @@ def extract_features(bd_names, epochs):
 #%% Subrgroups' connectivity features 
 
 # Filter of connectivity matrix
-def _features_subgroup_combination(conn, subgroup, conn_name, imcohAbs=False):
+def _features_subgroup_combination(conn, subgroup, conn_name):
     
     ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
                 'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
@@ -173,7 +173,7 @@ def _features_subgroup_combination(conn, subgroup, conn_name, imcohAbs=False):
     if conn_name != 'pdc':
         conn = conn + conn.T - np.diag(np.diag(conn))
     
-    if imcohAbs:
+    if conn_name == 'imcoh':
         conn = abs(conn)
         
     conn_df = pd.DataFrame(data=conn, index=ch_names, columns=ch_names)

@@ -175,7 +175,7 @@ def compute_graph_subgroup_measures(fts):
                 
                 for sub_n in subgroups_names:
                     chs = subgroups[sub_n]
-                    ft_df_subgroup = _features_subgroup_combination(ft, chs, ms_name, imcohAbs=True)
+                    ft_df_subgroup = _features_subgroup_combination(ft, chs, ms_name)
                     ft_np_subgroup = ft_df_subgroup.to_numpy()
                 
                     # efficiency

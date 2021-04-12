@@ -39,7 +39,7 @@ MI = {}
 PDC = {}
 
 # over all subjects
-for i, filename in enumerate(filenames):
+for i, filename in enumerate(filenames[[0]]):
     saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
         
     BDP[filename] = extract_bandpowers(saved_epochs, filename)
@@ -66,8 +66,8 @@ fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
-#%% Graph Asymmetry Measures
-fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
+#%% Subgroups Graph Asymmetry Ratios
+fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
 
