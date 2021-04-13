@@ -38,10 +38,8 @@ def get_saved_features(bdp=False, rawConn=False, conn=False, graphs=False, asy=F
 #%% 
 
 # Produce Features Array for ML
-def make_features_array(bdp_ms, conn_ms, gr_ms, asy_ms):
-        
-    filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-    
+def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
+            
     allFeatures = pd.DataFrame()
     
     for filename in filenames:
@@ -63,16 +61,44 @@ def make_features_array(bdp_ms, conn_ms, gr_ms, asy_ms):
         allFeatures = pd.concat([allFeatures, features_row], axis=0)
     
     return allFeatures.fillna(0)
+
+# Get filenames and labels from metadata
+def get_filenames_labels(mode='Diagnosis'):
     
+    if mode == 'Diagnosis':
+        filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+        labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Diagnosis']
+        
+    elif mode == 'Epilepsy types':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Epilepsy type']
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels != 'undetermined']
+        filenames = labels.index
+    
+    elif mode == 'Gender':
+        filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+        labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Gender']
+        
+    return labels, filenames
 
 # Make Data Array: Features + Labels
-def add_labels_to_data_array(data):
+def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
-    labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Diagnosis']
+    if mode == 'Diagnosis':
+        labels[labels != 'epileptic seizure'] = 0
+        labels[labels == 'epileptic seizure'] = 1
+
+    elif mode == 'Epilepsy types':
+        labels[labels == 'cryptogenic'] = 0
+        labels[labels == 'focal cryptogenic'] = 0
+        labels[labels == 'focal symptomatic'] = 1
+        labels[labels == 'generalized idiopathic'] = 2
+        
+    elif mode == 'Gender':
+        labels[labels == 'female'] = 0
+        labels[labels == 'male'] = 1
     
-    labels[labels != 'epileptic seizure'] = 0
-    labels[labels == 'epileptic seizure'] = 1
-   
+    
     data.insert(loc=0, column='y', value=labels)
 
 

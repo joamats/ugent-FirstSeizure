@@ -6,7 +6,7 @@ from FeatureExtraction import extract_bandpowers, extract_features, compute_conn
 from GraphMeasures import compute_graph_subgroup_measures
 from Asymmetry import compute_asymmetry_measures
 from DataPreparation import get_saved_features,  make_features_array, \
-                            add_labels_to_data_array, dataset_split
+                            add_labels_to_data_array, dataset_split, get_filenames_labels
 
 '''
     Function Reorganization
@@ -74,18 +74,22 @@ createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures'
 
 #%% Generate All Features Matrix
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
-data = make_features_array(bdp_ms, conn_ms, gr_ms, asy_ms)
+
+labels, filenames = get_filenames_labels(mode='Gender')
+
+# Make array
+data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
 fts_names = data.columns
 
 createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
 createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
-add_labels_to_data_array(data)
+add_labels_to_data_array(data, labels, mode='Gender')
 dataset = dataset_split(data)
 
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 
-#%% Machine Learning 
+#%% Machine Learning TRAIN
 from PlotTSNE import plot_tsne
 from BestRankedFeatures import best_ranked_features
 from MachineLearning import svm_anova, svm_pca, mlp_anova, \
@@ -96,7 +100,7 @@ dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 
 #%% Plot TSNE
-fig_tsne = plot_tsne(dataset)
+fig_tsne = plot_tsne(dataset, num_labels=2)
 
 #%% Best Ranked Features
 best_fts = best_ranked_features(dataset,fts_names, k_features=50)
