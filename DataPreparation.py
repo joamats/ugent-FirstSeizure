@@ -79,8 +79,8 @@ def add_labels_to_data_array(data):
 # double 5-fold nested cross-validation
 def dataset_split(data):
 
-    y = data['y']#.to_numpy(dtype=float)
-    X = data.drop('y', axis=1)#.to_numpy()
+    y = data['y'].to_numpy(dtype=float)
+    X = data.drop('y', axis=1).to_numpy()
         
     X_tr, X_ts, y_tr, y_ts = train_test_split(X, y, test_size=0.20, shuffle=True, random_state=42)
         

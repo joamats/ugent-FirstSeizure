@@ -130,37 +130,37 @@ def extract_features(bd_names, epochs):
     bands = {'Global': [2.5,30], 'Delta': [2.5, 4], 'Theta': [4, 8],
          'Alpha': [8,12], 'Beta': [12, 30]}
     
-    imcohs = {}
-    plvs = {}
+    # imcohs = {}
+    # plvs = {}
     pdcs = {}
     
     for bd_n in bd_names:
         f_min, f_max = bands[bd_n]
         
-        # IMCOH
-        imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
-                                  sfreq=128, fmin=f_min, fmax=f_max, 
-                                  faverage=False, verbose=False)
+        # # IMCOH
+        # imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
+        #                           sfreq=128, fmin=f_min, fmax=f_max, 
+        #                           faverage=False, verbose=False)
 
-        imcohs[bd_n] = _compute_feature_mean(imcoh[0])
+        # imcohs[bd_n] = _compute_feature_mean(imcoh[0])
            
-        # PLV
-        plv = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "plv", 
-                                  sfreq = 128, fmin=f_min, fmax=f_max,
-                                  faverage=False, verbose=False)   
+        # # PLV
+        # plv = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "plv", 
+        #                           sfreq = 128, fmin=f_min, fmax=f_max,
+        #                           faverage=False, verbose=False)   
 
-        plvs[bd_n] = _compute_feature_mean(plv[0])
+        # plvs[bd_n] = _compute_feature_mean(plv[0])
 
-        # MI (only for Global band)
-        if(bd_n == 'Global'):
-            mi = {'Global': mutual_information(epochs[bd_n])}
+        # # MI (only for Global band)
+        # if(bd_n == 'Global'):
+        #     mi = {'Global': mutual_information(epochs[bd_n])}
                
         # PDC
         idxs_bd = _map_bins_to_indices(bands[bd_n])
         pdc = partial_directed_coherence(epochs[bd_n], plot=False)
         pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
-    return imcohs, plvs, mi, pdcs
+    return  pdcs #imcohs, plvs, mi,
 
 #%% Subrgroups' connectivity features 
 
@@ -206,7 +206,7 @@ def compute_connectivity_measures(fts):
     
     conn_ms = {}
     
-    for filename in filenames[0:10]:
+    for filename in filenames:
         df_all = pd.DataFrame()
         for conn_n in conn_names:
             if conn_n == 'mi':
