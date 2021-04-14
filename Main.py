@@ -12,8 +12,9 @@ from BestRankedFeatures import best_ranked_features
 from MachineLearning import svm_anova, svm_pca, mlp_anova, \
                             mlp_pca, rfc_anova, rfc_pca
 
+
 '''
-    Different classification tasks implementation (MODE)
+    PDC with new toolbox Eden-Kramer
 '''
 
 global filenames, _mode_

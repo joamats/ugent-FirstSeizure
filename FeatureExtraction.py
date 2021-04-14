@@ -8,6 +8,7 @@ from BandpowerCorrection import bandpower_1f_correction
 from Pickle import getPickleFile
 from DataPreparation import get_saved_features
 from spectral_connectivity import Multitaper, Connectivity
+import warnings
 
 #%% Auxiliary functions
 
@@ -52,7 +53,7 @@ def _map_bins_to_indices(band, fs=128, bins_fft=256, toolbox='scot'):
     
     if toolbox == 'scot':
         f_step = 0.5 * fs / bins_fft
-    elif toolbox == 'erden-kramer':
+    elif toolbox == 'eden-kramer':
         f_step = 0.4
         
     limits = [int(b / f_step) for b in band]
@@ -130,7 +131,7 @@ def partial_directed_coherence(epochs, plot=False, toolbox='scot'):
         
         return pdc
     
-    elif toolbox == 'erden-kramer':
+    elif toolbox == 'eden-kramer':
         # swap axes
         time_series = np.swapaxes(epochs._data, axis1=0, axis2=2)
         time_series = np.swapaxes(time_series, axis1=1, axis2=2)
@@ -185,8 +186,14 @@ def extract_features(bd_names, epochs):
         #     mi = {'Global': mutual_information(epochs[bd_n])}
                
         # PDC
-        idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='erden-kramer')
-        pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='erden-kramer')
+        try:
+            idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='eden-kramer')
+            pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='eden-kramer')
+        except:
+            idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
+            pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
+            warnings.warn('SCoT used instead of eden-kramer')
+        
         pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return  pdcs #imcohs, plvs, mi,
