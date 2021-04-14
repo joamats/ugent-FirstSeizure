@@ -20,7 +20,7 @@ global filenames, _mode_
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 # implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age'
-MODE = 'Age'
+MODE = 'Diagnosis'
 
 #%% EEG Pre-Processing 256Hz
 
@@ -134,3 +134,5 @@ clf_rfc_anova = rfc_anova(dataset)
 clf_rfc_pca = rfc_pca(dataset)
 
 #%% Model Exhaustive assesment and report
+
+

@@ -7,11 +7,13 @@ from sklearn.feature_selection import mutual_info_regression
 from BandpowerCorrection import bandpower_1f_correction
 from Pickle import getPickleFile
 from DataPreparation import get_saved_features
+from spectral_connectivity import Multitaper, Connectivity
 
 #%% Auxiliary functions
 
 # transforms 2D matrix to 3D
 def _3D_to_triangular(m_3D):
+    
     n = np.shape(m_3D)[0]
     m_2D = np.zeros((n,n))
     
@@ -46,9 +48,15 @@ def _get_scot_locations(epochs):
     return locations
 
 # mapping of fft bins to subscriptable indices 
-def _map_bins_to_indices(band, fs=128, bins_fft=256):
-    f_step = 0.5 * fs / bins_fft
+def _map_bins_to_indices(band, fs=128, bins_fft=256, toolbox='scot'):
+    
+    if toolbox == 'scot':
+        f_step = 0.5 * fs / bins_fft
+    elif toolbox == 'erden-kramer':
+        f_step = 0.4
+        
     limits = [int(b / f_step) for b in band]
+    
     return range(limits[0], limits[1] + 1)
 
 #%% Mutual Information
@@ -78,50 +86,71 @@ def mutual_information(epochs):
 
 #%% Partial Directed Coherence
 
-def partial_directed_coherence(epochs, plot=False, band=[]):
-    # get number of channels
-    n_channels = len(epochs.ch_names)
+def partial_directed_coherence(epochs, plot=False, toolbox='scot'):
     
-    # get electrodes coordinates
-    locs = _get_scot_locations(epochs)
+    if toolbox == 'scot':
+        # get number of channels
+        n_channels = len(epochs.ch_names)
         
-    # multivariate VAR
-    var = scot.var.VAR(model_order=8)
-    var.fit(epochs._data)
+        # get electrodes coordinates
+        locs = _get_scot_locations(epochs)
+            
+        # multivariate VAR
+        var = scot.var.VAR(model_order=8)
+        var.fit(epochs._data)
+        
+        # workspace settings
+        fs = 128
+        bins_fft = 256
+        
+        # SCoT workspace
+        ws = scot.Workspace(var, reducedim='no_pca', fs=fs,
+                            nfft=bins_fft, locations=locs)
+        ws.set_data(epochs._data)
+        
+        # manually set mixing matrices to identity - we want no mixing
+        ws.set_premixing(np.eye(n_channels))
+        ws.mixing_ = np.eye(n_channels)
+        
+        # manually set activations equal to data - each source is a channel
+        ws.activations_ = epochs._data
+        
+        # fit var
+        ws.fit_var()
+        
+        # plotting settings
+        if plot:
+            ws.plot_outside_topo = True
+            fig = ws.plot_connectivity_topos()    
+            # compute connectivity
+            pdc, fig = ws.get_connectivity('PDC', plot=fig)
+            ws.show_plots()
+        else:
+             pdc = ws.get_connectivity('PDC', plot=False)
+        
+        return pdc
     
-    # workspace settings
-    fs = 128
-    bins_fft = 256
-    
-    # SCoT workspace
-    ws = scot.Workspace(var, reducedim='no_pca', fs=fs,
-                        nfft=bins_fft, locations=locs)
-    ws.set_data(epochs._data)
-    
-    # manually set mixing matrices to identity - we want no mixing
-    ws.set_premixing(np.eye(n_channels))
-    ws.mixing_ = np.eye(n_channels)
-    
-    # manually set activations equal to data - each source is a channel
-    ws.activations_ = epochs._data
-    
-    # fit var
-    ws.fit_var()
-    
-    # plotting settings
-    if plot:
-        ws.plot_f_range = band
-        ws.plot_outside_topo = True
-        fig = ws.plot_connectivity_topos()    
-        # compute connectivity
-        pdc, fig = ws.get_connectivity('PDC', plot=fig)
-        ws.show_plots()
-    else:
-         pdc = ws.get_connectivity('PDC', plot=False)
-    
-    return pdc
-    
+    elif toolbox == 'erden-kramer':
+        # swap axes
+        time_series = np.swapaxes(epochs._data, axis1=0, axis2=2)
+        time_series = np.swapaxes(time_series, axis1=1, axis2=2)
+        
+        m = Multitaper(time_series,
+               sampling_frequency=128,
+               time_halfbandwidth_product=2,
+               start_time=0)
 
+        c = Connectivity(fourier_coefficients=m.fft(),
+                         frequencies=m.frequencies,
+                         time=m.time)
+        
+        pdc = c.partial_directed_coherence()[0,:,:,:]
+        
+        pdc = np.swapaxes(pdc, axis1=0, axis2=2)
+        pdc = np.swapaxes(pdc, axis1=0, axis2=1)
+        
+        return pdc
+    
     
 #%% Connectivity Features Extractor
 
@@ -156,8 +185,8 @@ def extract_features(bd_names, epochs):
         #     mi = {'Global': mutual_information(epochs[bd_n])}
                
         # PDC
-        idxs_bd = _map_bins_to_indices(bands[bd_n])
-        pdc = partial_directed_coherence(epochs[bd_n], plot=False)
+        idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='erden-kramer')
+        pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='erden-kramer')
         pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return  pdcs #imcohs, plvs, mi,
