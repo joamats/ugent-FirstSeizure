@@ -84,22 +84,32 @@ def get_filenames_labels(mode='Diagnosis'):
 # Make Data Array: Features + Labels
 def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
+    flt_labels = labels.copy()
+    
     if mode == 'Diagnosis':
-        labels[labels != 'epileptic seizure'] = 0
-        labels[labels == 'epileptic seizure'] = 1
+        flt_labels[flt_labels != 'epileptic seizure'] = 0
+        flt_labels[flt_labels == 'epileptic seizure'] = 1
+        
+        labels_names = ['non-epileptic', 'epileptic seizure']
 
     elif mode == 'Epilepsy types':
-        labels[labels == 'cryptogenic'] = 0
-        labels[labels == 'focal cryptogenic'] = 0
-        labels[labels == 'focal symptomatic'] = 1
-        labels[labels == 'generalized idiopathic'] = 2
+        flt_labels[flt_labels == 'cryptogenic'] = 0
+        flt_labels[flt_labels == 'focal cryptogenic'] = 1
+        flt_labels[flt_labels == 'focal symptomatic'] = 2
+        flt_labels[flt_labels == 'generalized idiopathic'] = 3
+        
+        labels_names = ['cryptogenic', 'focal cryptogenic', 'focal symptomatic', 'generalized idiopathic']
         
     elif mode == 'Gender':
-        labels[labels == 'female'] = 0
-        labels[labels == 'male'] = 1
+        flt_labels[flt_labels == 'female'] = 0
+        flt_labels[flt_labels == 'male'] = 1
+        
+        labels_names = ['female', 'male']
     
     
-    data.insert(loc=0, column='y', value=labels)
+    data.insert(loc=0, column='y', value=flt_labels)
+    
+    return labels_names
 
 
 # double 5-fold nested cross-validation

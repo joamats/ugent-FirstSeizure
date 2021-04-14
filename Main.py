@@ -7,13 +7,20 @@ from GraphMeasures import compute_graph_subgroup_measures
 from Asymmetry import compute_asymmetry_measures
 from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split, get_filenames_labels
+from PlotTSNE import plot_tsne
+from BestRankedFeatures import best_ranked_features
+from MachineLearning import svm_anova, svm_pca, mlp_anova, \
+                            mlp_pca, rfc_anova, rfc_pca
 
 '''
-    Function Reorganization
+    Different classification tasks implementation (MODE)
 '''
 
-global filenames
+global filenames, _mode_
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+
+# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender'
+MODE = 'Gender'
 
 #%% EEG Pre-Processing 256Hz
 
@@ -75,7 +82,7 @@ createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures'
 #%% Generate All Features Matrix
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
-labels, filenames = get_filenames_labels(mode='Gender')
+labels, filenames = get_filenames_labels(mode=MODE)
 
 # Make array
 data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
@@ -84,41 +91,46 @@ fts_names = data.columns
 createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
 createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
-add_labels_to_data_array(data, labels, mode='Gender')
+labels_names = add_labels_to_data_array(data, labels, mode=MODE)
 dataset = dataset_split(data)
 
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
+createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
 
-#%% Machine Learning TRAIN
-from PlotTSNE import plot_tsne
-from BestRankedFeatures import best_ranked_features
-from MachineLearning import svm_anova, svm_pca, mlp_anova, \
-                            mlp_pca, rfc_anova, rfc_pca
-
-global dataset, fts_names
+#%% funny thing: females have stronger efficiency in beta BL
+a = data[['y', 	'efficiency-pdc-Beta-BL']]
+a_f = a[a['y']==0]['efficiency-pdc-Beta-BL'].mean()
+a_m = a[a['y']==1]['efficiency-pdc-Beta-BL'].mean()
+    
+#%% TRAIN Machine Learning 
+global dataset, fts_names, labels_names
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
+labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
 #%% Plot TSNE
-fig_tsne = plot_tsne(dataset, num_labels=2)
-
+fig_tsne = plot_tsne(dataset, labels_names, MODE)
+    
 #%% Best Ranked Features
 best_fts = best_ranked_features(dataset,fts_names, k_features=50)
 
-#%% SVM + SelectKBest
+#%% GridSearchCV of Best Models (run current line with F9)
+# SVM + SelectKBest
 clf_svm_anova = svm_anova(dataset)
 
-#%% SVM + PCA
+# SVM + PCA
 clf_svm_pca = svm_pca(dataset)
 
-#%% MLP + SelectKBest
+# MLP + SelectKBest
 clf_mlp_anova = mlp_anova(dataset)
 
-#%% MLP + PCA
+# MLP + PCA
 clf_mlp_pca = mlp_pca(dataset)
 
-#%% RFC + SelectKBest
+# RFC + SelectKBest
 clf_rfc_anova = rfc_anova(dataset)
 
-#%% RFC + PCA
+# RFC + PCA
 clf_rfc_pca = rfc_pca(dataset)
+
+#%% Model Exhaustive assesment and report
