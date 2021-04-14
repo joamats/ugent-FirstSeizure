@@ -79,6 +79,10 @@ def get_filenames_labels(mode='Diagnosis'):
         filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
         labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Gender']
         
+    elif mode == 'Age':
+        filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
+        labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Age']
+        
     return labels, filenames
 
 # Make Data Array: Features + Labels
@@ -105,6 +109,12 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         flt_labels[flt_labels == 'male'] = 1
         
         labels_names = ['female', 'male']
+        
+    elif mode == 'Age':
+        flt_labels[flt_labels < 50] = 0
+        flt_labels[flt_labels >= 50 ] = 1
+        
+        labels_names = ['young', 'old']
     
     
     data.insert(loc=0, column='y', value=flt_labels)

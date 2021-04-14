@@ -19,8 +19,8 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 global filenames, _mode_
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender'
-MODE = 'Gender'
+# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age'
+MODE = 'Age'
 
 #%% EEG Pre-Processing 256Hz
 
