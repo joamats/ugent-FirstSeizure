@@ -14,14 +14,11 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 
 
 '''
-    Cardiovascular vs. Epileptic
+    New scoring procedure
 '''
 
-global filenames, MODE
+global filenames
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-
-# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age', 'Sleep', 'Diagnosis-Sleep', 'CardiovascularVSEpileptic'
-MODE = 'CardiovascularVSEpileptic'
 
 #%% EEG Pre-Processing 256Hz
 
@@ -56,14 +53,14 @@ for i, filename in enumerate(filenames):
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
     
     # IMCOH[filename], PLV[filename], MI[filename],\
-    PDC[filename] = extract_features(bd_names, s_epochs)
+    # PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
     # createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
     # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
     # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
     # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
-    createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
+    # createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% Subgroups Connectivity Features
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
@@ -80,7 +77,21 @@ fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
 
-#%% Generate All Features Matrix
+#%% Working Mode & Generate All Features Matrix
+''' 
+Diagnosis:                  roc_auc
+Epilepsy types:             balanced_accuracy
+Gender:                     f1
+Age:                        f1
+Sleep:                      f1
+Diagnosis-Sleep:            f1
+CardiovascularVSEpileptic:  f1
+'''
+
+global MODE, SCORING
+MODE = 'Diagnosis'
+SCORING = 'f1'
+
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
 labels, filenames = get_filenames_labels(mode=MODE)
@@ -105,6 +116,7 @@ fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
 #%% Plot TSNE
+# %config InlineBackend.figure_format='retina'
 fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 #%% Best Ranked Features
@@ -112,22 +124,22 @@ best_fts = best_ranked_features(dataset,fts_names, k_features=50)
 
 #%% GridSearchCV of Best Models (run current line with F9)
 # SVM + SelectKBest
-clf_svm_anova = svm_anova(dataset)
+clf_svm_anova = svm_anova(dataset, MODE, SCORING)
 
 # SVM + PCA
-clf_svm_pca = svm_pca(dataset)
+clf_svm_pca = svm_pca(dataset, MODE, SCORING)
 
 # MLP + SelectKBest
-clf_mlp_anova = mlp_anova(dataset)
+clf_mlp_anova = mlp_anova(dataset, MODE, SCORING)
 
 # MLP + PCA
-clf_mlp_pca = mlp_pca(dataset)
+clf_mlp_pca = mlp_pca(dataset, MODE, SCORING)
 
 # RFC + SelectKBest
-clf_rfc_anova = rfc_anova(dataset)
+clf_rfc_anova = rfc_anova(dataset, MODE, SCORING)
 
 # RFC + PCA
-clf_rfc_pca = rfc_pca(dataset)
+clf_rfc_pca = rfc_pca(dataset, MODE, SCORING)
 
 #%% Model Exhaustive assesment and report
 

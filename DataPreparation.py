@@ -66,8 +66,13 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
 def get_filenames_labels(mode='Diagnosis'):
     
     if mode == 'Diagnosis':
-        filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
-        labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Diagnosis']
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        filenames = labels.index
         
     elif mode == 'Epilepsy types':
         meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')['Epilepsy type']
@@ -121,7 +126,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
-        labels_names = ['epileptic seizure', 'cardiovascular']
+        labels_names = ['non-epileptic', 'epileptic seizure']
 
     elif mode == 'Epilepsy types':
         flt_labels[labels == 'cryptogenic'] = 0
