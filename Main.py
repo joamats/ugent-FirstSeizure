@@ -20,8 +20,10 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 global filenames, MODE
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age', 'Sleep', 'Diagnosis-Sleep', 'CardiovascularVSEpileptic'
-MODE = 'CardiovascularVSEpileptic'
+# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age', 'Sleep',
+# 'Diagnosis-Sleep', 'CardiovascularVSEpileptic', 'ProvokedVSEpileptic',
+# 'PsychogenicVSEpileptic'
+MODE = 'PsychogenicVSEpileptic'
 
 #%% EEG Pre-Processing 256Hz
 
@@ -59,28 +61,28 @@ for i, filename in enumerate(filenames):
     PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    # createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
-    # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
-    # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
+    createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
+    createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
     createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
-#%% Subgroups Connectivity Features
+#%%Subgroups Connectivity Features
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/128Hz/' + 'connectivityMeasures')
 
-#%% Subgroups Graph Measures
+#%%Subgroups Graph Measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
-#%% Subgroups Graph Asymmetry Ratios
+#%%Subgroups Graph Asymmetry Ratios
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
 
-#%% Generate All Features Matrix
+#%%Generate All Features Matrix
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
 labels, filenames = get_filenames_labels(mode=MODE)

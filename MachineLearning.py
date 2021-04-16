@@ -123,10 +123,9 @@ def mlp_anova(dataset):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__hidden_layer_sizes':[(100), (150), (500), (1000), (2000), (5000),
+        'classifier__hidden_layer_sizes':[(100), (150), (500), (1000),
                                           (50,50), (100,100), (150,150),(500,500),
-                                          (50,50,50), (100,100,100),(150,150,150),
-                                          (1000, 1000)],
+                                          (50,50,50), (100,100,100),(150,150,150)],
         'classifier__activation': ['relu'],
         'classifier__solver': ['adam'],
         'classifier__learning_rate': ['adaptive'],
@@ -186,7 +185,7 @@ def mlp_pca(dataset):
         'classifier__activation': ['relu'],
         'classifier__solver': ['adam'],
         'classifier__learning_rate': ['adaptive'],
-        'classifier__alpha':[0.1, 1],
+        'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
         'classifier__early_stopping': [False]
     })
     
