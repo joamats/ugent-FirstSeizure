@@ -186,14 +186,8 @@ def extract_features(bd_names, epochs):
         #     mi = {'Global': mutual_information(epochs[bd_n])}
                
         # PDC
-        try:
-            idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='eden-kramer')
-            pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='eden-kramer')
-        except:
-            idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
-            pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
-            warnings.warn('SCoT used instead of eden-kramer')
-        
+        idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
+        pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
         pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return  pdcs #imcohs, plvs, mi,

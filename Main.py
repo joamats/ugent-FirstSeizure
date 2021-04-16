@@ -14,14 +14,14 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 
 
 '''
-    PDC with new toolbox Eden-Kramer
+    Cardiovascular vs. Epileptic
 '''
 
-global filenames, _mode_
+global filenames, MODE
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age'
-MODE = 'Diagnosis'
+# implemented modes: 'Diagnosis', 'Epilepsy types', 'Gender', 'Age', 'Sleep', 'Diagnosis-Sleep', 'CardiovascularVSEpileptic'
+MODE = 'CardiovascularVSEpileptic'
 
 #%% EEG Pre-Processing 256Hz
 
@@ -97,11 +97,6 @@ dataset = dataset_split(data)
 
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
-
-#%% funny thing: females have stronger efficiency in beta BL
-a = data[['y', 	'efficiency-pdc-Beta-BL']]
-a_f = a[a['y']==0]['efficiency-pdc-Beta-BL'].mean()
-a_m = a[a['y']==1]['efficiency-pdc-Beta-BL'].mean()
     
 #%% TRAIN Machine Learning 
 global dataset, fts_names, labels_names

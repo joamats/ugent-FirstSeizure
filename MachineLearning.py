@@ -126,10 +126,10 @@ def mlp_anova(dataset):
         'classifier__hidden_layer_sizes':[(100), (150), (500), (1000), (2000), (5000),
                                           (50,50), (100,100), (150,150),(500,500),
                                           (50,50,50), (100,100,100),(150,150,150),
-                                          (1000, 1000), (1000, 1000, 1000)],
-        'classifier__activation': ['relu', 'logistic'],
+                                          (1000, 1000)],
+        'classifier__activation': ['relu'],
         'classifier__solver': ['adam'],
-        'classifier__learning_rate': ['adaptive', 'invscaling'],
+        'classifier__learning_rate': ['adaptive'],
         'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
         'classifier__early_stopping': [False]
     })
@@ -180,21 +180,20 @@ def mlp_pca(dataset):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__hidden_layer_sizes':[(100), (150), (500), (1000), (2000), (5000),
+        'classifier__hidden_layer_sizes':[(100), (150), (500), (1000),
                                           (50,50), (100,100), (150,150),(500,500),
-                                          (50,50,50), (100,100,100),(150,150,150),
-                                          (1000, 1000), (1000, 1000, 1000)],
-        'classifier__activation': ['relu', 'logistic'],
+                                          (50,50,50), (100,100,100),(150,150,150)],
+        'classifier__activation': ['relu'],
         'classifier__solver': ['adam'],
-        'classifier__learning_rate': ['adaptive', 'invscaling'],
-        'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+        'classifier__learning_rate': ['adaptive'],
+        'classifier__alpha':[0.1, 1],
         'classifier__early_stopping': [False]
     })
     
     # Dimensionality Reduction
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = [2, 5, 10, 15, 20, 25, 30]
+    space['dim_red__n_components'] = [10, 15, 20]
     
     
     # Pipeline
