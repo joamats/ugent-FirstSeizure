@@ -8,10 +8,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 
-#%% SVM + SelectKBest
-def svm_anova(dataset):
 
-    print('\nSVM + SelectKBest\n')
+
+#%% SVM + SelectKBest
+def svm_anova(dataset, mode, scoring):
+
+    print(mode + ' SVM + SelectKBest\n')
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -26,7 +28,7 @@ def svm_anova(dataset):
     space = dict({
         'classifier__C': [0.01, 0.1, 1, 10, 100],
         'classifier__gamma': [0.01, 0.1, 1, 10, 100],
-        'classifier__kernel': ['rbf', 'linear', 'sigmoid']
+        'classifier__kernel': ['rbf']#, 'linear', 'sigmoid']
     })
     
     # Feature Selection
@@ -41,26 +43,27 @@ def svm_anova(dataset):
     
     clf = GridSearchCV( estimator=model_SVC,
                         param_grid=space,
-                        scoring='roc_auc', 
+                        scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
+                        refit=False,
                         return_train_score=True )
     
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print('Best Score: ')
+    print(scoring + ' :')
     print(clf.best_score_)
-    print('Best Parameters: ')
+    print('best parameters: ')
     print(clf.best_params_)
 
     return clf
 
 #%% SVM + PCA
 
-def svm_pca(dataset):
+def svm_pca(dataset, mode, scoring):
 
-    print('\nSVM + PCA\n')
+    print(mode + ' SVM + PCA\n')
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -90,7 +93,7 @@ def svm_pca(dataset):
     
     clf = GridSearchCV( estimator=model_SVC,
                         param_grid=space,
-                        scoring='roc_auc', 
+                        scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
                         return_train_score=True )
@@ -98,18 +101,18 @@ def svm_pca(dataset):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print('Best Score: ')
+    print(scoring + ' :')
     print(clf.best_score_)
-    print('Best Parameters: ')
+    print('best parameters: ')
     print(clf.best_params_)
     
     return clf
 
 #%% MLP + SelectKBest
 
-def mlp_anova(dataset):
+def mlp_anova(dataset, mode, scoring):
     
-    print('\nMLP + SelectKBest\n')
+    print(mode + ' MLP + SelectKBest\n')
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -123,13 +126,13 @@ def mlp_anova(dataset):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__hidden_layer_sizes':[(100), (150), (500), (1000),
-                                          (50,50), (100,100), (150,150),(500,500),
-                                          (50,50,50), (100,100,100),(150,150,150)],
+        'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
+                                          (100,100), (150,150),(200,200), (500,500),
+                                          (100,100,100),(150,150,150), (200,200,200)],
         'classifier__activation': ['relu'],
         'classifier__solver': ['adam'],
         'classifier__learning_rate': ['adaptive'],
-        'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+        'classifier__alpha':[0.001, 0.01, 0.1, 1],
         'classifier__early_stopping': [False]
     })
     
@@ -146,7 +149,7 @@ def mlp_anova(dataset):
     
     clf = GridSearchCV( estimator=model_MLP,
                         param_grid=space,
-                        scoring='roc_auc', 
+                        scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
                         return_train_score=True )
@@ -154,18 +157,18 @@ def mlp_anova(dataset):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print('Best Score: ')
+    print(scoring + ' :')
     print(clf.best_score_)
-    print('Best Parameters: ')
+    print('best parameters: ')
     print(clf.best_params_)
     
     return clf
 
 #%% MLP + PCA
 
-def mlp_pca(dataset):
+def mlp_pca(dataset, mode, scoring):
 
-    print('\nMLP + PCA\n')
+    print(mode + ' MLP + PCA\n')
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -179,13 +182,13 @@ def mlp_pca(dataset):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__hidden_layer_sizes':[(100), (150), (500), (1000),
-                                          (50,50), (100,100), (150,150),(500,500),
-                                          (50,50,50), (100,100,100),(150,150,150)],
+        'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
+                                          (100,100), (150,150),(200,200), (500,500),
+                                          (100,100,100),(150,150,150), (200,200,200)],
         'classifier__activation': ['relu'],
         'classifier__solver': ['adam'],
         'classifier__learning_rate': ['adaptive'],
-        'classifier__alpha':[0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+        'classifier__alpha':[0.001, 0.01, 0.1, 1],
         'classifier__early_stopping': [False]
     })
     
@@ -203,7 +206,7 @@ def mlp_pca(dataset):
     
     clf = GridSearchCV( estimator=model_MLP,
                         param_grid=space,
-                        scoring='roc_auc', 
+                        scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
                         return_train_score=True )
@@ -211,18 +214,18 @@ def mlp_pca(dataset):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print('Best Score: ')
+    print(scoring + ' :')
     print(clf.best_score_)
-    print('Best Parameters: ')
+    print('best parameters: ')
     print(clf.best_params_)
 
     return clf
 
 #%% RFC + SelectKBest
 
-def rfc_anova(dataset):
+def rfc_anova(dataset, mode, scoring):
 
-    print('\nRFC + SelectKBest\n')
+    print(mode + ' RFC + SelectKBest\n')
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -256,7 +259,7 @@ def rfc_anova(dataset):
     
     clf = GridSearchCV( estimator=model_RFC,
                         param_grid=space,
-                        scoring='roc_auc', 
+                        scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
                         return_train_score=True )
@@ -264,9 +267,9 @@ def rfc_anova(dataset):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print('Best Score: ')
+    print(scoring + ' :')
     print(clf.best_score_)
-    print('Best Parameters: ')
+    print('best parameters: ')
     print(clf.best_params_)
     
     return clf
@@ -274,9 +277,9 @@ def rfc_anova(dataset):
 
 #%% RFC + PCA
 
-def rfc_pca(dataset):
+def rfc_pca(dataset, mode, scoring):
 
-    print('\nRFC + PCA\n')
+    print(mode + ' RFC + PCA\n')
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -310,7 +313,7 @@ def rfc_pca(dataset):
     
     clf = GridSearchCV( estimator=model_RFC,
                         param_grid=space,
-                        scoring='roc_auc', 
+                        scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
                         return_train_score=True )
@@ -318,9 +321,9 @@ def rfc_pca(dataset):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print('Best Score: ')
+    print(scoring + ' :')
     print(clf.best_score_)
-    print('Best Parameters: ')
+    print('best parameters: ')
     print(clf.best_params_)
     
     return clf
