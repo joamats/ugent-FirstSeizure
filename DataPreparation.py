@@ -114,9 +114,51 @@ def get_filenames_labels(mode='Diagnosis'):
         labels = labels[~ labels['Diagnosis'].isnull()]
         labels = labels['Diagnosis']
         filenames = labels.index
+
+    elif mode == 'ProvokedVSEpileptic':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels != 'undetermined']
+        labels = labels[labels != 'cardiovascular']
+        labels = labels[labels != 'vagal syncope']
+        labels = labels[labels != 'other']
+        labels = labels[labels != 'psychogenic']
+        labels = labels[~ labels['Sleep state'].isnull()]
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+
+        filenames = labels.index
         
-  
+    elif mode == 'PsychogenicVSEpileptic':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels != 'undetermined']
+        labels = labels[labels != 'cardiovascular']
+        labels = labels[labels != 'vagal syncope']
+        labels = labels[labels != 'other']
+        labels = labels[labels != 'provoked seizure']
+        labels = labels[~ labels['Sleep state'].isnull()]
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
         
+        filenames = labels.index
+        
+    elif mode == 'VagalSyncopeVSEpileptic':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels != 'undetermined']
+        labels = labels[labels != 'cardiovascular']
+        labels = labels[labels != 'psychogenic']
+        labels = labels[labels != 'other']
+        labels = labels[labels != 'provoked seizure']
+        labels = labels[~ labels['Sleep state'].isnull()]
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
         
     return labels, filenames
 
@@ -168,8 +210,26 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         flt_labels[labels == 'epileptic seizure'] = 1
         
         labels_names = ['cardiovascular', 'epileptic seizure']
-    
+
+    elif mode == 'ProvokedVSEpileptic':
+        flt_labels[labels == 'provoked seizure'] = 0
+        flt_labels[labels == 'epileptic seizure'] = 1
         
+        labels_names = ['provoked seizure', 'epileptic seizure']
+        
+    elif mode == 'PsychogenicVSEpileptic':
+        flt_labels[labels == 'psychogenic'] = 0
+        flt_labels[labels == 'epileptic seizure'] = 1
+        
+        labels_names = ['psychogenic', 'epileptic seizure']
+        
+    elif mode == 'VagalSyncopeVSEpileptic':
+        flt_labels[labels == 'vagal syncope'] = 0
+        flt_labels[labels == 'epileptic seizure'] = 1
+        
+        labels_names = ['vagal syncope', 'epileptic seizure']
+
+
     data.insert(loc=0, column='y', value=flt_labels)
     
     return labels_names

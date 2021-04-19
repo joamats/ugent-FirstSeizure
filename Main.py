@@ -67,16 +67,19 @@ for i, filename in enumerate(filenames):
 #%% From connectivity matrices, compute subgroups' measures
 
 #Subgroups Connectivity Features
+
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/128Hz/' + 'connectivityMeasures')
 
 # Subgroups Graph Measures
+
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
 # Subgroups Graph Asymmetry Ratios
+
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
