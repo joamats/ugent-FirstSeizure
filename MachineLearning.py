@@ -28,7 +28,7 @@ def svm_anova(dataset, mode, scoring):
     space = dict({
         'classifier__C': [0.01, 0.1, 1, 10, 100],
         'classifier__gamma': [0.01, 0.1, 1, 10, 100],
-        'classifier__kernel': ['rbf']#, 'linear', 'sigmoid']
+        'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
     # Feature Selection

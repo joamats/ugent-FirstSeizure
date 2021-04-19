@@ -167,6 +167,8 @@ def extract_features(bd_names, epochs):
     for bd_n in bd_names:
         f_min, f_max = bands[bd_n]
         
+        
+        
         # # IMCOH
         # imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
         #                           sfreq=128, fmin=f_min, fmax=f_max, 
@@ -185,10 +187,10 @@ def extract_features(bd_names, epochs):
         # if(bd_n == 'Global'):
         #     mi = {'Global': mutual_information(epochs[bd_n])}
                
-        # PDC
-        idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
-        pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
-        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
+        # # PDC
+        # idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
+        # pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
+        # pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
     return  pdcs #imcohs, plvs, mi,
 
@@ -260,12 +262,7 @@ def compute_connectivity_measures(fts):
 
 #%% Bandpower
 def band_power_measures(epochs, sub_name, filename):
-    # channel names
-    ch = epochs.ch_names
-    
-    # number of epochs
-    n_epochs = np.shape(epochs._data)[0]
-    
+        
     bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
     
@@ -275,20 +272,32 @@ def band_power_measures(epochs, sub_name, filename):
     
     for bd_n in bd_names:
         bd_means = []
+                
+        # Total Absolute Power is computed for global band
+        bd_na = 'Global' if bd_n == 'TotalAbsPow' else bd_n
+        
+        # channel names
+        ch = epochs[bd_na].ch_names
+        
+        # number of epochs
+        n_epochs = np.shape(epochs[bd_na]._data)[0]
         
         for i in range (n_epochs):
             # compute bandpowers
-            bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], 
+            bd, _, _ = bandpower_1f_correction(data=epochs[bd_na]._data[i,:,:], 
                                                sf=128, ch_names=ch,
                                                hypno=None, relative=True,
                                                bands=bands)
             
+            # combination in subgroup's channels
             bd_means.append(bd[bd_n].mean(axis=0))
     
-        m = np.mean(bd_means)
+        # combination over all epochs
+        m = np.median(bd_means)
         s = np.std(bd_means)
         
-        m_name = 'bdp-' + bd_n + '-' + sub_name + '-Mean'
+        # naming
+        m_name = 'bdp-' + bd_n + '-' + sub_name + '-Median'
         s_name = 'bdp-' + bd_n + '-' + sub_name + '-Std'
         
         bd_power_band = pd.DataFrame(data=[m,s], columns=[filename], index=[m_name, s_name])
@@ -301,31 +310,32 @@ def band_power_measures(epochs, sub_name, filename):
 
 # Drops channels, calculates band powers 
 def _band_powers_subgroup(saved_epochs, chs_subgroup, sub_name, filename):
+    
+    s_epochs = {}
+    
+    for key in saved_epochs:
 
-    ch_names = saved_epochs.ch_names
-
-    chs_to_drop = [i for i in ch_names if i not in chs_subgroup]    
-
-    epochs_use = saved_epochs.copy()
-    epochs_use.drop_channels(chs_to_drop) 
-    bd_powers = band_power_measures(epochs_use, sub_name, filename)
+        ch_names = saved_epochs[key].ch_names
+        chs_to_drop = [i for i in ch_names if i not in chs_subgroup]    
+        epochs_use = saved_epochs[key].copy().drop_channels(chs_to_drop) 
+        s_epochs[key] = epochs_use
+        
+    bd_powers = band_power_measures(s_epochs, sub_name, filename)
    
     return bd_powers
 
 def extract_bandpowers(epochs, filename):
     
-    ch_names = epochs.ch_names
-    
     subgroups = {
         'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
         'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
         'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
-        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'],
-        'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
-        'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
-        'ALL': ch_names }
+        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
+        # 'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
+        # 'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
+        # 'ALL': epochs.ch_names }
        
-    subgroups_names = ['FR', 'FL', 'BR', 'BL', 'R', 'L', 'ALL']
+    subgroups_names = ['FR', 'FL', 'BR', 'BL'] #, 'R', 'L', 'ALL']
     
     df_all = pd.DataFrame()
     

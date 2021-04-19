@@ -16,7 +16,7 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 
 
 '''
-    New scoring procedure
+    New bandpower extractor, now with epoch selection
 '''
 
 global filenames
@@ -49,16 +49,16 @@ PDC = {}
 # over all subjects
 for i, filename in enumerate(filenames):
     saved_epochs = getPickleFile('../1_PreProcessed_Data/128Hz/' + filename)
-        
-    # BDP[filename] = extract_bandpowers(saved_epochs, filename)
-    
+            
     bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    
+    BDP[filename] = extract_bandpowers(s_epochs, filename)
     
     # IMCOH[filename], PLV[filename], MI[filename],\
     # PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
-    # createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
+    createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
     # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
     # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
     # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
@@ -90,11 +90,12 @@ Age:                        f1
 Sleep:                      f1
 Diagnosis-Sleep:            f1
 CardiovascularVSEpileptic:  f1
+DiagnosisWithAgeGender      roc_auc
 '''
 
 global MODE, SCORING
-MODE = 'Epilepsy types'
-SCORING = 'f1'
+MODE = 'Diagnosis'
+SCORING = 'roc_auc'
 
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 

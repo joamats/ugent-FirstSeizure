@@ -58,6 +58,7 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
         ft_df = asy_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
         # join this subject's row to all subjects
+        features_row = features_row[features_row.columns.drop(list(features_row.filter(regex='mi')))]
         allFeatures = pd.concat([allFeatures, features_row], axis=0)
     
     return allFeatures.fillna(0)
@@ -65,7 +66,7 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
 # Get filenames and labels from metadata
 def get_filenames_labels(mode='Diagnosis'):
     
-    if mode == 'Diagnosis':
+    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender':
         meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
         labels = meta_labels[~ meta_labels.isnull()]
         labels = labels[labels['Sleep state'] == 'wake']
@@ -112,8 +113,10 @@ def get_filenames_labels(mode='Diagnosis'):
         labels = labels[~ labels['Sleep state'].isnull()]
         labels = labels[~ labels['Diagnosis'].isnull()]
         labels = labels['Diagnosis']
-
         filenames = labels.index
+        
+  
+        
         
     return labels, filenames
 
@@ -122,7 +125,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
     flt_labels = labels.copy()
     
-    if mode == 'Diagnosis':
+    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender':
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
@@ -165,8 +168,8 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         flt_labels[labels == 'epileptic seizure'] = 1
         
         labels_names = ['cardiovascular', 'epileptic seizure']
-        
     
+        
     data.insert(loc=0, column='y', value=flt_labels)
     
     return labels_names
