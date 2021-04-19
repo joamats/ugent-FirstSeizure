@@ -209,8 +209,14 @@ def _features_subgroup_combination(conn, subgroup, conn_name):
 # Compute connectivity mean and std
 def _conn_mean_std(conn_df, filename, conn_name, bd_name, sub_name):
     
-    # wrong here! PDC is directed!! we cannot ignore the upper triangular matrix
-    tr = np.tril(conn_df)
+    # if pdc, simply fill diagonal with zeros
+    if conn_name == 'pdc':
+        tr = np.copy(conn_df)
+        np.fill_diagonal(tr,0)
+    # if not pdc, get the lower triangular matrix
+    else:
+        tr = np.tril(conn_df)   
+        
     m = np.mean(tr[tr!=0])
     s = np.std(tr[tr!=0])
     
