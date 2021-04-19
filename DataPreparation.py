@@ -235,7 +235,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
     return labels_names
 
 
-# double 5-fold nested cross-validation
+# 5-fold cross-validation
 def dataset_split(data):
 
     y = data['y'].to_numpy(dtype=float)

@@ -16,7 +16,7 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 
 
 '''
-    New bandpower extractor, now with epoch selection
+    Features extraction with epochs 2.5s and delta 2-4Hz
 '''
 
 global filenames
@@ -54,15 +54,15 @@ for i, filename in enumerate(filenames):
     
     BDP[filename] = extract_bandpowers(s_epochs, filename)
     
-    # IMCOH[filename], PLV[filename], MI[filename],\
-    # PDC[filename] = extract_features(bd_names, s_epochs)
+    IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
     
     # save features in pickle
     createPickleFile(BDP, '../2_Features_Data/128Hz/' + 'bdp')
-    # createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
-    # createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
-    # createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
-    # createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
+    createPickleFile(IMCOH, '../2_Features_Data/128Hz/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/128Hz/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/128Hz/' + 'mi')
+    createPickleFile(PDC, '../2_Features_Data/128Hz/' + 'pdc')         
 
 #%% From connectivity matrices, compute subgroups' measures
 

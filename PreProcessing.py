@@ -90,8 +90,8 @@ def eeg_preprocessing(filename, icas, plot=False):
     orig_raw = raw.copy()
     ica.apply(raw, verbose=False)
     
-    # create epochs with 2sec
-    epochs = mne.make_fixed_length_epochs(raw, duration=2.0, verbose = False, preload=True)
+    # create epochs with 2.5sec
+    epochs = mne.make_fixed_length_epochs(raw, duration=2.5, verbose = False, preload=True)
     epochs.drop_bad(flat=flat_criteria)
     
     if plot == True:
@@ -108,7 +108,7 @@ def eeg_preprocessing(filename, icas, plot=False):
         # Without Artifacts EEG Plot
         raw.plot(duration=15, n_channels = 20, title="Preprocessed " + filename, remove_dc = False)
         # Epochs Plot
-        epochs.plot(n_epochs=10, n_channels= 20, title="EEG 2s Epochs " + filename)     
+        epochs.plot(n_epochs=10, n_channels= 20, title="EEG 2.5s Epochs " + filename)     
     
     return raw, ica
 

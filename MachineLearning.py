@@ -5,9 +5,9 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-
 
 
 #%% SVM + SelectKBest
@@ -28,13 +28,13 @@ def svm_anova(dataset, mode, scoring):
     space = dict({
         'classifier__C': [0.01, 0.1, 1, 10, 100],
         'classifier__gamma': [0.01, 0.1, 1, 10, 100],
-        'classifier__kernel': ['rbf', 'linear', 'sigmoid']
+        'classifier__kernel': ['rbf', 'sigmoid']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [20, 50, 70]
+    space['dim_red__k'] = [10, 15, 20, 25, 30, 35, 40, 45, 50]
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -327,3 +327,10 @@ def rfc_pca(dataset, mode, scoring):
     print(clf.best_params_)
     
     return clf
+
+
+# #%% Naive Bayes
+
+# def naive_bayes_anova(dataset):
+    
+    

@@ -1,5 +1,4 @@
 from sklearn.manifold import TSNE
-from Pickle import getPickleFile
 import pandas as pd
 import seaborn as sb
 from matplotlib import pyplot as plt 

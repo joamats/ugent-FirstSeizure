@@ -5,10 +5,7 @@ import scot
 from scot.eegtopo import eegpos3d
 from sklearn.feature_selection import mutual_info_regression
 from BandpowerCorrection import bandpower_1f_correction
-from Pickle import getPickleFile
-from DataPreparation import get_saved_features
 from spectral_connectivity import Multitaper, Connectivity
-import warnings
 
 #%% Auxiliary functions
 
@@ -77,8 +74,8 @@ def mutual_information(epochs):
                 y = epochs._data[singleEpoch][channel_2]
                 mi = mutual_info_regression(x, y, random_state=42)
                 all_mi.append(mi)
-            #Saves the all the MI mean and std in the right position
-            mutual_infos[channel_1][channel_2][0] = np.mean(all_mi)
+            # Combine all epochs with MI median and std 
+            mutual_infos[channel_1][channel_2][0] = np.median(all_mi)
             std[channel_1][channel_2][0] = np.std(all_mi)
     
     # transforms the 3D matrix in 2D    
@@ -157,42 +154,40 @@ def partial_directed_coherence(epochs, plot=False, toolbox='scot'):
 
 def extract_features(bd_names, epochs):
     
-    bands = {'Global': [2.5,30], 'Delta': [2.5, 4], 'Theta': [4, 8],
+    bands = {'Global': [2,30], 'Delta': [2, 4], 'Theta': [4, 8],
          'Alpha': [8,12], 'Beta': [12, 30]}
     
-    # imcohs = {}
-    # plvs = {}
+    imcohs = {}
+    plvs = {}
     pdcs = {}
     
     for bd_n in bd_names:
         f_min, f_max = bands[bd_n]
         
-        
-        
-        # # IMCOH
-        # imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
-        #                           sfreq=128, fmin=f_min, fmax=f_max, 
-        #                           faverage=False, verbose=False)
+        # IMCOH
+        imcoh = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "imcoh", 
+                                  sfreq=128, fmin=f_min, fmax=f_max, 
+                                  faverage=False, verbose=False)
 
-        # imcohs[bd_n] = _compute_feature_mean(imcoh[0])
+        imcohs[bd_n] = _compute_feature_mean(imcoh[0])
            
-        # # PLV
-        # plv = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "plv", 
-        #                           sfreq = 128, fmin=f_min, fmax=f_max,
-        #                           faverage=False, verbose=False)   
+        # PLV
+        plv = mne.connectivity.spectral_connectivity(epochs[bd_n], method = "plv", 
+                                  sfreq = 128, fmin=f_min, fmax=f_max,
+                                  faverage=False, verbose=False)   
 
-        # plvs[bd_n] = _compute_feature_mean(plv[0])
+        plvs[bd_n] = _compute_feature_mean(plv[0])
 
-        # # MI (only for Global band)
-        # if(bd_n == 'Global'):
-        #     mi = {'Global': mutual_information(epochs[bd_n])}
+        # MI (only for Global band)
+        if(bd_n == 'Global'):
+            mi = {'Global': mutual_information(epochs[bd_n])}
                
-        # # PDC
-        # idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
-        # pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
-        # pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
+        # PDC
+        idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
+        pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
+        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
                 
-    return  pdcs #imcohs, plvs, mi,
+    return imcohs, plvs, mi, pdcs
 
 #%% Subrgroups' connectivity features 
 
@@ -214,6 +209,7 @@ def _features_subgroup_combination(conn, subgroup, conn_name):
 # Compute connectivity mean and std
 def _conn_mean_std(conn_df, filename, conn_name, bd_name, sub_name):
     
+    # wrong here! PDC is directed!! we cannot ignore the upper triangular matrix
     tr = np.tril(conn_df)
     m = np.mean(tr[tr!=0])
     s = np.std(tr[tr!=0])
@@ -263,7 +259,7 @@ def compute_connectivity_measures(fts):
 #%% Bandpower
 def band_power_measures(epochs, sub_name, filename):
         
-    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
+    bands = [(2, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
     
     bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']
