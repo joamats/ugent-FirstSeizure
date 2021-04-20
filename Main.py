@@ -96,26 +96,48 @@ CardiovascularVSEpileptic:  f1
 DiagnosisWithAgeGender      roc_auc
 '''
 
-global MODE, SCORING
-MODE = 'Diagnosis'
-SCORING = 'roc_auc'
+# global MODE, SCORING
+# MODE = 'AntecedentFamilyOther'
+# SCORING = 'roc_auc'
 
-bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
+# bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
-labels, filenames = get_filenames_labels(mode=MODE)
+# labels, filenames = get_filenames_labels(mode=MODE)
 
-# Make array
-data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
-fts_names = data.columns
+# # Make array
+# data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+# fts_names = data.columns
 
-createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
-createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
+# createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+# createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
-labels_names = add_labels_to_data_array(data, labels, mode=MODE)
-dataset = dataset_split(data)
+# labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+# dataset = dataset_split(data)
 
+# createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
+# createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
+
+
+datasets=[]
+global MODE
+MODE=["AntecedentFamilyEpileptic", "AntecedentFamilyNonEpileptic","AntecedentFamilyOther"]
+for i in range(3):
+    bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
+
+    labels, filenames = get_filenames_labels(mode=MODE[i])
+    # Make array
+    data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+    fts_names = data.columns
+    
+    createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+    createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
+    
+    labels_names = add_labels_to_data_array(data, labels, mode=MODE[i])
+    dataset = dataset_split(data)
+    datasets.append(dataset)
+dataset=datasets
+    
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
-createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
     
 #%% TRAIN Machine Learning - get data from Pickle
 global dataset, fts_names, labels_names
@@ -124,7 +146,8 @@ fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
 #%% Plot Data Distribution
-c = plot_data_distribution(dataset, labels_names, MODE)
+
+c = plot_data_distribution(dataset, MODE, MODE)
 
 #%% Plot TSNE
 # %config InlineBackend.figure_format='retina'

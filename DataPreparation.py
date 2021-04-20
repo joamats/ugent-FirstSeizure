@@ -160,6 +160,39 @@ def get_filenames_labels(mode='Diagnosis'):
         
         filenames = labels.index
         
+    elif mode == 'AntecedentFamilyEpileptic':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent family']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent family'] == 'epilepsy']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentFamilyNonEpileptic':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent family']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent family'] == 'none']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentFamilyOther':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent family']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent family'] == 'other']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
     return labels, filenames
 
 # Make Data Array: Features + Labels
@@ -167,7 +200,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
     flt_labels = labels.copy()
     
-    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender':
+    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender' or mode == 'AntecedentFamilyEpileptic' or mode == 'AntecedentFamilyNonEpileptic' or mode == 'AntecedentFamilyOther':
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
