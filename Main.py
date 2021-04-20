@@ -1,28 +1,15 @@
 import pandas as pd
-
 from Pickle import getPickleFile, createPickleFile
-from PreProcessing import  get_ica_template, eeg_preprocessing, clean_epochs
-from EpochSelection import epochs_selection_bandpower
-from FeatureExtraction import extract_bandpowers, extract_features, compute_connectivity_measures
-from GraphMeasures import compute_graph_subgroup_measures
-from Asymmetry import compute_asymmetry_measures
-from DataPreparation import get_saved_features,  make_features_array, \
-                            add_labels_to_data_array, dataset_split, get_filenames_labels
-                    
-from FeatureSelection import eliminate_corr_fts                           
-from DataAssessment import plot_data_distribution, plot_tsne, \
-                        best_ranked_features, fts_correlation_matrix
-from MachineLearning import svm_anova, svm_pca, mlp_anova, \
-                            mlp_pca, rfc_anova, rfc_pca
+from DataPreparation import get_saved_features
 
 '''
     Elimination of highly correlated features
 '''
 
-global filenames
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
 #%% EEG Pre-Processing 256Hz
+from PreProcessing import  get_ica_template, eeg_preprocessing, clean_epochs
 
 icas = get_ica_template(filenames[0])
 
@@ -39,6 +26,8 @@ for filename in filenames:
     createPickleFile(epochs, '../1_PreProcessed_Data/128Hz/' + filename)
 
 #%% Extraction of Bandpower and Connectivity Features 
+from EpochSelection import epochs_selection_bandpower
+from FeatureExtraction import extract_bandpowers, extract_features
 
 BDP = {}
 IMCOH = {}
@@ -67,19 +56,19 @@ for i, filename in enumerate(filenames):
 #%% From connectivity matrices, compute subgroups' measures
 
 #Subgroups Connectivity Features
-
+from FeatureExtraction import compute_connectivity_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/128Hz/' + 'connectivityMeasures')
 
 # Subgroups Graph Measures
-
+from GraphMeasures import compute_graph_subgroup_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/128Hz/' + 'graphMeasures')
 
 # Subgroups Graph Asymmetry Ratios
-
+from Asymmetry import compute_asymmetry_measures
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures')
@@ -101,7 +90,7 @@ MODE = 'Diagnosis'
 SCORING = 'roc_auc'
 
 #%% Make features array
-
+from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
 labels, filenames = get_filenames_labels(mode=MODE)
@@ -120,16 +109,13 @@ createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
     
 #%% TRAIN Machine Learning - get data from Pickle
-global dataset, fts_names, labels_names
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
-#%% Eliminate highly correlated features
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.95)
-
 #%% Preliminary Data Assessment and Predictive Power
-
+from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix
+                        
 # Plot Data Distribution
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
@@ -141,9 +127,15 @@ fig_tsne = plot_tsne(dataset, labels_names, MODE)
 best_fts = best_ranked_features(dataset,fts_names, k_features=50)
 
 # Features Correlation Matrix
-corr_df = fts_correlation_matrix(dataset, fts_names, k_features=10)
+corr_df = fts_correlation_matrix(dataset, fts_names, k_features=20)
+
+#%% Eliminate highly correlated features
+from FeatureSelection import eliminate_corr_fts   
+dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.95)
 
 #%% GridSearchCV of Best Models (run current line with F9)
+from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca
+
 # SVM + SelectKBest
 clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
 

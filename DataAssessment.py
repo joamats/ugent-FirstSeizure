@@ -114,8 +114,19 @@ def fts_correlation_matrix(dataset, fts_names, k_features=None):
         # filtered df with best features only
         X_df = pd.DataFrame(data=X_tr[:,best_idxs], columns=best_fts['fts_names'])
         
-        corr_df = X_df.corr()
+        corr_df = X_df.corr().round(decimals=2)
+        
         plt.figure()
-        sb.heatmap(corr_df, annot=True, cmap="Blues")
+        # Show annotation corr only if 10 or less features are being showns
+        if k_features <= 10:
+            ax = sb.heatmap(corr_df, annot=True, cmap="Blues", xticklabels=True, yticklabels=True, linewidths=.5)
+        elif k_features > 10:
+            ax = sb.heatmap(corr_df, annot=False, cmap="Blues", xticklabels=True, yticklabels=True, linewidths=.5)
+            
+        ax.tick_params(axis='both', labelsize=5)
+        plt.title('Features Correlation Matrix')
+        ax.set_ylabel('')    
+        ax.set_xlabel('')
+    
     
     return corr_df
