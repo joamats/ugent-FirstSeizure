@@ -7,16 +7,15 @@ from GraphMeasures import compute_graph_subgroup_measures
 from Asymmetry import compute_asymmetry_measures
 from DataPreparation import get_saved_features,  make_features_array, \
                             add_labels_to_data_array, dataset_split, get_filenames_labels
-                            
-from PlotDistribution import plot_data_distribution
-from PlotTSNE import plot_tsne
-from BestRankedFeatures import best_ranked_features
-from PlotCorrelationMatrix import fts_correlation_matrix
+                    
+from FeatureSelection import eliminate_corr_fts                           
+from DataAssessment import plot_data_distribution, plot_tsne, \
+                        best_ranked_features, fts_correlation_matrix
 from MachineLearning import svm_anova, svm_pca, mlp_anova, \
                             mlp_pca, rfc_anova, rfc_pca
 
 '''
-    Features extraction with epochs 2.5s and delta 2-4Hz, Median for MI, BDP
+    Elimination of highly correlated features
 '''
 
 global filenames
@@ -124,6 +123,9 @@ global dataset, fts_names, labels_names
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
+
+#%% Eliminate highly correlated features
+dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.9)
 
 #%% Preliminary Data Assessment and Predictive Power
 
