@@ -114,7 +114,7 @@ fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
 #%% Preliminary Data Assessment and Predictive Power
-from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix
+from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
                         
 # Plot Data Distribution
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
@@ -128,6 +128,9 @@ best_fts = best_ranked_features(dataset,fts_names, k_features=50)
 
 # Features Correlation Matrix
 corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['node_strengths','FR'], ms_exclude=['vs'])
+
+# Most and Least Correlated Features
+corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=100, ms_keep=['node_strengths','FR'], ms_exclude=['vs', 'Std'])
 
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   
