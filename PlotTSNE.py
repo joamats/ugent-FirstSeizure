@@ -37,4 +37,5 @@ def plot_tsne(dataset, labels_names, mode='Diagnosis'):
     plt.title(mode + ' Classification t-SNE', fontsize=10)
     legend = plt.legend(title='Labels', bbox_to_anchor=(1.3, 0.5), loc='center right', prop={'size': 6})
     plt.setp(legend.get_title(),fontsize='xx-small')
+    plt.style.use('default') 
     return fig

@@ -16,7 +16,7 @@ from MachineLearning import svm_anova, svm_pca, mlp_anova, \
 
 
 '''
-    Features extraction with epochs 2.5s and delta 2-4Hz
+    Features extraction with epochs 2.5s and delta 2-4Hz,  Median for MI, BDP
 '''
 
 global filenames
@@ -99,6 +99,8 @@ DiagnosisWithAgeGender      roc_auc
 global MODE, SCORING
 MODE = 'Diagnosis'
 SCORING = 'roc_auc'
+
+#%%
 
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
