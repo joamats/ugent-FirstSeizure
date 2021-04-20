@@ -11,13 +11,12 @@ from DataPreparation import get_saved_features,  make_features_array, \
 from PlotDistribution import plot_data_distribution
 from PlotTSNE import plot_tsne
 from BestRankedFeatures import best_ranked_features
+from PlotCorrelationMatrix import fts_correlation_matrix
 from MachineLearning import svm_anova, svm_pca, mlp_anova, \
                             mlp_pca, rfc_anova, rfc_pca
 
-from ScoringMetrics import plot_confusion_matrix, plot_roc
-
 '''
-    Features extraction with epochs 2.5s and delta 2-4Hz,  Median for MI, BDP
+    Features extraction with epochs 2.5s and delta 2-4Hz, Median for MI, BDP
 '''
 
 global filenames
@@ -101,7 +100,7 @@ global MODE, SCORING
 MODE = 'Diagnosis'
 SCORING = 'roc_auc'
 
-#%%
+#%% Make features array
 
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
@@ -126,38 +125,38 @@ dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
-#%% Plot Data Distribution
-c = plot_data_distribution(dataset, labels_names, MODE)
+#%% Preliminary Data Assessment and Predictive Power
 
-#%% Plot TSNE
+# Plot Data Distribution
+fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
+
+# Plot TSNE
 # %config InlineBackend.figure_format='retina'
 fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
-#%% Best Ranked Features
+# Best Ranked Features
 best_fts = best_ranked_features(dataset,fts_names, k_features=50)
+
+# Features Correlation Matrix
+corr_df = fts_correlation_matrix(dataset, fts_names, k_features=10)
 
 #%% GridSearchCV of Best Models (run current line with F9)
 # SVM + SelectKBest
-clf_svm_anova = svm_anova(dataset, MODE, SCORING)
+clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
 
 # SVM + PCA
-clf_svm_pca = svm_pca(dataset, MODE, SCORING)
+clf_svm_pca = svm_pca(dataset, labels_names, MODE, SCORING)
 
 # MLP + SelectKBest
-clf_mlp_anova = mlp_anova(dataset, MODE, SCORING)
+clf_mlp_anova = mlp_anova(dataset, labels_names, MODE, SCORING)
 
 # MLP + PCA
-clf_mlp_pca = mlp_pca(dataset, MODE, SCORING)
+clf_mlp_pca = mlp_pca(dataset, labels_names, MODE, SCORING)
 
 # RFC + SelectKBest
-clf_rfc_anova = rfc_anova(dataset, MODE, SCORING)
+clf_rfc_anova = rfc_anova(dataset, labels_names, MODE, SCORING)
 
 # RFC + PCA
-clf_rfc_pca = rfc_pca(dataset, MODE, SCORING)
-
-#%% Model Exhaustive assesment and report
-
-plot_confusion_matrix(dataset, clf_svm_pca, mode=MODE, model='SVM + PCA', scoring=SCORING)
-plot_roc(dataset, clf_svm_pca)
+clf_rfc_pca = rfc_pca(dataset, labels_names, MODE, SCORING)
 
 

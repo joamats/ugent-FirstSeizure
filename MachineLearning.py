@@ -8,12 +8,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+from ScoringMetrics import assess_model
 
 
 #%% SVM + SelectKBest
-def svm_anova(dataset, mode, scoring):
-
-    print(mode + ' SVM + SelectKBest\n')
+def svm_anova(dataset, labels_names, mode, scoring):
+    
+    model = 'SVM + ANOVA'
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -46,24 +47,21 @@ def svm_anova(dataset, mode, scoring):
                         scoring=scoring, 
                         n_jobs=-1,
                         cv=skf,
-                        refit=False,
                         return_train_score=True )
     
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print(scoring + ' :')
-    print(clf.best_score_)
-    print('best parameters: ')
-    print(clf.best_params_)
+    
+    assess_model(dataset, clf, labels_names, mode, model, scoring)
 
     return clf
 
 #%% SVM + PCA
 
-def svm_pca(dataset, mode, scoring):
+def svm_pca(dataset, labels_names, mode, scoring):
 
-    print(mode + ' SVM + PCA\n')
+    model = 'SVM + PCA'
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -101,18 +99,16 @@ def svm_pca(dataset, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print(scoring + ' :')
-    print(clf.best_score_)
-    print('best parameters: ')
-    print(clf.best_params_)
+   
+    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
 #%% MLP + SelectKBest
 
-def mlp_anova(dataset, mode, scoring):
+def mlp_anova(dataset, mode, labels_names, scoring):
     
-    print(mode + ' MLP + SelectKBest\n')
+    model = 'MLP + ANOVA'
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -157,18 +153,16 @@ def mlp_anova(dataset, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print(scoring + ' :')
-    print(clf.best_score_)
-    print('best parameters: ')
-    print(clf.best_params_)
+    
+    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
 #%% MLP + PCA
 
-def mlp_pca(dataset, mode, scoring):
+def mlp_pca(dataset, labels_names, mode, scoring):
 
-    print(mode + ' MLP + PCA\n')
+    model = 'MLP + PCA'
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -214,18 +208,16 @@ def mlp_pca(dataset, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print(scoring + ' :')
-    print(clf.best_score_)
-    print('best parameters: ')
-    print(clf.best_params_)
+    
+    assess_model(dataset, clf, labels_names, mode, model, scoring)
 
     return clf
 
 #%% RFC + SelectKBest
 
-def rfc_anova(dataset, mode, scoring):
+def rfc_anova(dataset, labels_names, mode, scoring):
 
-    print(mode + ' RFC + SelectKBest\n')
+    model = 'RFC + ANOVA'
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -267,19 +259,17 @@ def rfc_anova(dataset, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print(scoring + ' :')
-    print(clf.best_score_)
-    print('best parameters: ')
-    print(clf.best_params_)
+    
+    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
 
 #%% RFC + PCA
 
-def rfc_pca(dataset, mode, scoring):
+def rfc_pca(dataset, labels_names, mode, scoring):
 
-    print(mode + ' RFC + PCA\n')
+    model = 'RFC + PCA'
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -321,16 +311,15 @@ def rfc_pca(dataset, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    print(scoring + ' :')
-    print(clf.best_score_)
-    print('best parameters: ')
-    print(clf.best_params_)
+    
+    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
 
 # #%% Naive Bayes
-
 # def naive_bayes_anova(dataset):
+    
+
     
     

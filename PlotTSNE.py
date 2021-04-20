@@ -24,6 +24,8 @@ def plot_tsne(dataset, labels_names, mode='Diagnosis'):
     df['component2'] = X_embedded[:, 1]
     df['y'] = labels
     
+    plt.figure()
+    
     fig = sb.scatterplot(
         x="component1", y="component2",
         hue="y",

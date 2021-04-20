@@ -15,6 +15,7 @@ def plot_data_distribution(dataset, labels_names, mode):
     s = sum(counts)
     r_counts = [i/s for i in counts]
     
+    plt.figure()
     fig = sb.barplot(x=labels_names, y=r_counts, palette=sb.color_palette("hls", num_labels))
     plt.title(mode + ' Data Distribution', fontsize=10)
     
