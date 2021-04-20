@@ -14,6 +14,7 @@ from BestRankedFeatures import best_ranked_features
 from MachineLearning import svm_anova, svm_pca, mlp_anova, \
                             mlp_pca, rfc_anova, rfc_pca
 
+from ScoringMetrics import plot_confusion_matrix, plot_roc
 
 '''
     Features extraction with epochs 2.5s and delta 2-4Hz,  Median for MI, BDP
@@ -155,5 +156,8 @@ clf_rfc_anova = rfc_anova(dataset, MODE, SCORING)
 clf_rfc_pca = rfc_pca(dataset, MODE, SCORING)
 
 #%% Model Exhaustive assesment and report
+
+plot_confusion_matrix(dataset, clf_svm_pca, mode=MODE, model='SVM + PCA', scoring=SCORING)
+plot_roc(dataset, clf_svm_pca)
 
 
