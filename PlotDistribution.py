@@ -3,6 +3,30 @@ import seaborn as sb
 import numpy as np
 import pandas as pd
 
+#Example of modes_list:
+#MODE=["AntecedentFamilyEpileptic", "AntecedentFamilyNonEpileptic","AntecedentFamilyOther"]
+def several_modes_data_and_labels(modes_list):
+    datasets=[]
+    labels_names_list=[]
+    for i in range(3):
+    
+        labels, filenames = get_filenames_labels(mode=MODE[i])
+        # Make array
+        data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+        fts_names = data.columns
+        
+        createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+        createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
+        
+        labels_names = add_labels_to_data_array(data, labels, mode=MODE[i])
+        labels_names_list.append(labels_names)
+        dataset = dataset_split(data)
+        datasets.append(dataset)
+        
+    createPickleFile(datasets, '../3_ML_Data/128Hz/' + 'dataset')
+    createPickleFile(labels_names_list, '../3_ML_Data/128Hz/' + 'labelsNames')
+    return labels_names_list, datasets
+
 def plot_data_distribution(dataset, labels_names, mode, title=None):
     
     #Non-normalized multiple countplot
