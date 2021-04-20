@@ -2,6 +2,7 @@ from Pickle import getPickleFile, createPickleFile
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from Pickle import createPickleFile
 
 #%% Auxiliary functions
 
@@ -277,3 +278,31 @@ def dataset_split(data):
     X_tr, X_ts, y_tr, y_ts = train_test_split(X, y, test_size=0.20, shuffle=True, random_state=42)
         
     return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts}
+
+
+#Example of modes_list:
+#MODE=["AntecedentFamilyEpileptic", "AntecedentFamilyNonEpileptic","AntecedentFamilyOther"]
+def several_modes_data_and_labels(modes_list):
+    
+    bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
+
+    datasets=[]
+    labels_names_list=[]
+    
+    for i in range(3):
+        labels, filenames = get_filenames_labels(mode=modes_list[i])
+        # Make array
+        data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+        fts_names = data.columns
+        
+        createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+        createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
+        
+        labels_names = add_labels_to_data_array(data, labels, mode=modes_list[i])
+        labels_names_list.append(labels_names)
+        dataset = dataset_split(data)
+        datasets.append(dataset)
+        
+    createPickleFile(datasets, '../3_ML_Data/128Hz/' + 'dataset')
+    createPickleFile(labels_names_list, '../3_ML_Data/128Hz/' + 'labelsNames')
+    return labels_names_list, datasets
