@@ -86,12 +86,14 @@ DiagnosisWithAgeGender      roc_auc
 '''
 
 global MODE, SCORING
-MODE = 'Diagnosis'
+MODE = 'AntecedentFamilyOther'
 SCORING = 'roc_auc'
+
 
 #%% Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
+
 
 labels, filenames = get_filenames_labels(mode=MODE)
 
@@ -107,11 +109,17 @@ dataset = dataset_split(data)
 
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
+
+#Multiple Modes Dataset and Labels:
+# from PlotDistribution import several_modes_data_and_labels
+# several_modes_data_and_labels(modes_list)
+
     
 #%% TRAIN Machine Learning - get data from Pickle
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
+
 
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
