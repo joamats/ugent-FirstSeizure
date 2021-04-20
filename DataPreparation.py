@@ -66,7 +66,7 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
 # Get filenames and labels from metadata
 def get_filenames_labels(mode='Diagnosis'):
     
-    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender':
+    if mode == 'Diagnosis':
         meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
         labels = meta_labels[~ meta_labels.isnull()]
         labels = labels[labels['Sleep state'] == 'wake']
@@ -193,6 +193,50 @@ def get_filenames_labels(mode='Diagnosis'):
         
         filenames = labels.index
         
+    elif mode == 'DiagnosisMale':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Gender']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Gender'] == 'male']
+        labels = labels[labels['Diagnosis'] != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'DiagnosisFemale':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Gender']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Gender'] == 'female']
+        labels = labels[labels['Diagnosis'] != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'DiagnosisYoung':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Age']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Age'] < 50]
+        labels = labels[labels['Diagnosis'] != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'DiagnosisOld':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Age']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Age'] >= 50]
+        labels = labels[labels['Diagnosis'] != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
     return labels, filenames
 
 # Make Data Array: Features + Labels
@@ -200,7 +244,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
     flt_labels = labels.copy()
     
-    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender' or mode == 'AntecedentFamilyEpileptic' or mode == 'AntecedentFamilyNonEpileptic' or mode == 'AntecedentFamilyOther':
+    if mode in ['Diagnosis','DiagnosisMale','DiagnosisFemale','DiagnosisYoung','DiagnosisOld','AntecedentFamilyEpileptic', 'AntecedentFamilyNonEpileptic', 'AntecedentFamilyOther']:
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
@@ -226,18 +270,12 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
         labels_names = ['young', 'old']
         
-    elif mode == 'Sleep':
+    elif mode in ['Sleep', 'Diagnosis-Sleep']:
         flt_labels[labels == 'sleep'] = 0
         flt_labels[labels == 'wake'] = 1
         
         labels_names = ['sleep', 'wake']
-        
-    elif mode == 'Diagnosis-Sleep':
-        flt_labels[labels == 'sleep'] = 0
-        flt_labels[labels == 'wake'] = 1
-        
-        labels_names = ['sleep', 'wake']
-        
+                
     elif mode == 'CardiovascularVSEpileptic':
         flt_labels[labels == 'cardiovascular'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1

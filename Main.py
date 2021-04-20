@@ -76,17 +76,26 @@ createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures'
 #%% Working Mode & Generate All Features Matrix
 ''' 
 Diagnosis:                  roc_auc
+
 Epilepsy types:             balanced_accuracy
 Gender:                     f1
 Age:                        f1
 Sleep:                      f1
 Diagnosis-Sleep:            f1
+
 CardiovascularVSEpileptic:  f1
-DiagnosisWithAgeGender      roc_auc
+ProvokedVSEpileptic         roc_auc
+PsychogenicVSEpileptic      roc_auc
+VagalSyncopeVSEpileptic     roc_auc
+
+DiagnosisMale               roc_auc
+DiagnosisFemale             roc_auc
+DiagnosisYoung              roc_auc
+DiagnosisOld                roc_auc
 '''
 
 global MODE, SCORING
-MODE = 'AntecedentFamilyOther'
+MODE = 'DiagnosisOld'
 SCORING = 'roc_auc'
 
 
@@ -113,13 +122,11 @@ createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
 #Multiple Modes Dataset and Labels:
 # from PlotDistribution import several_modes_data_and_labels
 # several_modes_data_and_labels(modes_list)
-
     
 #%% TRAIN Machine Learning - get data from Pickle
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
-
 
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
@@ -142,7 +149,7 @@ corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=100, ms_
 
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.95)
+dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
 
 #%% GridSearchCV of Best Models (run current line with F9)
 from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca

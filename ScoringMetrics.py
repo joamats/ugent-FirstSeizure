@@ -11,6 +11,7 @@ def plot_confusion_matrix(dataset, clf, mode='Diagnosis', model='SVM + ANOVA', s
     
     confusionMatrix = confusion_matrix(y_true, y_pred)
     
+    plt.figure()
     sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g')
     plt.title(mode + ' ' + model + ' ' + scoring)
     plt.xlabel('Target Class')
@@ -22,6 +23,7 @@ def plot_roc(dataset, clf, mode='Diagnosis', model='SVM + ANOVA', scoring='roc_a
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     
+    plt.figure()
     plot_roc_curve(estimator=clf, X=X_tr, y=y_tr)
     plt.title(mode + ' ' + model + ' ' + scoring)
 
