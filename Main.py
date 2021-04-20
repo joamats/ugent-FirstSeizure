@@ -89,13 +89,11 @@ DiagnosisWithAgeGender      roc_auc
 # MODE = 'AntecedentFamilyOther'
 # SCORING = 'roc_auc'
 
-<<<<<<< HEAD
-# bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
-=======
+
 #%% Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
->>>>>>> 10a45b7a10524ac56d8049fed0cc78bda50101d7
+
 
 # labels, filenames = get_filenames_labels(mode=MODE)
 
@@ -139,17 +137,12 @@ dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
-<<<<<<< HEAD
-#%% Plot Data Distribution
 
-c = plot_data_distribution(dataset, MODE, MODE)
-=======
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
                         
 # Plot Data Distribution
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
->>>>>>> 10a45b7a10524ac56d8049fed0cc78bda50101d7
 
 # Plot TSNE
 # %config InlineBackend.figure_format='retina'
