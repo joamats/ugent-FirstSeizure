@@ -127,7 +127,7 @@ fig_tsne = plot_tsne(dataset, labels_names, MODE)
 best_fts = best_ranked_features(dataset,fts_names, k_features=50)
 
 # Features Correlation Matrix
-corr_df = fts_correlation_matrix(dataset, fts_names, k_features=20)
+corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['node_strengths','FR'], ms_exclude=['vs'])
 
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   

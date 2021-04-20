@@ -100,33 +100,53 @@ def best_ranked_features(dataset, fts_names, k_features=200):
 
 #%% Features Correlation Matrix
 
-def fts_correlation_matrix(dataset, fts_names, k_features=None):
+def fts_correlation_matrix(dataset, fts_names, ms_keep=[], ms_exclude=[], k_features=0):
+# ms_keep is a list with str keywords of features to keep in this matrix
+# ms_exclude is a list with str keywords of features to remove
+# len(ms_keep) + len(ms_exclude) == 0 means no filter is done at all (both are [])
 
     X_tr = dataset['X_tr']
 
-    if k_features is None:
+    # all features mode
+    if k_features == 0 and len(ms_keep) + len(ms_exclude) == 0:
         X_df = pd.DataFrame(data=X_tr, columns=fts_names)
-        corr_df = X_df.corr()
-                
-    else:
+        return X_df.corr()
+    
+    # k best features mode
+    if len(ms_keep) + len(ms_exclude) == 0 and k_features > 0:
         best_fts = best_ranked_features(dataset, fts_names, k_features)
         best_idxs = best_fts.index
         # filtered df with best features only
         X_df = pd.DataFrame(data=X_tr[:,best_idxs], columns=best_fts['fts_names'])
+    
+    # filter mode, based on methodological similarities
+    elif len(ms_keep) + len(ms_exclude) > 0 and k_features == 0:
+        X_df = pd.DataFrame(data=X_tr, columns=fts_names)
+        # iterate over ms_keep to keep only its strings
+        for ms in ms_keep:
+            X_df = X_df.filter(regex=ms, axis=1)
+        # iterate over ms_exclude to keep only its strings
+        for ms in ms_exclude:
+            X_df = X_df[X_df.columns.drop(list(X_df.filter(regex=ms)))]
+    else:
+        raise AttributeError('Only one mode is possible: either you set filtering conditions or k best features to be shown in correlation matrix. If ms_keep or ms_exclude are defined, k_features must not be simultaneously defined, and vice-versa.')
+    
+    # build corr matrix, rounded to 2 decimals
+    corr_df = X_df.corr().round(decimals=2)
+    # actual number of features considered
+    num_fts = corr_df.shape[0]
+    # plotting     
+    plt.figure()
+    # Show annotation corr only if 10 or less features are being showns
+    if num_fts <= 10:
+        ax = sb.heatmap(corr_df, annot=True, cmap="Blues", xticklabels=True, yticklabels=True, linewidths=.5)
+    elif num_fts > 10:
+        ax = sb.heatmap(corr_df, annot=False, cmap="Blues", xticklabels=True, yticklabels=True, linewidths=.5)
         
-        corr_df = X_df.corr().round(decimals=2)
-        
-        plt.figure()
-        # Show annotation corr only if 10 or less features are being showns
-        if k_features <= 10:
-            ax = sb.heatmap(corr_df, annot=True, cmap="Blues", xticklabels=True, yticklabels=True, linewidths=.5)
-        elif k_features > 10:
-            ax = sb.heatmap(corr_df, annot=False, cmap="Blues", xticklabels=True, yticklabels=True, linewidths=.5)
-            
-        ax.tick_params(axis='both', labelsize=5)
-        plt.title('Features Correlation Matrix')
-        ax.set_ylabel('')    
-        ax.set_xlabel('')
+    ax.tick_params(axis='both', labelsize=5)
+    plt.title('Features Correlation Matrix')
+    ax.set_ylabel('')    
+    ax.set_xlabel('')
     
     
     return corr_df
