@@ -47,8 +47,8 @@ def plot_tsne(dataset, labels_names, mode='Diagnosis'):
             if y_i == i:
                 labels.append(lb)
     
-    X_embedded = TSNE(n_components=2, random_state=42).fit_transform(X_tr)
-         
+    tsne= TSNE(n_components=2, random_state=42, perplexity=30, early_exaggeration=12, learning_rate=200)
+    X_embedded  = tsne.fit_transform(X_tr)
     df = pd.DataFrame()
     df['component1'] = X_embedded[:, 0]
     df['component2'] = X_embedded[:, 1]

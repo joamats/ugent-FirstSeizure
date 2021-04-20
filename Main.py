@@ -1,4 +1,5 @@
 import pandas as pd
+
 from Pickle import getPickleFile, createPickleFile
 from PreProcessing import  get_ica_template, eeg_preprocessing, clean_epochs
 from EpochSelection import epochs_selection_bandpower
@@ -125,7 +126,7 @@ fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 
 #%% Eliminate highly correlated features
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.9)
+dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.95)
 
 #%% Preliminary Data Assessment and Predictive Power
 
