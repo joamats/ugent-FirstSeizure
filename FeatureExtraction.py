@@ -185,7 +185,7 @@ def extract_features(bd_names, epochs):
         # PDC
         idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
         pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
-        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
+        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd]).T # sinks and sources switched
                 
     return imcohs, plvs, mi, pdcs
 

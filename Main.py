@@ -156,5 +156,3 @@ clf_rfc_anova = rfc_anova(dataset, labels_names, MODE, SCORING)
 
 # RFC + PCA
 clf_rfc_pca = rfc_pca(dataset, labels_names, MODE, SCORING)
-
-
