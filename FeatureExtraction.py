@@ -185,7 +185,7 @@ def extract_features(bd_names, epochs):
         # PDC
         idxs_bd = _map_bins_to_indices(bands[bd_n], toolbox='scot')
         pdc = partial_directed_coherence(epochs[bd_n], plot=False, toolbox='scot')
-        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd])
+        pdcs[bd_n] = _compute_feature_mean(pdc[:,:,idxs_bd]).T # sinks and sources switched
                 
     return imcohs, plvs, mi, pdcs
 
@@ -265,7 +265,7 @@ def compute_connectivity_measures(fts):
 #%% Bandpower
 def band_power_measures(epochs, sub_name, filename):
         
-    bands = [(2, 4, 'Delta'), (4, 8, 'Theta'),
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
     
     bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']

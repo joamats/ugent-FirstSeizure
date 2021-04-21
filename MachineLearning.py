@@ -106,7 +106,7 @@ def svm_pca(dataset, labels_names, mode, scoring):
 
 #%% MLP + SelectKBest
 
-def mlp_anova(dataset, mode, labels_names, scoring):
+def mlp_anova(dataset, labels_names, mode, scoring):
     
     model = 'MLP + ANOVA'
     
