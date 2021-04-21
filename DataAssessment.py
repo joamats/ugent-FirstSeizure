@@ -15,53 +15,53 @@ from Pickle import getPickleFile
 
 def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None, ylabel=None, xtickslabels=None):
     
-    # #Non-normalized multiple countplot
-    # if isinstance(dataset, list):
-    #     dictionary={}
-    #     for i in range(np.size(dataset)):
-    #         y_tr=(dataset[i]['y_tr'])
-    #         dictionary[mode[i]]=y_tr
-            
-    #     dframe=pd.DataFrame.from_dict(dictionary, orient='index')
-    #     dframe=dframe.transpose()
-    #     df=pd.melt(dframe, value_vars=mode)
-        
-    #     fig = sb.catplot(x="variable", hue="value", legend=False, aspect=1.5, data=df, kind ='count')
-    #     plt.title(title + ' Data Distribution', fontsize=10)
-    #     plt.tight_layout()
-    #     plt.ylabel(ylabel)
-    #     plt.xlabel(xlabel)
-    #     plt.xticks(range(0,np.size(dataset)),xtickslabels)
-    #     plt.legend(labels=labels_names[0], loc=1)
-        
-    
-    #Normalized multiple countplot    
+    #Non-normalized multiple countplot
     if isinstance(dataset, list):
-        dictionary={"Diagnosis":labels_names[0]}
+        dictionary={}
         for i in range(np.size(dataset)):
-            num_labels = len(labels_names[i]) 
             y_tr=(dataset[i]['y_tr'])
-            counts = []
-        
-            for k in range(num_labels):
-                counts.append(len(y_tr[y_tr == k]))
+            dictionary[mode[i]]=y_tr
             
-            s = sum(counts)
-            r_counts = [j/s for j in counts]
-            dictionary[mode[i]]=np.array(r_counts)
         dframe=pd.DataFrame.from_dict(dictionary, orient='index')
         dframe=dframe.transpose()
-        df=pd.melt(dframe, id_vars=["Diagnosis"], value_vars=mode) 
+        df=pd.melt(dframe, value_vars=mode)
         
-        fig = sb.catplot(x="variable", y="value", hue="Diagnosis", aspect=1.5,
-                          data=df, kind ='bar', legend=False, palette=sb.color_palette("hls", num_labels))
+        fig = sb.catplot(x="variable", hue="value", legend=False, aspect=1.5, data=df, kind ='count')
         plt.title(title + ' Data Distribution', fontsize=10)
         plt.tight_layout()
-        plt.ylim(0,1)
         plt.ylabel(ylabel)
         plt.xlabel(xlabel)
         plt.xticks(range(0,np.size(dataset)),xtickslabels)
-        plt.legend(loc=1)
+        plt.legend(labels=labels_names[0], loc=1)
+        
+    
+    # #Normalized multiple countplot    
+    # if isinstance(dataset, list):
+    #     dictionary={"Diagnosis":labels_names[0]}
+    #     for i in range(np.size(dataset)):
+    #         num_labels = len(labels_names[i]) 
+    #         y_tr=(dataset[i]['y_tr'])
+    #         counts = []
+        
+    #         for k in range(num_labels):
+    #             counts.append(len(y_tr[y_tr == k]))
+            
+    #         s = sum(counts)
+    #         r_counts = [j/s for j in counts]
+    #         dictionary[mode[i]]=np.array(r_counts)
+    #     dframe=pd.DataFrame.from_dict(dictionary, orient='index')
+    #     dframe=dframe.transpose()
+    #     df=pd.melt(dframe, id_vars=["Diagnosis"], value_vars=mode) 
+        
+    #     fig = sb.catplot(x="variable", y="value", hue="Diagnosis", aspect=1.5,
+    #                       data=df, kind ='bar', legend=False, palette=sb.color_palette("hls", num_labels))
+    #     plt.title(title + ' Data Distribution', fontsize=10)
+    #     plt.tight_layout()
+    #     plt.ylim(0,1)
+    #     plt.ylabel(ylabel)
+    #     plt.xlabel(xlabel)
+    #     plt.xticks(range(0,np.size(dataset)),xtickslabels)
+    #     plt.legend(loc=1)
         
 
     else:
@@ -78,6 +78,7 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
         
         fig = sb.barplot(x=labels_names, y=r_counts, palette=sb.color_palette("hls", num_labels))
         plt.title(mode + ' Data Distribution', fontsize=10)
+        plt.ylim(0,1)
     
     return fig
 

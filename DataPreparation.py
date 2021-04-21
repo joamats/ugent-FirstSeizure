@@ -193,6 +193,61 @@ def get_filenames_labels(mode='Diagnosis'):
         labels = labels['Diagnosis']
         
         filenames = labels.index
+       
+    elif mode == 'AntecedentChildDevelopDisorder':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'developmental disorder']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentChildFebrileSeizure':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'febrile seizure']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentChildMyoclonus':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'myoclonus']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentChildNone':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'none']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+       
+    elif mode == 'AntecedentChildOther':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'other']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
         
     return labels, filenames
 
@@ -201,7 +256,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
     flt_labels = labels.copy()
     
-    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender' or mode == 'AntecedentFamilyEpileptic' or mode == 'AntecedentFamilyNonEpileptic' or mode == 'AntecedentFamilyOther':
+    if mode == 'Diagnosis' or mode =='DiagnosisWithAgeGender' or mode == 'AntecedentFamilyEpileptic' or mode == 'AntecedentFamilyNonEpileptic' or mode == 'AntecedentFamilyOther' or mode == 'AntecedentChildDevelopDisorder' or mode == 'AntecedentChildFebrileSeizure' or mode == 'AntecedentChildMyoclonus' or mode == 'AntecedentChildNone' or mode == 'AntecedentChildOther':
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
@@ -289,7 +344,7 @@ def several_modes_data_and_labels(modes_list):
     datasets=[]
     labels_names_list=[]
     
-    for i in range(3):
+    for i in range(np.size(modes_list)):
         labels, filenames = get_filenames_labels(mode=modes_list[i])
         # Make array
         data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
