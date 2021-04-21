@@ -35,7 +35,7 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
     #     plt.legend(labels=labels_names[0], loc=1)
         
     
-    #Normalized multiple countplot    
+    # Normalized multiple countplot    
     if isinstance(dataset, list):
         dictionary={"Diagnosis":labels_names[0]}
         for i in range(np.size(dataset)):
@@ -63,7 +63,6 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
         plt.xticks(range(0,np.size(dataset)),xtickslabels)
         plt.legend(loc=1)
         
-
     else:
         num_labels = len(labels_names) 
         y_tr = dataset['y_tr']
@@ -97,7 +96,7 @@ def plot_tsne(dataset, labels_names, mode='Diagnosis'):
             if y_i == i:
                 labels.append(lb)
     
-    tsne= TSNE(n_components=2, random_state=42, perplexity=30, early_exaggeration=12, learning_rate=200)
+    tsne= TSNE(n_components=2, random_state=42, perplexity=10, early_exaggeration=12, learning_rate=200)
     X_embedded  = tsne.fit_transform(X_tr)
     df = pd.DataFrame()
     df['component1'] = X_embedded[:, 0]

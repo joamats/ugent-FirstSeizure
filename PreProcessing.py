@@ -110,7 +110,7 @@ def eeg_preprocessing(filename, icas, plot=False):
         # Epochs Plot
         epochs.plot(n_epochs=10, n_channels= 20, title="EEG 2.5s Epochs " + filename)     
     
-    return raw, ica
+    return epochs
 
 #%% Removes noisy epochs
 def clean_epochs(filename, epochs, plot=False):

@@ -265,7 +265,7 @@ def compute_connectivity_measures(fts):
 #%% Bandpower
 def band_power_measures(epochs, sub_name, filename):
         
-    bands = [(2, 4, 'Delta'), (4, 8, 'Theta'),
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
     
     bd_names = ['Delta', 'Theta', 'Alpha', 'Beta', 'TotalAbsPow']

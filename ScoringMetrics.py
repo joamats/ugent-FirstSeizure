@@ -45,5 +45,5 @@ def assess_model(dataset, clf, labels_names, mode='Diagnosis', model='SVM + ANOV
     print_metric_report(dataset, labels_names, clf)
     
     plot_confusion_matrix(dataset, clf, mode=mode, model=model, scoring=scoring)
-    plot_roc(dataset, clf)
+    plot_roc(dataset, clf, mode=mode, model=model, scoring=scoring)
     

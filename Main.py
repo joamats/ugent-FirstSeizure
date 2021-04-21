@@ -95,34 +95,29 @@ DiagnosisOld                roc_auc
 '''
 
 global MODE, SCORING
-<<<<<<< HEAD
 MODE = 'DiagnosisOld'
-=======
-MODE = ["AntecedentFamilyEpileptic", "AntecedentFamilyNonEpileptic","AntecedentFamilyOther"]
->>>>>>> ce6c7a30d00492aba02e4c974e49bb3acb69e4cf
 SCORING = 'roc_auc'
-
 
 #%% Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
-# bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
+bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
-# labels, filenames = get_filenames_labels(mode=MODE)
+labels, filenames = get_filenames_labels(mode=MODE)
 
-# # Make array
-# data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
-# fts_names = data.columns
+# Make array
+data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+fts_names = data.columns
 
-# createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
-# createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
+createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
+createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
-# labels_names = add_labels_to_data_array(data, labels, mode=MODE)
-# dataset = dataset_split(data)
+labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+dataset = dataset_split(data)
 
-# createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
-# createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
+createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
+createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
 
-#Multiple Modes Dataset and Labels:
+# Multiple Modes Dataset and Labels:
 # from PlotDistribution import several_modes_data_and_labels
 # several_modes_data_and_labels(modes_list)
     
@@ -134,12 +129,15 @@ labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
                         
-# Plot Data Distribution
-fig_data_dist = plot_data_distribution(datasets, labels_names_list, MODE,
-                                       title="Family Antecedent Absolute",
-                                       xlabel="Family Antecedent",
-                                       ylabel="Absolute Distribution",
-                                       xtickslabels=['Epileptic', 'Non Epileptic', 'Other'])
+# # Plot Data Distribution for Family Antecedent
+# fig_data_dist = plot_data_distribution(datasets, labels_names_list, MODE,
+#                                        title="Family Antecedent Absolute",
+#                                        xlabel="Family Antecedent",
+#                                        ylabel="Absolute Distribution",
+#                                        xtickslabels=['Epileptic', 'Non Epileptic', 'Other'])
+
+# Plot Data Distribution for Current MODE
+fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
 # Plot TSNE
 # %config InlineBackend.figure_format='retina'

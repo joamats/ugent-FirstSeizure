@@ -58,8 +58,11 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
         # concatenate asymmetry measures
         ft_df = asy_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
+        
+        # to eliminate some specific feature
+        # features_row[features_row.columns.drop(list(features_row.filter(regex='mi')))]
+        
         # join this subject's row to all subjects
-        features_row = features_row[features_row.columns.drop(list(features_row.filter(regex='mi')))]
         allFeatures = pd.concat([allFeatures, features_row], axis=0)
     
     return allFeatures.fillna(0)
