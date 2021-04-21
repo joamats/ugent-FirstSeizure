@@ -75,27 +75,36 @@ createPickleFile(asymmetry_ms, '../2_Features_Data/128Hz/' + 'asymmetryMeasures'
 
 #%% Working Mode & Generate All Features Matrix
 ''' 
-Diagnosis:                  roc_auc
+Diagnosis:                      roc_auc
 
-Epilepsy types:             balanced_accuracy
-Gender:                     f1
-Age:                        f1
-Sleep:                      f1
-Diagnosis-Sleep:            f1
+Epilepsy types:                 balanced_accuracy
+Gender:                         f1
+Age:                            f1
+Sleep:                          f1
+Diagnosis-Sleep:                f1
 
-CardiovascularVSEpileptic:  f1
-ProvokedVSEpileptic         roc_auc
-PsychogenicVSEpileptic      roc_auc
-VagalSyncopeVSEpileptic     roc_auc
+CardiovascularVSEpileptic:      f1
+ProvokedVSEpileptic             roc_auc
+PsychogenicVSEpileptic          roc_auc
+VagalSyncopeVSEpileptic         roc_auc
 
-DiagnosisMale               roc_auc
-DiagnosisFemale             roc_auc
-DiagnosisYoung              roc_auc
-DiagnosisOld                roc_auc
+DiagnosisMale                   roc_auc
+DiagnosisFemale                 roc_auc
+DiagnosisYoung                  roc_auc
+DiagnosisOld                    roc_auc
+
+AntecedentFamilyEpileptic       
+AntecedentFamilyNonEpileptic    
+AntecedentFamilyOther
+
+AntecedentChildDevelopDisorder  
+AntecedentChildFebrileSeizure   
+AntecedentChildMyoclonus        
+AntecedentChildNone             
+AntecedentChildOther            
 '''
 
 global MODE, SCORING
-<<<<<<< HEAD
 MODE = "Diagnosis"
 SCORING = 'roc_auc'
 
