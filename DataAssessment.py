@@ -33,9 +33,9 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
     #     plt.xlabel(xlabel)
     #     plt.xticks(range(0,np.size(dataset)),xtickslabels)
     #     plt.legend(labels=labels_names[0], loc=1)
-        
     
-    # Normalized multiple countplot    
+    
+    #Normalized multiple countplot    
     if isinstance(dataset, list):
         dictionary={"Diagnosis":labels_names[0]}
         for i in range(np.size(dataset)):
@@ -77,6 +77,7 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
         
         fig = sb.barplot(x=labels_names, y=r_counts, palette=sb.color_palette("hls", num_labels))
         plt.title(mode + ' Data Distribution', fontsize=10)
+        plt.ylim(0,1)
     
     return fig
 

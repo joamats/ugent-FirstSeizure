@@ -192,10 +192,14 @@ def extract_features(bd_names, epochs):
 #%% Subrgroups' connectivity features 
 
 # Filter of connectivity matrix
-def _features_subgroup_combination(conn, subgroup, conn_name):
+def _features_subgroup_combination(conn, subgroup, conn_name, bipolar=True):
     
-    ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
-                'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+    if bipolar:
+        ch_names = ['Fz-Cz', 'Cz-Pz', 'Fp1-F3', 'F3-C3', 'C3-P3', 'P3-O1', 'Fp1-F7', 'F7-T3', 'T3-T5', 'T5-O1', 'Fp2-F4', 'F4-C4', 'C4-P4', 'P4-O2', 'Fp2-F8', 'F8-T4', 'T4-T6', 'T6-O2']
+    
+    else:
+        ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3',
+                    'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
     
     if conn_name != 'pdc':
         conn = conn + conn.T - np.diag(np.diag(conn))
@@ -226,13 +230,23 @@ def _conn_mean_std(conn_df, filename, conn_name, bd_name, sub_name):
     return pd.DataFrame(data=[m,s], index=[m_name, s_name], columns=[filename])
 
 # Final Computation for subgroups
-def compute_connectivity_measures(fts):
+def compute_connectivity_measures(fts, bipolar=True):
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
     
-    subgroups = {   'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
-                    'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
-                    'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
-                    'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
+    if bipolar:
+        subgroups = {
+                'FR': ['Fp1-F3', 'F3-C3', 'Fp1-F7', 'F7-T3', 'Fz-Cz'],
+                'FL': ['Fp2-F4', 'F4-C4', 'Fp2-F8', 'F8-T4', 'Fz-Cz'],
+                'BR': ['T3-T5', 'T5-O1', 'C3-P3', 'P3-O1', 'Cz-Pz'],
+                'BL': ['T4-T6', 'T6-O2', 'C4-P4', 'P4-O2', 'Cz-Pz'] }
+    
+    else:
+        subgroups = {
+                'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+                'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+                'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+                'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
+    
     
     subgroups_names = ['FR', 'FL', 'BR', 'BL']
     
@@ -326,18 +340,23 @@ def _band_powers_subgroup(saved_epochs, chs_subgroup, sub_name, filename):
    
     return bd_powers
 
-def extract_bandpowers(epochs, filename):
+def extract_bandpowers(epochs, filename, bipolar=True):
     
-    subgroups = {
-        'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
-        'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
-        'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
-        'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
-        # 'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
-        # 'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
-        # 'ALL': epochs.ch_names }
+    if bipolar:
+        subgroups = {
+                'FR': ['Fp1-F3', 'F3-C3', 'Fp1-F7', 'F7-T3', 'Fz-Cz'],
+                'FL': ['Fp2-F4', 'F4-C4', 'Fp2-F8', 'F8-T4', 'Fz-Cz'],
+                'BR': ['T3-T5', 'T5-O1', 'C3-P3', 'P3-O1', 'Cz-Pz'],
+                'BL': ['T4-T6', 'T6-O2', 'C4-P4', 'P4-O2', 'Cz-Pz'] }
+    
+    else:
+        subgroups = {
+                'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+                'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+                'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+                'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
        
-    subgroups_names = ['FR', 'FL', 'BR', 'BL'] #, 'R', 'L', 'ALL']
+    subgroups_names = ['FR', 'FL', 'BR', 'BL']
     
     df_all = pd.DataFrame()
     

@@ -12,23 +12,23 @@ def get_saved_features(bdp=False, rawConn=False, conn=False, graphs=False, asy=F
     features = []
     
     if bdp:
-        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'bdp'))
+        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256'))
     
     if rawConn:
-        IMCOH = getPickleFile('../2_Features_Data/128Hz/' + 'imcoh')
-        PLV = getPickleFile('../2_Features_Data/128Hz/' + 'plv')
-        MI = getPickleFile('../2_Features_Data/128Hz/' + 'mi')
-        PDC = getPickleFile('../2_Features_Data/128Hz/' + 'pdc')
+        IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
+        PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
+        MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
+        PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc')
         features.append({'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC})
     
     if conn:
-        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'connectivityMeasures'))
+        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'connectivityMeasures'))
     
     if graphs:
-        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'graphMeasures'))
+        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'graphMeasures'))
         
     if asy:    
-        features.append(getPickleFile('../2_Features_Data/128Hz/' + 'asymmetryMeasures'))
+        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'asymmetryMeasures'))
 
     if len(features)==1:
         return features[0]
@@ -196,6 +196,61 @@ def get_filenames_labels(mode='Diagnosis'):
         labels = labels['Diagnosis']
         
         filenames = labels.index
+       
+    elif mode == 'AntecedentChildDevelopDisorder':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'developmental disorder']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentChildFebrileSeizure':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'febrile seizure']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentChildMyoclonus':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'myoclonus']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'AntecedentChildNone':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'none']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
+       
+    elif mode == 'AntecedentChildOther':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Antecedent child']]
+        labels = meta_labels[~ meta_labels.isnull()]
+        labels = labels[labels['Sleep state'] == 'wake']
+        labels = labels[labels['Antecedent child'] == 'other']
+        labels = labels[labels != 'undetermined']
+        labels = labels[~ labels['Diagnosis'].isnull()]
+        labels = labels['Diagnosis']
+        
+        filenames = labels.index
         
     elif mode == 'DiagnosisMale':
         meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Gender']]
@@ -248,7 +303,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
     flt_labels = labels.copy()
     
-    if mode in ['Diagnosis','DiagnosisMale','DiagnosisFemale','DiagnosisYoung','DiagnosisOld','AntecedentFamilyEpileptic', 'AntecedentFamilyNonEpileptic', 'AntecedentFamilyOther']:
+    if mode in ['Diagnosis','DiagnosisMale','DiagnosisFemale','DiagnosisYoung','DiagnosisOld','AntecedentFamilyEpileptic', 'AntecedentFamilyNonEpileptic', 'AntecedentFamilyOther', 'AntecedentChildDevelopDisorder', 'AntecedentChildFebrileSeizure', 'AntecedentChildMyoclonus', 'AntecedentChildNone', 'AntecedentChildOther']:
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
@@ -330,20 +385,20 @@ def several_modes_data_and_labels(modes_list):
     datasets=[]
     labels_names_list=[]
     
-    for i in range(3):
+    for i in range(np.size(modes_list)):
         labels, filenames = get_filenames_labels(mode=modes_list[i])
         # Make array
         data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
         fts_names = data.columns
         
-        createPickleFile(data, '../2_Features_Data/128Hz/' + 'allFeatures')
-        createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
+        createPickleFile(data, '../2_Features_Data/Bipolar/' + 'allFeatures')
+        createPickleFile(fts_names, '../3_ML_Data/Bipolar/' + 'featuresNames')
         
         labels_names = add_labels_to_data_array(data, labels, mode=modes_list[i])
         labels_names_list.append(labels_names)
         dataset = dataset_split(data)
         datasets.append(dataset)
         
-    createPickleFile(datasets, '../3_ML_Data/128Hz/' + 'dataset')
-    createPickleFile(labels_names_list, '../3_ML_Data/128Hz/' + 'labelsNames')
+    createPickleFile(datasets, '../3_ML_Data/Bipolar/' + 'dataset')
+    createPickleFile(labels_names_list, '../3_ML_Data/Bipolar/' + 'labelsNames')
     return labels_names_list, datasets

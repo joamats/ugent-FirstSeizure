@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import brainconn
 from DataPreparation import get_saved_features
-from Pickle import createPickleFile
 from FeatureExtraction import _features_subgroup_combination
 
 #%% Subgroups Graph Measures
@@ -39,7 +38,7 @@ def _compute_graph_mean_std(graph_ms, gr_n, conn_n, bd_n, sub_n, filename):
     return pd.DataFrame(data=d_list, index=n_list, columns=[filename])
 
 # Final Computation
-def compute_graph_subgroup_measures(fts):
+def compute_graph_subgroup_measures(fts, bipolar=True):
 
     # def compute_subgroups_graph_measures(fts):
     filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
@@ -47,19 +46,23 @@ def compute_graph_subgroup_measures(fts):
     ms_names = ['imcoh', 'plv', 'mi', 'pdc']
     bd_names = ['Global', 'Delta', 'Theta', 'Alpha', 'Beta']
     
-    # ch_names = ['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1','F7',
-    #             'T3', 'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6']
+    if bipolar:
+        subgroups = {
+                'FR': ['Fp1-F3', 'F3-C3', 'Fp1-F7', 'F7-T3', 'Fz-Cz'],
+                'FL': ['Fp2-F4', 'F4-C4', 'Fp2-F8', 'F8-T4', 'Fz-Cz'],
+                'BR': ['T3-T5', 'T5-O1', 'C3-P3', 'P3-O1', 'Cz-Pz'],
+                'BL': ['T4-T6', 'T6-O2', 'C4-P4', 'P4-O2', 'Cz-Pz'] }
     
-    subgroups = {
-            'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
-            'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
-            'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
-            'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
-            # 'R': ['Fz', 'Cz', 'Pz', 'Fp1', 'F7', 'F3', 'T3', 'C3', 'T5', 'P3', 'O1'],
-            # 'L': ['Fz', 'Cz', 'Pz', 'Fp2', 'F4', 'F8', 'C4', 'T4', 'P4', 'T6', 'O2'],
-            # 'ALL': ch_names }
-           
-    subgroups_names = ['FR', 'FL', 'BR', 'BL']#, 'R', 'L', 'ALL']
+    else:
+        subgroups = {
+                'FR': ['Fp1', 'F7', 'T3', 'F3', 'C3', 'Fz', 'Cz'],
+                'FL': ['Fp2', 'F8', 'T4', 'F4', 'C4', 'Fz', 'Cz'],
+                'BR': ['T3', 'T5', 'O1', 'C3', 'P3', 'Cz', 'Pz'],
+                'BL': ['T4', 'T6', 'O2', 'C4', 'P4', 'Cz', 'Pz'] }
+        
+
+    
+    subgroups_names = ['FR', 'FL', 'BR', 'BL']
     
     # dict to store all measures from all subjects
     graph_ms = {}
