@@ -7,7 +7,7 @@ def epochs_selection_bandpower(epochs, allVars=False):
     bd_names = ['Delta', 'Theta', 'Alpha', 'Beta']
     
     # bands ranges
-    bands = [(2, 4, 'Delta'), (4, 8, 'Theta'),
+    bands = [(1, 4, 'Delta'), (4, 8, 'Theta'),
              (8, 12, 'Alpha'), (12, 30, 'Beta')]
     # channel names
     ch = epochs.ch_names

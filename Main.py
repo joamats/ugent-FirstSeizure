@@ -95,7 +95,7 @@ DiagnosisOld                roc_auc
 '''
 
 global MODE, SCORING
-MODE = 'DiagnosisOld'
+MODE = 'Diagnosis'
 SCORING = 'roc_auc'
 
 #%% Make features array
@@ -113,6 +113,8 @@ createPickleFile(fts_names, '../3_ML_Data/128Hz/' + 'featuresNames')
 
 labels_names = add_labels_to_data_array(data, labels, mode=MODE)
 dataset = dataset_split(data)
+dataset['MODE'] = MODE
+dataset['SCORING'] = SCORING
 
 createPickleFile(dataset, '../3_ML_Data/128Hz/' + 'dataset')
 createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
@@ -125,6 +127,12 @@ createPickleFile(labels_names, '../3_ML_Data/128Hz/' + 'labelsNames')
 dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
 fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
 labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
+MODE = dataset['MODE']
+SCORING = dataset['SCORING']
+
+#%% Eliminate highly correlated features
+from FeatureSelection import eliminate_corr_fts   
+dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
 
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
@@ -147,14 +155,16 @@ fig_tsne = plot_tsne(dataset, labels_names, MODE)
 best_fts = best_ranked_features(dataset,fts_names, k_features=50)
 
 # Features Correlation Matrix
-corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['node_strengths','FR'], ms_exclude=['vs'])
+corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
 
 # Most and Least Correlated Features
-corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=100, ms_keep=['node_strengths','FR'], ms_exclude=['vs', 'Std'])
-
-#%% Eliminate highly correlated features
-from FeatureSelection import eliminate_corr_fts   
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
+import seaborn as sb
+from matplotlib import pyplot as plt
+corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
+plt.figure()
+sb.histplot(x=corr_most.values)
+plt.title('Pairs of features correlations distribution')
+plt.xlabel('Correlation')
 
 #%% GridSearchCV of Best Models (run current line with F9)
 from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca

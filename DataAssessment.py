@@ -174,7 +174,7 @@ def fts_correlation_matrix(dataset, fts_names, ms_keep=[], ms_exclude=[], k_best
     
     # k best features mode
     if len(ms_keep) + len(ms_exclude) == 0 and k_best_features > 0:
-        best_fts = best_ranked_features(dataset, fts_names, k_features)
+        best_fts = best_ranked_features(dataset, fts_names, k_best_features)
         best_idxs = best_fts.index
         # filtered df with best features only
         X_df = pd.DataFrame(data=X_tr[:,best_idxs], columns=best_fts['fts_names'])
@@ -218,11 +218,14 @@ def _get_redundant_pairs(df):
             pairs_to_drop.add((cols[i], cols[j]))
     return pairs_to_drop
 
-def _get_top_abs_correlations(df, n=10, ascending=False):
+def _get_top_abs_correlations(df, n=-1, ascending=False):
     au_corr = df.corr().abs().unstack()
     labels_to_drop = _get_redundant_pairs(df)
     au_corr = au_corr.drop(labels=labels_to_drop).sort_values(ascending=ascending)
-    return au_corr[0:n]
+    if n == -1:
+        return au_corr
+    elif n > 0:
+        return au_corr[0:n]
 
 def most_least_correlated_fts(dataset, fts_names, n=10, ms_keep=[], ms_exclude=[]):
     X_tr = dataset['X_tr']
