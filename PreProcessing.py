@@ -10,7 +10,7 @@ from scipy.fft import fft, ifft, fftfreq
 
 #%% Imports EEG from EDF files
 def import_eeg(filename):
-    raw = mne.io.read_raw_edf('../Dataset/{}_0000.Export.edf'
+    raw = mne.io.read_raw_edf('../0_Dataset/{}_0000.Export.edf'
                               .format(filename), preload=True, verbose=False)
     # Rename channels (if necessary)
     if 'FP1' in raw.info['ch_names']:
@@ -26,13 +26,13 @@ def import_eeg(filename):
     raw.reorder_channels(['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 
                           'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6'])
 
-    # Average referencing
-    raw.set_eeg_reference()
-    
+    # Set average referencing
+    raw.set_eeg_reference(ref_channels='average')
+
     # Set 10-20 montage
     ten_twenty_montage = mne.channels.make_standard_montage('standard_1020')
     raw.set_montage(ten_twenty_montage)
-    
+   
     return raw
 
 #%% Filter EEG
@@ -62,7 +62,7 @@ def get_ica_template(filename):
     return icas
 
 #%% Filter, artifact removal and epochs file at filename
-def eeg_preprocessing(filename, icas, plot=False):
+def eeg_preprocessing(filename, icas, epoch_length=2.5, plot=False):
     
     raw = import_eeg(filename)
     
@@ -90,8 +90,8 @@ def eeg_preprocessing(filename, icas, plot=False):
     orig_raw = raw.copy()
     ica.apply(raw, verbose=False)
     
-    # create epochs with 2.5sec
-    epochs = mne.make_fixed_length_epochs(raw, duration=2.5, verbose = False, preload=True)
+    # create epochs with 2.5sec /// 5sec epoch_length
+    epochs = mne.make_fixed_length_epochs(raw, duration=epoch_length, verbose = False, preload=True)
     epochs.drop_bad(flat=flat_criteria)
     
     if plot == True:
@@ -108,16 +108,34 @@ def eeg_preprocessing(filename, icas, plot=False):
         # Without Artifacts EEG Plot
         raw.plot(duration=15, n_channels = 20, title="Preprocessed " + filename, remove_dc = False)
         # Epochs Plot
-        epochs.plot(n_epochs=10, n_channels= 20, title="EEG 2.5s Epochs " + filename)     
+        epochs.plot(n_epochs=10, n_channels= 20, title="EEG " + epoch_length + "s Epochs " + filename)     
     
     return epochs
 
 #%% Removes noisy epochs
 def clean_epochs(filename, epochs, plot=False):
-    ar = AutoReject(verbose=False, random_state=42)
+    ar = AutoReject(verbose=False, random_state=42, n_jobs=-1)
     epochs_clean, reject_log = ar.fit_transform(epochs, return_log=True)
     
     if plot == True:
         reject_log.plot_epochs(epochs, title="Clean Epochs "  + filename)
     return epochs_clean, reject_log
 
+
+#%% Resample epochs from 256Hz to 128Hz
+
+def resample_epochs(epochs, sfreq=128):
+    
+    return epochs.resample(sfreq)
+
+#%% Set longitudinal bipolar montage
+
+def set_bipolar(epochs):
+    anode = ['Fp1', 'F3', 'C3', 'P3', 'Fp2', 'F4', 'C4', 'P4', 'Fp1', 'F7', 'T3', 'T5', 'Fp2', 'F8', 'T4', 'T6','Fz', 'Cz']
+    cathode = ['F3', 'C3', 'P3', 'O1', 'F4', 'C4', 'P4', 'O2', 'F7', 'T3', 'T5', 'O1', 'F8', 'T4', 'T6','O2', 'Cz','Pz']
+   
+    epochs = mne.set_bipolar_reference(epochs, anode, cathode, drop_refs=False)
+    epochs.picks = np.array(range(0,37))
+    epochs.drop_channels(['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6'])
+    
+    return epochs

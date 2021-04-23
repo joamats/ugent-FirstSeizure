@@ -8,22 +8,37 @@ from DataPreparation import get_saved_features
 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
-#%% EEG Pre-Processing 256Hz
-from PreProcessing import  get_ica_template, eeg_preprocessing, clean_epochs
+#%% EEG Pre-Processing 256Hz 5s
+from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
 
 icas = get_ica_template(filenames[0])
 
 for filename in filenames:
-    epochs = eeg_preprocessing(filename, icas, plot=False)
+    epochs = eeg_preprocessing(filename, icas, epoch_length=5, plot=False)
     epochs, _ = clean_epochs(filename, epochs, plot=False)
-    createPickleFile(epochs, '../1_PreProcessed_Data/' + filename)
+    createPickleFile(epochs, '../1_PreProcessed_Data/Monopolar/5s/256Hz/' + filename)
 
-#%% Epochs Downsample to 128Hz
+# EEG Bipolar montage
+from PreProcessing import set_bipolar
 
-for filename in filenames:
-    epochs = getPickleFile('../1_PreProcessed_Data/' + filename)
-    epochs.resample(sfreq=128)
-    createPickleFile(epochs, '../1_PreProcessed_Data/128Hz/' + filename)
+epochs_lengths = ['2.5s', '5s']
+
+for ep_l in epochs_lengths:
+    for filename in filenames:
+        epochs = getPickleFile('../1_PreProcessed_Data/Monopolar/' + ep_l + '/256Hz/' + filename)
+        epochs_b = set_bipolar(epochs)
+        createPickleFile(epochs_b, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
+
+# Epochs Downsample to 128Hz
+from PreProcessing import resample_epochs
+
+epochs_lengths = ['2.5s', '5s']
+
+for ep_l in epochs_lengths:
+    for filename in filenames:
+        epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
+        epochs_r = resample_epochs(epochs, sfreq=128)
+        createPickleFile(epochs_r, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/128Hz/' + filename)
 
 #%% Extraction of Bandpower and Connectivity Features 
 from EpochSelection import epochs_selection_bandpower
@@ -105,8 +120,8 @@ AntecedentChildOther
 '''
 
 global MODE, SCORING
-MODE = "Diagnosis"
-SCORING = 'roc_auc'
+MODE = "Sleep"
+SCORING = 'f1_macro'
 
 #%% Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
@@ -157,7 +172,7 @@ fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 # Best Ranked Features
-best_fts = best_ranked_features(dataset,fts_names, k_features=50)
+best_fts = best_ranked_features(dataset,fts_names, k_features=100)
 
 # Features Correlation Matrix
 corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['node_strengths','FR'], ms_exclude=['vs'])
