@@ -29,38 +29,31 @@ for ep_l in epochs_lengths:
         epochs_b = set_bipolar(epochs)
         createPickleFile(epochs_b, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
 
-#%% Epochs Downsample to 128Hz
-from PreProcessing import resample_epochs
-
-epochs_lengths = ['2.5s', '5s']
-
-for ep_l in epochs_lengths:
-    for filename in filenames:
-        epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
-        epochs_r = resample_epochs(epochs, sfreq=128)
-        createPickleFile(epochs_r, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/128Hz/' + filename)
-
 #%% Extraction of Bandpower and Connectivity Features 
 from EpochSelection import epochs_selection_bandpower
+from PreProcessing import resample_epochs
 from FeatureExtraction import extract_bandpowers, extract_features
 
-BDP = {}
-IMCOH = {}
-PLV = {}
-MI = {}
-PDC = {}
+# BDP, IMCOH, PLV, MI, PDC = {}, {}, {}, {}, {}
+
+BDP = getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256')
+IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
+PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
+MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
+PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc') 
 
 # over all subjects
 for i, filename in enumerate(filenames):
-    # bandpower extraction
+    # bandpower extraction on 5s epochs, 256Hz
     saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/5s/256Hz/' + filename)
     _, s_epochs = epochs_selection_bandpower(saved_epochs)
     
     BDP[filename] = extract_bandpowers(s_epochs, filename)
     
-    # functional connectivity
-    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/128Hz/' + filename)
-    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    # functional connectivity on 2.5s epochs, 128Hz
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/256Hz/' + filename)
+    downsampled_epochs = resample_epochs(epochs, sfreq=128)
+    bd_names, s_epochs = epochs_selection_bandpower(downsampled_epochs)
     
     IMCOH[filename], PLV[filename], MI[filename],\
     PDC[filename] = extract_features(bd_names, s_epochs)
@@ -92,7 +85,7 @@ fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/Bipolar/' + 'asymmetryMeasures')
 
-#% Working Mode & Generate All Features Matrix
+#%% Working Mode & Generate All Features Matrix
 ''' 
 Diagnosis:                      roc_auc
 
@@ -127,7 +120,7 @@ global MODE, SCORING
 MODE = 'Diagnosis'
 SCORING = 'roc_auc'
 
-#% Make features array
+# Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
@@ -148,24 +141,6 @@ dataset['SCORING'] = SCORING
 createPickleFile(dataset, '../3_ML_Data/Bipolar/' + 'dataset')
 createPickleFile(labels_names, '../3_ML_Data/Bipolar/' + 'labelsNames')
 
-# #Multiple Modes Dataset and Labels:
-# from DataPreparation import several_modes_data_and_labels
-# labels_names_list, datasets = several_modes_data_and_labels(MODE)
-
-#% Eliminate 1 correlated features
-from FeatureSelection import eliminate_corr_fts   
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
-#% Data Assessment
-from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
-fig_tsne = plot_tsne(dataset, labels_names, MODE)
-# Best Ranked Features
-best_fts = best_ranked_features(dataset,fts_names, k_features=100)
-# Features Correlation Matrix
-corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
-# SVM + SelectKBest
-from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca
-clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
-    
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   
 dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
@@ -180,15 +155,6 @@ SCORING = dataset['SCORING']
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
                         
-# Plot Data Distribution
-
-# # Plot Data Distribution for Family Antecedent
-# fig_data_dist = plot_data_distribution(datasets, labels_names_list, MODE,
-#                                        title="Family Antecedent Absolute",
-#                                        xlabel="Family Antecedent",
-#                                        ylabel="Absolute Distribution",
-#                                        xtickslabels=['Epileptic', 'Non Epileptic', 'Other'])
-
 # Plot Data Distribution for Current MODE
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
@@ -203,13 +169,7 @@ best_fts = best_ranked_features(dataset,fts_names, k_features=100)
 corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
 
 # Most and Least Correlated Features
-import seaborn as sb
-from matplotlib import pyplot as plt
 corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
-plt.figure()
-sb.histplot(x=corr_most.values)
-plt.title('Pairs of features correlations distribution')
-plt.xlabel('Correlation')
 
 #%% GridSearchCV of Best Models (run current line with F9)
 from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca

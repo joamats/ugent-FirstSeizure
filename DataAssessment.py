@@ -81,6 +81,16 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
     
     return fig
 
+# Plot Data Distribution
+
+# # Plot Data Distribution for Family Antecedent
+# fig_data_dist = plot_data_distribution(datasets, labels_names_list, MODE,
+#                                        title="Family Antecedent Absolute",
+#                                        xlabel="Family Antecedent",
+#                                        ylabel="Absolute Distribution",
+#                                        xtickslabels=['Epileptic', 'Non Epileptic', 'Other'])
+
+
 #%% t-SNE plot - assess separability
 
 def plot_tsne(dataset, labels_names, mode='Diagnosis'):
@@ -239,3 +249,12 @@ def most_least_correlated_fts(dataset, fts_names, n=10, ms_keep=[], ms_exclude=[
     corr_least =_get_top_abs_correlations(X_df, n, ascending=True)
     
     return corr_most, corr_least
+
+# Most and Least Correlated Features
+# import seaborn as sb
+# from matplotlib import pyplot as plt
+# corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
+# plt.figure()
+# sb.histplot(x=corr_most.values)
+# plt.title('Pairs of features correlations distribution')
+# plt.xlabel('Correlation')
