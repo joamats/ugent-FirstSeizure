@@ -3,7 +3,7 @@ from Pickle import getPickleFile, createPickleFile
 from DataPreparation import get_saved_features
 
 '''
-    Elimination of highly correlated features
+    Bipolar montage
 '''
 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
@@ -72,7 +72,7 @@ for i, filename in enumerate(filenames):
     createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
     createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')         
 
-#% From connectivity matrices, compute subgroups' measures
+#%% From connectivity matrices, compute subgroups' measures
 
 #Subgroups Connectivity Features
 from FeatureExtraction import compute_connectivity_measures
@@ -80,13 +80,13 @@ fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/Bipolar/' + 'connectivityMeasures')
 
-#% Subgroups Graph Measures
+#%% Subgroups Graph Measures
 from GraphMeasures import compute_graph_subgroup_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/Bipolar/' + 'graphMeasures')
 
-#% Subgroups Graph Asymmetry Ratios
+#%% Subgroups Graph Asymmetry Ratios
 from Asymmetry import compute_asymmetry_measures
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)

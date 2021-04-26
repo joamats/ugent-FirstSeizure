@@ -137,5 +137,8 @@ def set_bipolar(epochs):
     epochs = mne.set_bipolar_reference(epochs, anode, cathode, drop_refs=False)
     epochs.picks = np.array(range(0,37))
     epochs.drop_channels(['Fz', 'Cz', 'Pz', 'Fp1', 'F3', 'C3', 'P3', 'O1', 'F7', 'T3', 'T5', 'Fp2', 'F4', 'C4', 'P4', 'O2', 'F8', 'T4', 'T6'])
-    
+    # drop signals with very low peak-to-peak
+    flat_criteria = dict(eeg = 1e-9)
+    epochs.drop_bad(flat=flat_criteria)
+
     return epochs
