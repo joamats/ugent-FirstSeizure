@@ -5,16 +5,17 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from ScoringMetrics import assess_model
-
+from sklearn.dummy import DummyClassifier
+from sklearn.model_selection import cross_validate
 
 #%% SVM + SelectKBest
-def svm_anova(dataset, labels_names, mode, scoring):
+def grid_search_svm_anova(dataset, labels_names):
     
-    model = 'SVM + ANOVA'
+    model = 'ANOVA + SVM'
+    mode = dataset['MODE']
+    scoring = dataset['SCORING']
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -27,15 +28,15 @@ def svm_anova(dataset, labels_names, mode, scoring):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.01, 0.1, 1, 10, 100],
-        'classifier__gamma': [0.01, 0.1, 1, 10, 100],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 10],
+        'classifier__gamma': [0.005, 0.01, 0.05, 0.1, 0.5, 1, 10, 100],
         'classifier__kernel': ['rbf', 'sigmoid']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [10, 15, 20, 25, 30, 35, 40, 45, 50]
+    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -53,9 +54,63 @@ def svm_anova(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
+    print('MODE:  ' + mode + '\nMODEL: ' + model)
+    print('\nHYPERPARAMETERS:')
+    print(clf.best_params_, '\n')
+    
+    return clf, model
 
-    return clf
+def svm_anova_estimators(dataset, clf_svm_anova, model):
+    
+    model = 'SVM & ANOVA'
+
+    clf_params = clf_svm_anova.get_params()
+    
+    pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
+                            ('dim_red', SelectKBest(score_func=f_classif)),
+                            ('classifier', SVC(random_state=42, probability=True))])
+    
+    pipe_params = { 'dim_red__k': clf_params['estimator__dim_red__k'],
+                    'classifier__C': clf_params['estimator__classifier__C'],
+                    'classifier__gamma': clf_params['estimator__classifier__gamma'],
+                    'classifier__kernel': clf_params['estimator__classifier__kernel'] }
+    
+    pipe.set_params(**pipe_params)
+    
+    X_tr = dataset['X_tr']
+    y_tr = dataset['y_tr']
+    
+    dummy = DummyClassifier(strategy="most_frequent")
+    
+    skf = StratifiedKFold(n_splits=5)
+    
+    scores_dummy = cross_validate(  estimator=dummy,
+                                    X=X_tr,
+                                    y=y_tr,
+                                    scoring=['roc_auc', 'f1_macro'],
+                                    cv=skf,
+                                    return_train_score=True,
+                                    return_estimator=True)
+    
+    print('DUMMY CLASSIFIER')
+    print('AUC ROC: {:.3f}'.format(scores_dummy['test_roc_auc'].mean()))
+    print('Balanced F1-score: {:.3f}\n'.format(scores_dummy['test_f1_macro'].mean()))
+    
+    scores_pipe = cross_validate(   estimator=pipe,
+                                    X=X_tr,
+                                    y=y_tr,
+                                    scoring=['roc_auc', 'f1_macro'],
+                                    cv=skf,
+                                    return_train_score=True,
+                                    return_estimator=True)
+    
+    print(model + ' CLASSIFIER')
+    print('AUC ROC: {:.3f}'.format(scores_pipe['test_roc_auc'].mean()))
+    print('Balanced F1-score: {:.3f}'.format(scores_pipe['test_f1_macro'].mean()))
+    
+    estimators = scores_pipe['estimator']
+
+    return estimators
 
 #%% SVM + PCA
 
@@ -100,8 +155,6 @@ def svm_pca(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
    
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
-    
     return clf
 
 #%% MLP + SelectKBest
@@ -153,8 +206,6 @@ def mlp_anova(dataset, labels_names, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
@@ -209,8 +260,6 @@ def mlp_pca(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
-
     return clf
 
 #%% RFC + SelectKBest
@@ -259,8 +308,6 @@ def rfc_anova(dataset, labels_names, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
@@ -312,14 +359,6 @@ def rfc_pca(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
-    
-    return clf
+    return clf  
 
-
-# #%% Naive Bayes
-# def naive_bayes_anova(dataset):
-    
-
-    
     

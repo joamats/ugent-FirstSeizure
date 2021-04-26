@@ -66,7 +66,6 @@ for i, filename in enumerate(filenames):
     createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')         
 
 #%% From connectivity matrices, compute subgroups' measures
-
 #Subgroups Connectivity Features
 from FeatureExtraction import compute_connectivity_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
@@ -120,7 +119,7 @@ global MODE, SCORING
 MODE = 'Diagnosis'
 SCORING = 'roc_auc'
 
-# Make features array
+#%% Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
@@ -146,9 +145,9 @@ from FeatureSelection import eliminate_corr_fts
 dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
 
 #%% TRAIN Machine Learning - get data from Pickle
-dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
-fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
-labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
+dataset = getPickleFile('../3_ML_Data/Bipolar/dataset')
+fts_names = getPickleFile('../3_ML_Data/Bipolar/featuresNames')
+labels_names = getPickleFile('../3_ML_Data/Bipolar/labelsNames')
 MODE = dataset['MODE']
 SCORING = dataset['SCORING']
 
@@ -172,22 +171,14 @@ corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'M
 corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
 
 #%% GridSearchCV of Best Models (run current line with F9)
-from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators
+from ScoringMetrics import cv_results
 
-# SVM + SelectKBest
-clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
+# SVM & SelectKBest
+grid_search_svm_anova, model = grid_search_svm_anova(dataset, labels_names)
+estimators_svm_anova = svm_anova_estimators(dataset, grid_search_svm_anova, model)
+cv_results(dataset, estimators_svm_anova, model)
 
-# SVM + PCA
-clf_svm_pca = svm_pca(dataset, labels_names, MODE, SCORING)
 
-# MLP + SelectKBest
-clf_mlp_anova = mlp_anova(dataset, labels_names, MODE, SCORING)
 
-# MLP + PCA
-clf_mlp_pca = mlp_pca(dataset, labels_names, MODE, SCORING)
 
-# RFC + SelectKBest
-clf_rfc_anova = rfc_anova(dataset, labels_names, MODE, SCORING)
-
-# RFC + PCA
-clf_rfc_pca = rfc_pca(dataset, labels_names, MODE, SCORING)
