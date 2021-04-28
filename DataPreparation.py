@@ -12,7 +12,7 @@ def get_saved_features(bdp=False, rawConn=False, conn=False, graphs=False, asy=F
     features = []
     
     if bdp:
-        features.append(getPickleFile('../2_Features_Data/' + montage + '/bdp_256'))
+        features.append(getPickleFile('../2_Features_Data/' + montage + '/bdp'))
     
     if rawConn:
         IMCOH = getPickleFile('../2_Features_Data/' + montage + '/imcoh')

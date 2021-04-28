@@ -60,7 +60,7 @@ def grid_search_svm_anova(dataset, labels_names):
     print('BEST SCORE')
     print(clf.best_score_, '\n')
     
-    return clf.best_params_, model
+    return clf.best_params_, model, clf
 
 def svm_anova_estimators(dataset, gs_svm_anova, model):
     

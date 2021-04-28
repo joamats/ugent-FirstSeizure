@@ -18,7 +18,7 @@ def cv_results(dataset, estimators, model):
     plt.figure()
     fig, axs = plt.subplots(nrows=2, ncols=5, figsize=(30,10))
     
-    aucs = []
+    aucs, y_probs, roc_aucs = [], [], []
     
     for i, (e, (train_index, test_index)) in enumerate(zip(estimators, skf.split(X_tr, y_tr))):
         X_val, y_val = X_tr[test_index], y_tr[test_index]
@@ -54,6 +54,7 @@ def cv_results(dataset, estimators, model):
         
     plt.suptitle(MODE + ' 5-Fold CV ROC Curves & Confusion Matrices (AUC = {:.3f} ± {:.3f})'.format(np.mean(aucs), np.std(aucs)), va='center', fontsize=30)
 
+    return aucs
 #%% Best model's features
 
 from DataAssessment import _best_fts
