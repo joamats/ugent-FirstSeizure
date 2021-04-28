@@ -7,7 +7,6 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from ScoringMetrics import assess_model
 from FeatureSelection import overall_best_fts
 import numpy as np
 
@@ -19,7 +18,7 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
     
     best_fts = []
     validation_score = []
-    best_estimator = []
+    best_estimators = []
     
     model = 'SVM + ANOVA'
     
@@ -39,8 +38,8 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
         X_tr, X_val = X_train[train_index], X_train[test_index]
         y_tr, y_val = y_train[train_index], y_train[test_index]
         
-        X_tr_pre_selected, X_val, best_fts_temp=overall_best_fts(X_tr,y_tr, X_val, fts_names,
-                                                               estimator=estimator_SVC,
+        X_tr_pre_selected, X_val, reduced_dataset, best_fts_temp=overall_best_fts(X_tr,y_tr, X_val, fts_names,
+                                                               estimator=estimator_SVC, mode=mode,
                                                                k_features_bdp=20,
                                                                  k_features_graph=150,
                                                                  k_features_asy=50,
@@ -55,7 +54,7 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
         
         
         skf_2.split(X_tr_pre_selected, y_tr)
-        svc_2 = SVC(random_state=42)
+        svc_2 = SVC(random_state=42, probability=True)
         
         space = dict({
         'classifier__C': [0.01, 0.1, 1, 10, 100],
@@ -76,16 +75,17 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
         
         clf.fit(X_tr_pre_selected, y_tr)
         
-        best_estimator.append(clf.best_estimator_)
+        best_estimators.append(clf.best_estimator_)
         
         validation_score.append(clf.best_estimator_.score(X_val, y_val))
+        
         
         print(3)
         
     mean_validation_score=np.mean(validation_score)
     std_validation_score=np.std(validation_score)
         
-    return best_fts, best_estimator, validation_score, mean_validation_score, std_validation_score
+    return best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_dataset
 
 #%% SVM + SelectKBest
 def grid_search_svm_anova(dataset, labels_names):

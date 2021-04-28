@@ -199,7 +199,7 @@ from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_featur
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
 # Plot TSNE
-# %config InlineBackend.figure_format='retina'
+%config InlineBackend.figure_format='retina'
 fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 # Best Ranked Features
@@ -234,14 +234,11 @@ from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_ano
 from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
-from imblearn.under_sampling import RandomUnderSampler 
-from imblearn.over_sampling import RandomOverSampler 
 
 modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
 montages = ['Bipolar', 'Monopolar_128Hz']
-smp = ['Original', 'Undersampling', 'Oversampling']
+smp = ['Original', 'Undersampling']
 SCORING = 'roc_auc'
-
 
 #%% 
 
@@ -288,4 +285,31 @@ for montage in montages[0:1]:
     AUCS[montage] = aucs_df
         
 #%% SVM with Hybrid Feature Selection
+modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
+montage = 'Bipolar'
+from MachineLearning import svm_overall_bst_fts
 
+log = []
+
+aucs_df = pd.DataFrame()
+
+for MODE in modes:
+
+    # Make array
+    bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
+    
+    labels, filenames = get_filenames_labels(mode=MODE)
+    
+    # Make array
+    data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+    fts_names = data.columns
+    labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+    dataset = dataset_split(data)
+    dataset['MODE'] = MODE
+    dataset['SCORING'] = SCORING
+
+    # ML
+    _, _, aucs, _, _, _= svm_overall_bst_fts(dataset, fts_names, labels_names, MODE, SCORING)
+    
+    aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
+    log.append((montage, MODE))

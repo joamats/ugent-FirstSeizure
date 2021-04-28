@@ -43,7 +43,7 @@ def eliminate_corr_fts(dataset, fts_names, th=0.95):
     return dataset, fts_names_new
 
 #%% ANOVA for Feature Pre-Selection + Sequential Feature Selection
-def overall_best_fts(X_tr, y_tr, X_val, fts_names, estimator, k_features_bdp=20,
+def overall_best_fts(X_tr, y_tr, X_val, fts_names, estimator, mode, k_features_bdp=20,
                      k_features_graph=150, k_features_asy=50,
                      k_features_conn=50, n_features_to_select=50,
                      scoring='roc_auc', cv=5):
@@ -153,7 +153,8 @@ def overall_best_fts(X_tr, y_tr, X_val, fts_names, estimator, k_features_bdp=20,
     X_val_pre_selected=X_val_pre_selected[:,idx]
     best_fts = pd.DataFrame(data=fts_names_pre_selected[idx], index=idx, columns=['fts_names'])
     
+    reduced_dataset={'X_tr': X_tr_pre_selected, 'y_tr': y_tr, 'MODE': mode, 'SCORING': scoring}
     
-    return X_tr_pre_selected, X_val_pre_selected, best_fts
+    return X_tr_pre_selected, X_val_pre_selected, reduced_dataset, best_fts
 
 
