@@ -29,38 +29,31 @@ for ep_l in epochs_lengths:
         epochs_b = set_bipolar(epochs)
         createPickleFile(epochs_b, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
 
-#%% Epochs Downsample to 128Hz
-from PreProcessing import resample_epochs
-
-epochs_lengths = ['2.5s', '5s']
-
-for ep_l in epochs_lengths:
-    for filename in filenames:
-        epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
-        epochs_r = resample_epochs(epochs, sfreq=128)
-        createPickleFile(epochs_r, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/128Hz/' + filename)
-
 #%% Extraction of Bandpower and Connectivity Features 
 from EpochSelection import epochs_selection_bandpower
+from PreProcessing import resample_epochs
 from FeatureExtraction import extract_bandpowers, extract_features
 
-BDP = {}
-IMCOH = {}
-PLV = {}
-MI = {}
-PDC = {}
+# BDP, IMCOH, PLV, MI, PDC = {}, {}, {}, {}, {}
+
+BDP = getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256')
+IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
+PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
+MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
+PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc') 
 
 # over all subjects
 for i, filename in enumerate(filenames):
-    # bandpower extraction
+    # bandpower extraction on 5s epochs, 256Hz
     saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/5s/256Hz/' + filename)
     _, s_epochs = epochs_selection_bandpower(saved_epochs)
     
     BDP[filename] = extract_bandpowers(s_epochs, filename)
     
-    # functional connectivity
-    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/128Hz/' + filename)
-    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    # functional connectivity on 2.5s epochs, 128Hz
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/256Hz/' + filename)
+    downsampled_epochs = resample_epochs(epochs, sfreq=128)
+    bd_names, s_epochs = epochs_selection_bandpower(downsampled_epochs)
     
     IMCOH[filename], PLV[filename], MI[filename],\
     PDC[filename] = extract_features(bd_names, s_epochs)
@@ -114,7 +107,6 @@ for i, filename in enumerate(filenames[[152]]):
     createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')          
 
 #%% From connectivity matrices, compute subgroups' measures
-
 #Subgroups Connectivity Features
 from FeatureExtraction import compute_connectivity_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
@@ -165,10 +157,10 @@ AntecedentChildOther
 '''
 
 global MODE, SCORING
-MODE = 'Diagnosis'
+MODE = 'DiagnosisFemale'
 SCORING = 'roc_auc'
 
-#% Make features array
+#%% Make features array
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
@@ -189,25 +181,6 @@ dataset['SCORING'] = SCORING
 createPickleFile(dataset, '../3_ML_Data/Bipolar/' + 'dataset')
 createPickleFile(labels_names, '../3_ML_Data/Bipolar/' + 'labelsNames')
 
-# #Multiple Modes Dataset and Labels:
-# from DataPreparation import several_modes_data_and_labels
-# labels_names_list, datasets = several_modes_data_and_labels(MODE)
-
-#% Eliminate 1 correlated features
-from FeatureSelection import eliminate_corr_fts   
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
-#% Data Assessment
-from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
-fig_tsne = plot_tsne(dataset, labels_names, MODE)
-# Best Ranked Features
-best_fts = best_ranked_features(dataset,fts_names, k_features=100)
-# Features Correlation Matrix
-corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
-# SVM + SelectKBest
-from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca
-clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
-clf_svm_pca = svm_pca(dataset, labels_names, MODE, SCORING)
-    
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   
 dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
@@ -222,15 +195,6 @@ SCORING = dataset['SCORING']
 #%% Preliminary Data Assessment and Predictive Power
 from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_features, fts_correlation_matrix, most_least_correlated_fts
                         
-# Plot Data Distribution
-
-# # Plot Data Distribution for Family Antecedent
-# fig_data_dist = plot_data_distribution(datasets, labels_names_list, MODE,
-#                                        title="Family Antecedent Absolute",
-#                                        xlabel="Family Antecedent",
-#                                        ylabel="Absolute Distribution",
-#                                        xtickslabels=['Epileptic', 'Non Epileptic', 'Other'])
-
 # Plot Data Distribution for Current MODE
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
@@ -240,40 +204,88 @@ fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 # Best Ranked Features
 best_fts = best_ranked_features(dataset,fts_names, k_features=100)
-
+    
 # Features Correlation Matrix
 corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
 
 # Most and Least Correlated Features
-import seaborn as sb
-from matplotlib import pyplot as plt
 corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
-plt.figure()
-sb.histplot(x=corr_most.values)
-plt.title('Pairs of features correlations distribution')
-plt.xlabel('Correlation')
 
-#%% GridSearchCV of Best Models (run current line with F9)
-from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca
+#%% Train Undersampling
+from imblearn.under_sampling import RandomUnderSampler 
+bl = RandomUnderSampler(random_state=42)
+dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_tr'])  
+fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)   
 
-# SVM + SelectKBest
-clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
+#%% Machine Learning (run current line with F9)
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_anova, mlp_pca
+from ScoringMetrics import cv_results, model_best_fts
+from DataAssessment import count_best_fts_types
 
-# SVM + PCA
-clf_svm_pca = svm_pca(dataset, labels_names, MODE, SCORING)
+# SVM & SelectKBest
+gs_svm_anova, model = grid_search_svm_anova(dataset, labels_names)
+estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
+cv_results(dataset, estimators_svm_anova, model)
+best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+count_best_fts_types(best_features, MODE)
 
-# MLP + SelectKBest
-clf_mlp_anova = mlp_anova(dataset, labels_names, MODE, SCORING)
+#%%
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_anova, mlp_pca
+from ScoringMetrics import cv_results, model_best_fts
+from DataAssessment import count_best_fts_types
+from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
+from imblearn.under_sampling import RandomUnderSampler 
+from imblearn.over_sampling import RandomOverSampler 
 
-# MLP + PCA
-clf_mlp_pca = mlp_pca(dataset, labels_names, MODE, SCORING)
+modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
+montages = ['Bipolar', 'Monopolar_128Hz']
+smp = ['Original', 'Undersampling', 'Oversampling']
+SCORING = 'roc_auc'
 
-# RFC + SelectKBest
-clf_rfc_anova = rfc_anova(dataset, labels_names, MODE, SCORING)
 
-# RFC + PCA
-clf_rfc_pca = rfc_pca(dataset, labels_names, MODE, SCORING)
+#%% 
 
+AUCS = {}
+log = []
+
+for montage in montages[0:1]:
+    aucs_df = pd.DataFrame()
+    for MODE in modes:
+        for s in smp[2:]: 
+        
+            # Make array
+            bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
+            
+            labels, filenames = get_filenames_labels(mode=MODE)
+            
+            # Make array
+            data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+            fts_names = data.columns
+            labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+            dataset = dataset_split(data)
+            dataset['MODE'] = MODE
+            dataset['SCORING'] = SCORING
+            
+            # Data Distribution
+            if s == 'Undersampling':
+                bl = RandomUnderSampler(random_state=42)
+                dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_tr']) 
+                
+            elif s == 'Oversampling':
+                bl = RandomOverSampler(random_state=42)
+                dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_tr']) 
+            
+            # ML
+            gs_svm_anova, model, gs = grid_search_svm_anova(dataset, labels_names)
+            estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
+            aucs = cv_results(dataset, estimators_svm_anova, model)
+            best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+            count_best_fts_types(best_features, MODE)
+            
+            aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [s]*5, aucs], index=['Classification', 'Imabalance Strategy', 'AUC']).transpose()], axis=0)
+            log.append((montage, MODE, s))
+
+    AUCS[montage] = aucs_df
+        
 #%% SVM with Hybrid Feature Selection
-
 

@@ -1,49 +1,70 @@
-from sklearn.metrics import confusion_matrix, plot_roc_curve, classification_report
- 
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import confusion_matrix, roc_curve, auc, RocCurveDisplay
+import pandas as pd
+import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
-
-
-def plot_confusion_matrix(dataset, clf, mode='Diagnosis', model='SVM + ANOVA', scoring='roc_auc'):
     
-    y_true = dataset['y_tr']
-    y_pred = clf.predict(dataset['X_tr'])
-    
-    confusionMatrix = confusion_matrix(y_true, y_pred)
-    
-    plt.figure()
-    sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g')
-    plt.title(mode + ' ' + model + ' ' + scoring)
-    plt.xlabel('Target Class')
-    plt.ylabel('Predicted Class')
-
-
-def plot_roc(dataset, clf, mode='Diagnosis', model='SVM + ANOVA', scoring='roc_auc'):
-    
+def cv_results(dataset, estimators, model):
+    # Dataset
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
-    
-    plt.figure()
-    plot_roc_curve(estimator=clf, X=X_tr, y=y_tr)
-    plt.title(mode + ' ' + model + ' ' + scoring)
+    MODE = dataset['MODE']
 
-def print_metric_report(dataset, labels_names, clf):
+    # Cross-Validation
+    skf = StratifiedKFold(n_splits=5)
     
-    y_true = dataset['y_tr']
-    y_pred = clf.predict(dataset['X_tr'])
+    # Initialize figure
+    plt.figure()
+    fig, axs = plt.subplots(nrows=2, ncols=5, figsize=(30,10))
     
-    rep = classification_report(y_true, y_pred, target_names=labels_names, zero_division=0)
+    aucs, y_probs, roc_aucs = [], [], []
     
-    print(rep)
+    for i, (e, (train_index, test_index)) in enumerate(zip(estimators, skf.split(X_tr, y_tr))):
+        X_val, y_val = X_tr[test_index], y_tr[test_index]
+        
+        # Probabilities
+        y_prob = e.predict_proba(X_val)[:,1]
+        
+        # ROC curve
+        fpr, tpr, thresholds = roc_curve(y_val, y_prob)
+        
+        # Optimal cut-off point
+        max_idxs = np.argmax(tpr - fpr)
+        opti_fpr, opti_tpr, opti_th = fpr[max_idxs], tpr[max_idxs], thresholds[max_idxs]
+        
+        # AUC ROC
+        aucs.append(auc(fpr, tpr))
+        
+        # Display ROC curve
+        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=aucs[i], estimator_name=model)
+        display.plot(axs[1,i])
+        axs[1,i].scatter(opti_fpr, opti_tpr, s=50, c='orange', alpha=1)
+        axs[1,i].plot([0,1], [0,1], '--k')
     
-def assess_model(dataset, clf, labels_names, mode='Diagnosis', model='SVM + ANOVA', scoring='roc_auc'):
-    print('\n' + mode + ' ' + model)
-    print('\nValidation Score with ' + scoring + ':')
-    print('{:.3f}'.format(clf.best_score_))
-    print('\nModel Parameters:')
-    print(clf.best_params_, '\n')
-    # print_metric_report(dataset, labels_names, clf)
+        # Confusion Matrix for optimal threshold
+        y_pred = (y_prob > opti_th).astype('float')
+        # y_pred = e.predict(X_val)
+        confusionMatrix = confusion_matrix(y_val, y_pred)
     
-    # plot_confusion_matrix(dataset, clf, mode=mode, model=model, scoring=scoring)
-    # plot_roc(dataset, clf, mode=mode, model=model, scoring=scoring)
+        sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
+        axs[0,i].title.set_text('Threshold: {:.2f}'.format(opti_th))
+        axs[0,i].set_xlabel('Target Class')
+        axs[0,i].set_ylabel('Predicted Class')
+        
+    plt.suptitle(MODE + ' 5-Fold CV ROC Curves & Confusion Matrices (AUC = {:.3f} ± {:.3f})'.format(np.mean(aucs), np.std(aucs)), va='center', fontsize=30)
+
+    return aucs
+#%% Best model's features
+
+from DataAssessment import _best_fts
+
+def model_best_fts(dataset, fts_names, estimators):
     
+    allBestFts = pd.DataFrame()
+    
+    for e in estimators:
+        selector = e.steps[1][1]
+        allBestFts = pd.concat([allBestFts, _best_fts(selector, fts_names)], axis=0)
+        
+    return allBestFts.sort_values(by='score', ascending=False)

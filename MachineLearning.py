@@ -5,7 +5,6 @@ from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from ScoringMetrics import assess_model
@@ -87,14 +86,13 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
     std_validation_score=np.std(validation_score)
         
     return best_fts, best_estimator, validation_score, mean_validation_score, std_validation_score
-        
-        
-    
 
 #%% SVM + SelectKBest
-def svm_anova(dataset, labels_names, mode, scoring):
+def grid_search_svm_anova(dataset, labels_names):
     
-    model = 'SVM + ANOVA'
+    model = 'ANOVA + SVM'
+    mode = dataset['MODE']
+    scoring = dataset['SCORING']
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -107,15 +105,15 @@ def svm_anova(dataset, labels_names, mode, scoring):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.01, 0.1, 1, 10, 100],
-        'classifier__gamma': [0.01, 0.1, 1, 10, 100],
-        'classifier__kernel': ['rbf', 'sigmoid']
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 10],
+        'classifier__gamma': [0.005, 0.01, 0.05, 0.1, 0.5, 1, 10, 100],
+        'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [10, 15, 20, 25, 30, 35, 40, 45, 50]
+    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -126,16 +124,40 @@ def svm_anova(dataset, labels_names, mode, scoring):
                         param_grid=space,
                         scoring=scoring, 
                         n_jobs=-1,
-                        cv=skf,
+                        cv=5,
                         return_train_score=True )
     
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
+    print('MODE:  ' + mode + '\nMODEL: ' + model)
+    print('\nHYPERPARAMETERS')
+    print(clf.best_params_, '\n')
+    print('BEST SCORE')
+    print(clf.best_score_, '\n')
+    
+    return clf.best_params_, model, clf
 
-    return clf
+def svm_anova_estimators(dataset, gs_svm_anova, model):
+    
+    model = 'SVM & ANOVA'
+    
+    pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
+                            ('dim_red', SelectKBest(score_func=f_classif)),
+                            ('classifier', SVC(random_state=42, probability=True))])
+    
+    pipe.set_params(**gs_svm_anova)
+    
+    scores_pipe = cross_validate(   estimator=pipe,
+                                    X=dataset['X_tr'],
+                                    y=dataset['y_tr'],
+                                    scoring=['roc_auc'],
+                                    cv=5,
+                                    return_train_score=True,
+                                    return_estimator=True)
+    
+    return scores_pipe['estimator']
 
 #%% SVM + PCA
 
@@ -159,7 +181,7 @@ def svm_pca(dataset, labels_names, mode, scoring):
         'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
-    # Dimensionality Reduction
+    # Dimensionality Reductionlabels_names
     dim_red = PCA(random_state=42)
     
     space['dim_red__n_components'] = [10, 15, 20]
@@ -180,22 +202,27 @@ def svm_pca(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
    
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
-    
     return clf
 
 #%% MLP + SelectKBest
 
-def mlp_anova(dataset, labels_names, mode, scoring):
+def mlp_anova(dataset, labels_names):
     
     model = 'MLP + ANOVA'
+    mode = dataset['MODE']
+    scoring = dataset['SCORING']
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
     minMax_scaler = MinMaxScaler()
     
     # MLP Model
-    mlp = MLPClassifier(random_state=42, max_iter = 1000, early_stopping = True)
+    mlp = MLPClassifier(random_state=42,
+                        max_iter=500,
+                        early_stopping=True,
+                        activation='relu',
+                        solver='adam',
+                        learning_rate='adaptive')
     
     # Cross-Validation
     skf = StratifiedKFold(n_splits=5)
@@ -203,19 +230,14 @@ def mlp_anova(dataset, labels_names, mode, scoring):
     # Parameters for Grid Search
     space = dict({
         'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
-                                          (100,100), (150,150),(200,200), (500,500),
-                                          (100,100,100),(150,150,150), (200,200,200)],
-        'classifier__activation': ['relu'],
-        'classifier__solver': ['adam'],
-        'classifier__learning_rate': ['adaptive'],
+                                          (100,100), (150,150),(200,200)],
         'classifier__alpha':[0.001, 0.01, 0.1, 1],
-        'classifier__early_stopping': [False]
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [20, 50, 70]
+    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40]
     
     # Pipeline
     model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -234,22 +256,33 @@ def mlp_anova(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
+    print('MODE:  ' + mode + '\nMODEL: ' + model)
+    print('\nHYPERPARAMETERS')
+    print(clf.best_params_, '\n')
+    print('BEST SCORE')
+    print(clf.best_score_, '\n')
     
-    return clf
+    return clf, model
 
 #%% MLP + PCA
 
-def mlp_pca(dataset, labels_names, mode, scoring):
+def mlp_pca(dataset, labels_names):
 
     model = 'MLP + PCA'
+    mode = dataset['MODE']
+    scoring = dataset['SCORING']
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
     minMax_scaler = MinMaxScaler()
     
     # MLP Model
-    mlp = MLPClassifier(random_state=42, max_iter = 1000)
+    mlp = MLPClassifier(random_state=42,
+                        max_iter=500,
+                        early_stopping=True,
+                        activation='relu',
+                        solver='adam',
+                        learning_rate='adaptive')
     
     # Cross-Validation
     skf = StratifiedKFold(n_splits=5)
@@ -257,19 +290,14 @@ def mlp_pca(dataset, labels_names, mode, scoring):
     # Parameters for Grid Search
     space = dict({
         'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
-                                          (100,100), (150,150),(200,200), (500,500),
-                                          (100,100,100),(150,150,150), (200,200,200)],
-        'classifier__activation': ['relu'],
-        'classifier__solver': ['adam'],
-        'classifier__learning_rate': ['adaptive'],
+                                          (100,100), (150,150),(200,200)],
         'classifier__alpha':[0.001, 0.01, 0.1, 1],
-        'classifier__early_stopping': [False]
     })
     
     # Dimensionality Reduction
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = [10, 15, 20]
+    space['dim_red__n_components'] = [5, 10, 15, 20]
     
     
     # Pipeline
@@ -289,15 +317,20 @@ def mlp_pca(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
-
-    return clf
+    print('MODE:  ' + mode + '\nMODEL: ' + model)
+    print('\nHYPERPARAMETERS')
+    print(clf.best_params_, '\n')
+    print('BEST SCORE')
+    print(clf.best_score_, '\n')
+    
+    return clf, model
 
 #%% RFC + SelectKBest
 
 def rfc_anova(dataset, labels_names, mode, scoring):
 
     model = 'RFC + ANOVA'
+    
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
@@ -339,8 +372,6 @@ def rfc_anova(dataset, labels_names, mode, scoring):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
-    
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
     
     return clf
 
@@ -392,14 +423,6 @@ def rfc_pca(dataset, labels_names, mode, scoring):
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
     
-    assess_model(dataset, clf, labels_names, mode, model, scoring)
-    
-    return clf
+    return clf  
 
-
-# #%% Naive Bayes
-# def naive_bayes_anova(dataset):
-    
-
-    
     

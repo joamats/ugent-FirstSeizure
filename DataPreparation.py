@@ -7,28 +7,28 @@ from Pickle import createPickleFile
 #%% Auxiliary functions
 
 # retrieves all saved features (conn + graphs)
-def get_saved_features(bdp=False, rawConn=False, conn=False, graphs=False, asy=False):
+def get_saved_features(bdp=False, rawConn=False, conn=False, graphs=False, asy=False, montage='Bipolar'):
     
     features = []
     
     if bdp:
-        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256'))
+        features.append(getPickleFile('../2_Features_Data/' + montage + '/bdp'))
     
     if rawConn:
-        IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
-        PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
-        MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
-        PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc')
+        IMCOH = getPickleFile('../2_Features_Data/' + montage + '/imcoh')
+        PLV = getPickleFile('../2_Features_Data/' + montage + '/plv')
+        MI = getPickleFile('../2_Features_Data/' + montage + '/mi')
+        PDC = getPickleFile('../2_Features_Data/' + montage + '/pdc')
         features.append({'imcoh': IMCOH, 'plv': PLV, 'mi': MI, 'pdc': PDC})
     
     if conn:
-        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'connectivityMeasures'))
+        features.append(getPickleFile('../2_Features_Data/' + montage + '/connectivityMeasures'))
     
     if graphs:
-        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'graphMeasures'))
+        features.append(getPickleFile('../2_Features_Data/' + montage + '/graphMeasures'))
         
     if asy:    
-        features.append(getPickleFile('../2_Features_Data/Bipolar/' + 'asymmetryMeasures'))
+        features.append(getPickleFile('../2_Features_Data/' + montage + '/asymmetryMeasures'))
 
     if len(features)==1:
         return features[0]
@@ -49,9 +49,11 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
         # concatenate bandpowers
         ft_df = bdp_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
-        # concatenate connectivity measures
+        
+        # concatenate connectivity measures - NOT ANYMORE
         ft_df = conn_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
+        
         # concatenate graph measures
         ft_df = gr_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
