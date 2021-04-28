@@ -116,7 +116,7 @@ AntecedentChildOther
 '''
 
 global MODE, SCORING
-MODE = 'Diagnosis'
+MODE = 'DiagnosisFemale'
 SCORING = 'roc_auc'
 
 #%% Make features array
@@ -163,22 +163,58 @@ fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 # Best Ranked Features
 best_fts = best_ranked_features(dataset,fts_names, k_features=100)
-
+    
 # Features Correlation Matrix
 corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
 
 # Most and Least Correlated Features
 corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
 
-#%% GridSearchCV of Best Models (run current line with F9)
-from MachineLearning import grid_search_svm_anova, svm_anova_estimators
-from ScoringMetrics import cv_results
+#%% Train Undersampling
+from imblearn.under_sampling import RandomUnderSampler 
+bl = RandomUnderSampler(random_state=42)
+dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_tr'])  
+fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)   
+
+#%% Machine Learning (run current line with F9)
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_anova, mlp_pca
+from ScoringMetrics import cv_results, model_best_fts
+from DataAssessment import count_best_fts_types
 
 # SVM & SelectKBest
-grid_search_svm_anova, model = grid_search_svm_anova(dataset, labels_names)
-estimators_svm_anova = svm_anova_estimators(dataset, grid_search_svm_anova, model)
+gs_svm_anova, model = grid_search_svm_anova(dataset, labels_names)
+estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
 cv_results(dataset, estimators_svm_anova, model)
+best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+count_best_fts_types(best_features, MODE)
 
+#%%
+modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
+SCORING = 'roc_auc'
 
-
-
+for MODE in modes:
+    
+    # Make array
+    from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
+    bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage='Monopolar_128Hz')
+    
+    labels, filenames = get_filenames_labels(mode=MODE)
+    
+    # Make array
+    data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+    fts_names = data.columns
+        
+    labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+    dataset = dataset_split(data)
+    dataset['MODE'] = MODE
+    dataset['SCORING'] = SCORING
+    
+    # ML
+    from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_anova, mlp_pca
+    from ScoringMetrics import cv_results, model_best_fts
+    from DataAssessment import count_best_fts_types
+    gs_svm_anova, model = grid_search_svm_anova(dataset, labels_names)
+    estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
+    cv_results(dataset, estimators_svm_anova, model)
+    best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+    count_best_fts_types(best_features, MODE)

@@ -1,5 +1,6 @@
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import confusion_matrix, roc_curve, auc, RocCurveDisplay
+import pandas as pd
 import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
@@ -16,7 +17,8 @@ def cv_results(dataset, estimators, model):
     # Initialize figure
     plt.figure()
     fig, axs = plt.subplots(nrows=2, ncols=5, figsize=(30,10))
-    plt.suptitle('5-Fold Cross-Validation ROC Curves and Confusion Matrices ' + MODE , va='center', fontsize=30)
+    
+    aucs = []
     
     for i, (e, (train_index, test_index)) in enumerate(zip(estimators, skf.split(X_tr, y_tr))):
         X_val, y_val = X_tr[test_index], y_tr[test_index]
@@ -32,18 +34,36 @@ def cv_results(dataset, estimators, model):
         opti_fpr, opti_tpr, opti_th = fpr[max_idxs], tpr[max_idxs], thresholds[max_idxs]
         
         # AUC ROC
-        roc_auc = auc(fpr, tpr)
+        aucs.append(auc(fpr, tpr))
         
         # Display ROC curve
-        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=model)
+        display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=aucs[i], estimator_name=model)
         display.plot(axs[1,i])
         axs[1,i].scatter(opti_fpr, opti_tpr, s=50, c='orange', alpha=1)
+        axs[1,i].plot([0,1], [0,1], '--k')
     
         # Confusion Matrix for optimal threshold
         y_pred = (y_prob > opti_th).astype('float')
+        # y_pred = e.predict(X_val)
         confusionMatrix = confusion_matrix(y_val, y_pred)
     
         sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
         axs[0,i].title.set_text('Threshold: {:.2f}'.format(opti_th))
         axs[0,i].set_xlabel('Target Class')
         axs[0,i].set_ylabel('Predicted Class')
+        
+    plt.suptitle(MODE + ' 5-Fold CV ROC Curves & Confusion Matrices (AUC = {:.3f} ± {:.3f})'.format(np.mean(aucs), np.std(aucs)), va='center', fontsize=30)
+
+#%% Best model's features
+
+from DataAssessment import _best_fts
+
+def model_best_fts(dataset, fts_names, estimators):
+    
+    allBestFts = pd.DataFrame()
+    
+    for e in estimators:
+        selector = e.steps[1][1]
+        allBestFts = pd.concat([allBestFts, _best_fts(selector, fts_names)], axis=0)
+        
+    return allBestFts.sort_values(by='score', ascending=False)

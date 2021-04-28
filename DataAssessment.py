@@ -135,6 +135,14 @@ def plot_tsne(dataset, labels_names, mode='Diagnosis'):
 
 #%% Feature selection with ANOVA - look for best ranked features
 
+def _best_fts(selector, fts_names):
+    idx = selector.get_support(indices=True)
+    scores = selector.scores_
+    best_fts = pd.DataFrame(data=scores[idx], index=idx, columns=['score'])
+    best_fts['fts_names'] = fts_names[idx]
+    
+    return best_fts.sort_values(by='score', ascending=False)
+
 def best_ranked_features(dataset, fts_names, k_features=200):
 
     X_tr = dataset['X_tr']
@@ -151,12 +159,60 @@ def best_ranked_features(dataset, fts_names, k_features=200):
                             k=k_features)
     X_tr = selector.fit_transform(X_tr, y_tr)
     
-    idx = selector.get_support(indices=True)
-    scores = selector.scores_
-    best_fts = pd.DataFrame(data=scores[idx], index=idx, columns=['score'])
-    best_fts['fts_names'] = fts_names[idx]
+    return _best_fts(selector, fts_names)
 
-    return best_fts.sort_values(by='score', ascending=False)
+#%% Histograms of best ranked features types
+
+def count_best_fts_types(best_fts, MODE):
+
+    fts_split = []
+    fts_names = best_fts['fts_names'].unique()
+    for fts in fts_names:
+        fts_split.append(fts.split('-'))
+        
+    bst_type_1, bst_type_2, bst_type_3, = [], [], []
+    fts_type_1 = ['bdp', 'imcoh', 'plv', 'mi', 'pdc']
+    fts_type_2 = ['Global', 'Alpha', 'Theta', 'Delta', 'Beta']
+    
+    # Auxiliar for bst_type_3
+    fts_type_list_conn = ['imcoh', 'plv', 'mi', 'pdc']
+    fts_type_list_graph = ['betweness_centr', 'clustering_coef', 'incoming_flow',
+                          'outgoing_flow', 'node_strengths', 'efficiency']
+    
+    for fts in fts_split:
+        bst_type_1.append([i for i in fts_type_1 if i in fts][0])
+        bst_type_2.append([i for i in fts_type_2 if i in fts][0])
+        
+        conn = [i for i in fts_type_list_conn if i in fts[0]]
+        graph = [i for i in fts_type_list_graph if i in fts[0] and 'vs' not in fts[3]]
+        asymmetry = [i for i in fts_type_list_graph if i in fts[0] and 'vs' in fts[3]]
+        
+        if conn != []:
+            bst_type_3.append('Functional\nConnectivity')
+        elif fts[0]=='bdp':
+            bst_type_3.append('Bandpowers')
+        elif graph != []:
+            bst_type_3.append('Graph\nMeasures')
+        elif asymmetry != []:
+            bst_type_3.append('Asymmetry\nRatios')
+        
+    df_1 = pd.DataFrame(bst_type_1, columns=['Bandpower and Functional Connectivity'])
+    df_2 = pd.DataFrame(bst_type_2, columns=['Frequency Band'])
+    df_3 = pd.DataFrame(bst_type_3, columns=['Type of Measure'])
+    
+    # Initialize figure
+    plt.figure()
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18,5), sharey=True)
+    
+    sb.countplot(x='Bandpower and Functional Connectivity', data=df_1, ax=axs[0]).set(xlabel=None)
+    axs[0].title.set_text('Bandpower and Functional Connectivity')
+    sb.countplot(x='Frequency Band', data=df_2, ax=axs[1]).set(xlabel=None)
+    axs[1].title.set_text('Frequency Band')
+    sb.countplot(x='Type of Measure', data=df_3, ax=axs[2]).set(xlabel=None)
+    axs[2].title.set_text('Type of Measure')
+    
+    plt.suptitle(MODE + ' Most Selected Features through 5-Fold CV', fontsize=18, va='center')
+    
 
 #%% Features Correlation Matrix
 
