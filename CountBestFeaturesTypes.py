@@ -18,16 +18,16 @@ for fts in fts_split:
     best_fts_type.append([i for i in fts_type_list if i in fts][0])
     
 # for fts in fts_split:
-#     conn=[i for i in fts_type_list_conn if i in fts[0]]
-#     graph=[i for i in fts_type_list_graph if i in fts[0] and 'vs' not in fts[3]]
-#     asymmetry=[i for i in fts_type_list_graph if i in fts[0] and 'vs' in fts[3]]
+#     conn=[i for i in fts_type_list_conn if i == fts_split[0]]
+#     graph=[i for i in fts_type_list_graph if i == fts_split[0] and 'vs' not in fts_split[3]]
+#     asymmetry=[i for i in fts_type_list_graph if i == fts_split[0] and 'vs' in fts_split[3]]
 #     if conn!=[]:
 #         best_fts_type.append('Functional\nConnectivity')
 #     elif fts[0]=='bdp':
 #         best_fts_type.append('Bandpowers')
 #     elif graph!=[]:
 #         best_fts_type.append('Graph\nMeasures')
-#     elif assimetry!=[]:
+#     elif asymmetry!=[]:
 #         best_fts_type.append('Asymmetry\nRatios')
     
 df = DataFrame (best_fts_type,columns=['Frequency Band'])

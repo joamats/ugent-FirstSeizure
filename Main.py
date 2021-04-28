@@ -24,7 +24,7 @@ from PreProcessing import set_bipolar
 epochs_lengths = ['2.5s', '5s']
 
 for ep_l in epochs_lengths:
-    for filename in filenames:
+    for filename in filenames[[152]]:
         epochs = getPickleFile('../1_PreProcessed_Data/Monopolar/' + ep_l + '/256Hz/' + filename)
         epochs_b = set_bipolar(epochs)
         createPickleFile(epochs_b, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
@@ -70,7 +70,48 @@ for i, filename in enumerate(filenames):
     createPickleFile(IMCOH, '../2_Features_Data/Bipolar/' + 'imcoh')
     createPickleFile(PLV, '../2_Features_Data/Bipolar/' + 'plv')
     createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
-    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')         
+    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')  
+
+#%% Extraction of Bandpower and Connectivity Features 
+from EpochSelection import epochs_selection_bandpower
+from FeatureExtraction import extract_bandpowers, extract_features
+from PreProcessing import resample_epochs
+
+# BDP = {}
+# IMCOH = {}
+# PLV = {}
+# MI = {}
+# PDC = {}
+
+BDP = getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256')
+IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
+PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
+MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
+PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc')
+
+# over all subjects
+for i, filename in enumerate(filenames[[152]]):
+    
+    # bandpower extraction
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/5s/256Hz/' + filename)
+    _, s_epochs = epochs_selection_bandpower(saved_epochs)
+    
+    BDP[filename] = extract_bandpowers(s_epochs, filename)
+    
+    # functional connectivity
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/256Hz/' + filename)
+    saved_epochs = resample_epochs(saved_epochs, sfreq=128)
+    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    
+    IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
+    
+    # save features in pickle
+    createPickleFile(BDP, '../2_Features_Data/Bipolar/' + 'bdp_256')
+    createPickleFile(IMCOH, '../2_Features_Data/Bipolar/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/Bipolar/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
+    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')          
 
 #%% From connectivity matrices, compute subgroups' measures
 
@@ -80,19 +121,19 @@ fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/Bipolar/' + 'connectivityMeasures')
 
-#%% Subgroups Graph Measures
+#% Subgroups Graph Measures
 from GraphMeasures import compute_graph_subgroup_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/Bipolar/' + 'graphMeasures')
 
-#%% Subgroups Graph Asymmetry Ratios
+#% Subgroups Graph Asymmetry Ratios
 from Asymmetry import compute_asymmetry_measures
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
 createPickleFile(asymmetry_ms, '../2_Features_Data/Bipolar/' + 'asymmetryMeasures')
 
-#% Working Mode & Generate All Features Matrix
+#%% Working Mode & Generate All Features Matrix
 ''' 
 Diagnosis:                      roc_auc
 
@@ -165,15 +206,16 @@ corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'M
 # SVM + SelectKBest
 from MachineLearning import svm_anova, svm_pca, mlp_anova, mlp_pca, rfc_anova, rfc_pca
 clf_svm_anova = svm_anova(dataset, labels_names, MODE, SCORING)
+clf_svm_pca = svm_pca(dataset, labels_names, MODE, SCORING)
     
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   
 dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
 
 #%% TRAIN Machine Learning - get data from Pickle
-dataset = getPickleFile('../3_ML_Data/128Hz/dataset')
-fts_names = getPickleFile('../3_ML_Data/128Hz/featuresNames')
-labels_names = getPickleFile('../3_ML_Data/128Hz/labelsNames')
+dataset = getPickleFile('../3_ML_Data/Bipolar/dataset')
+fts_names = getPickleFile('../3_ML_Data/Bipolar/featuresNames')
+labels_names = getPickleFile('../3_ML_Data/Bipolar/labelsNames')
 MODE = dataset['MODE']
 SCORING = dataset['SCORING']
 
@@ -231,3 +273,7 @@ clf_rfc_anova = rfc_anova(dataset, labels_names, MODE, SCORING)
 
 # RFC + PCA
 clf_rfc_pca = rfc_pca(dataset, labels_names, MODE, SCORING)
+
+#%% SVM with Hybrid Feature Selection
+
+
