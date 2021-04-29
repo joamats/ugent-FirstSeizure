@@ -4,7 +4,7 @@ from Pickle import getPickleFile
 from DataAssessment import fts_correlation_matrix
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from DataAssessment import best_ranked_features
-from sklearn.feature_selection import SequentialFeatureSelector
+# from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 
@@ -48,34 +48,27 @@ def overall_best_fts(X_tr, y_tr, X_val, whole_X_tr, whole_y_tr, fts_names, estim
                      k_features_conn=50, n_features_to_select=50,
                      scoring='roc_auc', cv=5):
     
-    fts_types = []
-    fts_names_bdp = []
-    fts_names_graph = []
-    fts_names_asy = []
-    fts_names_conn = []
-    
+    fts_types, fts_names_bdp, fts_names_graph, fts_names_asy, fts_names_conn = [], [], [], [],[]
     
     fts_type_list_conn = ['imcoh', 'plv', 'mi', 'pdc']
     fts_type_list_graph = ['betweness_centr', 'clustering_coef', 'incoming_flow',
                           'outgoing_flow', 'node_strengths', 'efficiency']
     for fts in fts_names:
         fts_split = (fts.split('-'))
-        conn=[i for i in fts_type_list_conn if i == fts_split[0]]
-        graph=[i for i in fts_type_list_graph if i == fts_split[0] and 'vs' not in fts_split[3]]
-        asymmetry=[i for i in fts_type_list_graph if i == fts_split[0] and 'vs' in fts_split[3]]
-        if conn!=[]:
+        conn = [i for i in fts_type_list_conn if i == fts_split[0]]
+        graph = [i for i in fts_type_list_graph if i == fts_split[0] and 'vs' not in fts_split[3]]
+        asymmetry = [i for i in fts_type_list_graph if i == fts_split[0] and 'vs' in fts_split[3]]
+        
+        if conn != []:
             fts_types.append('Connectivity')
-        elif fts_split[0]=='bdp':
+        elif fts_split[0] == 'bdp':
             fts_types.append('Bandpowers')
-        elif graph!=[]:
+        elif graph != []:
             fts_types.append('GraphMeasures')
-        elif asymmetry!=[]:
+        elif asymmetry != []:
             fts_types.append('Asymmetry')
     
-    a=0
-    b=0
-    c=0
-    d=0
+    a, b, c, d = 0, 0, 0, 0
     
     for i, fts_type in enumerate(fts_types):
         if fts_type == 'Bandpowers':
@@ -118,33 +111,31 @@ def overall_best_fts(X_tr, y_tr, X_val, whole_X_tr, whole_y_tr, fts_names, estim
     fts_names_asy = pd.Index(fts_names_asy)
     fts_names_conn = pd.Index(fts_names_conn)
         
-    if k_features_bdp>np.shape(X_tr_bdp)[1]:
+    if k_features_bdp > np.shape(X_tr_bdp)[1]:
         k_features_bdp = np.shape(X_tr_bdp)[1]
     best_ranked_features_bdp = best_ranked_features(dataset_bdp, fts_names_bdp, k_features_bdp)
     
-    if k_features_graph>np.shape(X_tr_graph)[1]:
+    if k_features_graph > np.shape(X_tr_graph)[1]:
         k_features_graph = np.shape(X_tr_graph)[1]
     best_ranked_features_graph = best_ranked_features(dataset_graph, fts_names_graph, k_features_graph)
     
-    if k_features_asy>np.shape(X_tr_asy)[1]:
+    if k_features_asy > np.shape(X_tr_asy)[1]:
         k_features_asy = np.shape(X_tr_asy)[1]
     best_ranked_features_asy = best_ranked_features(dataset_asy, fts_names_asy, k_features_asy)
     
-    if k_features_conn>np.shape(X_tr_conn)[1]:
+    if k_features_conn > np.shape(X_tr_conn)[1]:
         k_features_conn = np.shape(X_tr_conn)[1]
     best_ranked_features_conn = best_ranked_features(dataset_conn, fts_names_conn, k_features_conn)
-    
     
     idx_brf = []
     for i, fts_name in enumerate(fts_names):
         if fts_name in best_ranked_features_bdp['fts_names'].tolist() or fts_name in best_ranked_features_graph['fts_names'].tolist() or fts_name in best_ranked_features_asy['fts_names'].tolist() or fts_name in best_ranked_features_conn['fts_names'].tolist():
             idx_brf.append(i)
         
-    fts_names_pre_selected= fts_names[idx_brf]
-    X_tr_pre_selected=X_tr[:, idx_brf]
-    X_val_pre_selected=X_val[:,idx_brf]
-    whole_X_tr=whole_X_tr[:,idx_brf]
-    
+    fts_names_pre_selected = fts_names[idx_brf]
+    X_tr_pre_selected = X_tr[:, idx_brf]
+    X_val_pre_selected = X_val[:,idx_brf]
+    whole_X_tr = whole_X_tr[:,idx_brf]
     
     selector = SequentialFeatureSelector(estimator=estimator,\
                                          n_features_to_select=n_features_to_select,\
@@ -152,11 +143,11 @@ def overall_best_fts(X_tr, y_tr, X_val, whole_X_tr, whole_y_tr, fts_names, estim
     X_tr_pre_selected = selector.fit_transform(X_tr_pre_selected, y_tr)
     
     idx = selector.get_support(indices=True)
-    X_val_pre_selected=X_val_pre_selected[:,idx]
-    whole_X_tr=whole_X_tr[:,idx]
+    X_val_pre_selected = X_val_pre_selected[:,idx]
+    whole_X_tr = whole_X_tr[:,idx]
     best_fts = pd.DataFrame(data=fts_names_pre_selected[idx], index=idx, columns=['fts_names'])
     
-    reduced_dataset={'X_tr': whole_X_tr, 'y_tr': whole_y_tr, 'MODE': mode, 'SCORING': scoring}
+    reduced_dataset = {'X_tr': whole_X_tr, 'y_tr': whole_y_tr, 'MODE': mode, 'SCORING': scoring}
     
     return X_tr_pre_selected, X_val_pre_selected, reduced_dataset, best_fts
 
