@@ -29,12 +29,19 @@ def cv_results(dataset, estimators, model):
         # ROC curve
         fpr, tpr, thresholds = roc_curve(y_val, y_prob)
         
+        # AUC ROC
+        _auc = auc(fpr, tpr)
+        
+        if _auc < 0.5:
+            y_prob = e.predict_proba(X_val)[:,0]
+            fpr, tpr, thresholds = roc_curve(y_val, y_prob)
+            _auc = auc(fpr, tpr)
+
+        aucs.append(_auc)
+                
         # Optimal cut-off point
         max_idxs = np.argmax(tpr - fpr)
         opti_fpr, opti_tpr, opti_th = fpr[max_idxs], tpr[max_idxs], thresholds[max_idxs]
-        
-        # AUC ROC
-        aucs.append(auc(fpr, tpr))
         
         # Display ROC curve
         display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=aucs[i], estimator_name=model)

@@ -314,6 +314,78 @@ def get_filenames_labels(mode='Diagnosis'):
         labels = pd.concat([labels1, labels2], axis=0)['Diagnosis']
         
         filenames = labels.index
+        
+    elif mode == 'FocalSymptomaticVSNon-EpilepticFemale':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Epilepsy type', 'Gender']]
+        labels1 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels1 = labels1[labels1['Epilepsy type'] != 'cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'focal cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'generalized idiopathic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'undetermined']    
+        labels1 = labels1[~ labels1['Epilepsy type'].isnull()]    
+        
+        labels2 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels2 = labels2[labels2['Diagnosis'] != 'epileptic seizure']
+        labels2 = labels2[labels2['Diagnosis'] != 'undetermined']
+        
+        labels = pd.concat([labels1, labels2], axis=0)[['Diagnosis', 'Gender']]
+        labels = labels[labels['Gender'] == 'female']['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'FocalSymptomaticVSNon-EpilepticMale':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Epilepsy type', 'Gender']]
+        labels1 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels1 = labels1[labels1['Epilepsy type'] != 'cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'focal cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'generalized idiopathic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'undetermined']    
+        labels1 = labels1[~ labels1['Epilepsy type'].isnull()]    
+        
+        labels2 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels2 = labels2[labels2['Diagnosis'] != 'epileptic seizure']
+        labels2 = labels2[labels2['Diagnosis'] != 'undetermined']
+        
+        labels = pd.concat([labels1, labels2], axis=0)[['Diagnosis', 'Gender']]
+        labels = labels[labels['Gender'] == 'male']['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'FocalSymptomaticVSNon-EpilepticOld':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Epilepsy type', 'Age']]
+        labels1 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels1 = labels1[labels1['Epilepsy type'] != 'cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'focal cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'generalized idiopathic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'undetermined']    
+        labels1 = labels1[~ labels1['Epilepsy type'].isnull()]    
+        
+        labels2 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels2 = labels2[labels2['Diagnosis'] != 'epileptic seizure']
+        labels2 = labels2[labels2['Diagnosis'] != 'undetermined']
+        
+        labels = pd.concat([labels1, labels2], axis=0)[['Diagnosis', 'Age']]
+        labels = labels[labels['Age'] >= 50]['Diagnosis']
+        
+        filenames = labels.index
+        
+    elif mode == 'FocalSymptomaticVSNon-EpilepticYoung':
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Epilepsy type', 'Age']]
+        labels1 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels1 = labels1[labels1['Epilepsy type'] != 'cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'focal cryptogenic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'generalized idiopathic']
+        labels1 = labels1[labels1['Epilepsy type'] != 'undetermined']    
+        labels1 = labels1[~ labels1['Epilepsy type'].isnull()]    
+        
+        labels2 = meta_labels[meta_labels['Sleep state'] == 'wake']
+        labels2 = labels2[labels2['Diagnosis'] != 'epileptic seizure']
+        labels2 = labels2[labels2['Diagnosis'] != 'undetermined']
+        
+        labels = pd.concat([labels1, labels2], axis=0)[['Diagnosis', 'Age']]
+        labels = labels[labels['Age'] < 50]['Diagnosis']
+        
+        filenames = labels.index
 
     return labels, filenames
 
@@ -322,7 +394,7 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
         
     flt_labels = labels.copy()
     
-    if mode in ['Diagnosis','DiagnosisMale','DiagnosisFemale','DiagnosisYoung','DiagnosisOld','AntecedentFamilyEpileptic', 'AntecedentFamilyNonEpileptic', 'AntecedentFamilyOther', 'AntecedentChildDevelopDisorder', 'AntecedentChildFebrileSeizure', 'AntecedentChildMyoclonus', 'AntecedentChildNone', 'AntecedentChildOther', 'FocalSymptomaticVSNon-Epileptic']:
+    if mode in ['Diagnosis','DiagnosisMale','DiagnosisFemale','DiagnosisYoung','DiagnosisOld','AntecedentFamilyEpileptic', 'AntecedentFamilyNonEpileptic', 'AntecedentFamilyOther', 'AntecedentChildDevelopDisorder', 'AntecedentChildFebrileSeizure', 'AntecedentChildMyoclonus', 'AntecedentChildNone', 'AntecedentChildOther', 'FocalSymptomaticVSNon-Epileptic', 'FocalSymptomaticVSNon-EpilepticYoung', 'FocalSymptomaticVSNon-EpilepticOld', 'FocalSymptomaticVSNon-EpilepticMale', 'FocalSymptomaticVSNon-EpilepticFemale']:
         flt_labels[labels != 'epileptic seizure'] = 0
         flt_labels[labels == 'epileptic seizure'] = 1
         
