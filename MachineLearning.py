@@ -19,27 +19,25 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
     best_fts = []
     validation_score = []
     best_estimators = []
-    
-    model = 'SVM + ANOVA'
+    reduced_datasets = []
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)
     
     # SVC Model
-    svc_1 = SVC(C=0.1, gamma=0.01, kernel = 'rbf', random_state=42)
-    estimator_SVC = Pipeline(steps=[('norm_scaler',norm_scaler), ('classifier', svc_1)])
+    svc = SVC(C=0.1, gamma=0.01, kernel = 'rbf', random_state=42, probability=True)
+    model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler), ('classifier', svc)])
     
     # Cross-Validation
-    skf_1 = StratifiedKFold(n_splits=5)
-    skf_2 = StratifiedKFold(n_splits=5)
+    skf = StratifiedKFold(n_splits=5)
     
-    for train_index, test_index in skf_1.split(X_train, y_train):
+    for train_index, test_index in skf.split(X_train, y_train):
         print(1)
         X_tr, X_val = X_train[train_index], X_train[test_index]
         y_tr, y_val = y_train[train_index], y_train[test_index]
         
-        X_tr_pre_selected, X_val, reduced_dataset, best_fts_temp=overall_best_fts(X_tr,y_tr, X_val, fts_names,
-                                                               estimator=estimator_SVC, mode=mode,
+        X_tr_pre_selected, X_val, reduced_dataset, best_fts_temp=overall_best_fts(X_tr,y_tr, X_val, X_train, y_train, fts_names,
+                                                               estimator=model_SVC, mode=mode,
                                                                k_features_bdp=20,
                                                                  k_features_graph=150,
                                                                  k_features_asy=50,
@@ -51,10 +49,7 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
         print(2)
         
         best_fts.append(best_fts_temp)
-        
-        
-        skf_2.split(X_tr_pre_selected, y_tr)
-        svc_2 = SVC(random_state=42, probability=True)
+        reduced_datasets.append(reduced_dataset)
         
         space = dict({
         'classifier__C': [0.01, 0.1, 1, 10, 100],
@@ -62,16 +57,11 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
         'classifier__kernel': ['rbf', 'sigmoid']
         })
         
-        
-        # Pipeline
-        model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
-                                    ('classifier', svc_2)])
-        
         clf = GridSearchCV( estimator=model_SVC,
                             param_grid=space,
                             scoring=scoring, 
                             n_jobs=-1,
-                            cv=skf_2 )
+                            cv=skf )
         
         clf.fit(X_tr_pre_selected, y_tr)
         
@@ -85,7 +75,7 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
     mean_validation_score=np.mean(validation_score)
     std_validation_score=np.std(validation_score)
         
-    return best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_dataset
+    return best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets
 
 #%% SVM + SelectKBest
 def grid_search_svm_anova(dataset, labels_names):
