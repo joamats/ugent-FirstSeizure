@@ -7,6 +7,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_validate
 from FeatureSelection import overall_best_fts
 import numpy as np
 
@@ -89,9 +90,6 @@ def grid_search_svm_anova(dataset, labels_names):
     
     # SVC Model
     svc = SVC(random_state=42)
-    
-    # Cross-Validation
-    skf = StratifiedKFold(n_splits=5)
     
     # Parameters for Grid Search
     space = dict({

@@ -199,7 +199,7 @@ from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_featur
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
 # Plot TSNE
-%config InlineBackend.figure_format='retina'
+#%config InlineBackend.figure_format='retina'
 fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 # Best Ranked Features
@@ -235,58 +235,51 @@ from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 
-modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
-montages = ['Bipolar', 'Monopolar_128Hz']
-smp = ['Original', 'Undersampling']
+# modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
+modes = ['FocalSymptomaticVSNon-Epileptic']
+# montages = ['Bipolar', 'Monopolar_128Hz']
+montages = ['Bipolar']
 SCORING = 'roc_auc'
 
-#%% 
-
-AUCS = {}
 log = []
 
-for montage in montages[0:1]:
-    aucs_df = pd.DataFrame()
-    for MODE in modes:
-        for s in smp[2:]: 
-        
-            # Make array
-            bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
-            
-            labels, filenames = get_filenames_labels(mode=MODE)
-            
-            # Make array
-            data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
-            fts_names = data.columns
-            labels_names = add_labels_to_data_array(data, labels, mode=MODE)
-            dataset = dataset_split(data)
-            dataset['MODE'] = MODE
-            dataset['SCORING'] = SCORING
-            
-            # Data Distribution
-            if s == 'Undersampling':
-                bl = RandomUnderSampler(random_state=42)
-                dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_tr']) 
-                
-            elif s == 'Oversampling':
-                bl = RandomOverSampler(random_state=42)
-                dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_tr']) 
-            
-            # ML
-            gs_svm_anova, model, gs = grid_search_svm_anova(dataset, labels_names)
-            estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
-            aucs = cv_results(dataset, estimators_svm_anova, model)
-            best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
-            count_best_fts_types(best_features, MODE)
-            
-            aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [s]*5, aucs], index=['Classification', 'Imabalance Strategy', 'AUC']).transpose()], axis=0)
-            log.append((montage, MODE, s))
+aucs_df = pd.DataFrame()
 
-    AUCS[montage] = aucs_df
+for montage in montages:
+    for MODE in modes:
+        # Make array
+        bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
         
+        labels, filenames = get_filenames_labels(mode=MODE)
+        
+        # Make array
+        data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+        fts_names = data.columns
+        labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+        dataset = dataset_split(data)
+        dataset['MODE'] = MODE
+        dataset['SCORING'] = SCORING
+        
+        # ML
+        gs_svm_anova, model, gs = grid_search_svm_anova(dataset, labels_names)
+        estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
+        aucs = cv_results(dataset, estimators_svm_anova, model)
+        best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+        count_best_fts_types(best_features, MODE)
+        
+        aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
+        log.append((montage, MODE))
+    
+#%% Boxplot with all models information
+import seaborn as sb
+from matplotlib import pyplot as plt
+
+plt.figure(figsize=(14,7))
+box_plot = sb.boxplot(x="Classification", y="AUC", hue='Montage', data=aucs_df, palette=sb.color_palette("hls", 2))
+
 #%% SVM with Hybrid Feature Selection
 # modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
-modes= ['DiagnosisYoung']
+modes = ['Diagnosis']
 montage = 'Bipolar'
 from MachineLearning import svm_overall_bst_fts
 from ScoringMetrics import cv_results_hybrid
@@ -299,7 +292,6 @@ for MODE in modes:
 
     # Make array
     bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
-    
     labels, filenames = get_filenames_labels(mode=MODE)
     
     # Make array
@@ -310,9 +302,9 @@ for MODE in modes:
     dataset['MODE'] = MODE
     dataset['SCORING'] = SCORING
 
-    # ML
-    best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets= svm_overall_bst_fts(dataset, fts_names, labels_names, MODE, SCORING)
-    aucs = cv_results_hybrid(reduced_datasets, best_estimators, 'SVM+Hybrid')
+    
+    # best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets = svm_overall_bst_fts(dataset, fts_names, labels_names, MODE, SCORING)
+    # aucs = cv_results(reduced_datasets, best_estimators, 'SVM + Hybrid Selection')
     
     aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
     log.append((montage, MODE))
