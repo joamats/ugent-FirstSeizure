@@ -24,7 +24,7 @@ from PreProcessing import set_bipolar
 epochs_lengths = ['2.5s', '5s']
 
 for ep_l in epochs_lengths:
-    for filename in filenames:
+    for filename in filenames[[152]]:
         epochs = getPickleFile('../1_PreProcessed_Data/Monopolar/' + ep_l + '/256Hz/' + filename)
         epochs_b = set_bipolar(epochs)
         createPickleFile(epochs_b, '../1_PreProcessed_Data/Bipolar/' + ep_l + '/256Hz/' + filename)
@@ -63,7 +63,48 @@ for i, filename in enumerate(filenames):
     createPickleFile(IMCOH, '../2_Features_Data/Bipolar/' + 'imcoh')
     createPickleFile(PLV, '../2_Features_Data/Bipolar/' + 'plv')
     createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
-    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')         
+    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')  
+
+#%% Extraction of Bandpower and Connectivity Features 
+from EpochSelection import epochs_selection_bandpower
+from FeatureExtraction import extract_bandpowers, extract_features
+from PreProcessing import resample_epochs
+
+# BDP = {}
+# IMCOH = {}
+# PLV = {}
+# MI = {}
+# PDC = {}
+
+BDP = getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256')
+IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
+PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
+MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
+PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc')
+
+# over all subjects
+for i, filename in enumerate(filenames[[152]]):
+    
+    # bandpower extraction
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/5s/256Hz/' + filename)
+    _, s_epochs = epochs_selection_bandpower(saved_epochs)
+    
+    BDP[filename] = extract_bandpowers(s_epochs, filename)
+    
+    # functional connectivity
+    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/256Hz/' + filename)
+    saved_epochs = resample_epochs(saved_epochs, sfreq=128)
+    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
+    
+    IMCOH[filename], PLV[filename], MI[filename],\
+    PDC[filename] = extract_features(bd_names, s_epochs)
+    
+    # save features in pickle
+    createPickleFile(BDP, '../2_Features_Data/Bipolar/' + 'bdp_256')
+    createPickleFile(IMCOH, '../2_Features_Data/Bipolar/' + 'imcoh')
+    createPickleFile(PLV, '../2_Features_Data/Bipolar/' + 'plv')
+    createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
+    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')          
 
 #%% From connectivity matrices, compute subgroups' measures
 #Subgroups Connectivity Features
@@ -72,13 +113,13 @@ fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=
 conn_ms = compute_connectivity_measures(fts)
 createPickleFile(conn_ms, '../2_Features_Data/Bipolar/' + 'connectivityMeasures')
 
-#%% Subgroups Graph Measures
+#% Subgroups Graph Measures
 from GraphMeasures import compute_graph_subgroup_measures
 fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=False)
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/Bipolar/' + 'graphMeasures')
 
-#%% Subgroups Graph Asymmetry Ratios
+#% Subgroups Graph Asymmetry Ratios
 from Asymmetry import compute_asymmetry_measures
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
@@ -158,7 +199,7 @@ from DataAssessment import plot_data_distribution, plot_tsne, best_ranked_featur
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
 # Plot TSNE
-# %config InlineBackend.figure_format='retina'
+%config InlineBackend.figure_format='retina'
 fig_tsne = plot_tsne(dataset, labels_names, MODE)
     
 # Best Ranked Features
@@ -199,6 +240,8 @@ modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'Diagno
 montages = ['Bipolar', 'Monopolar_128Hz']
 SCORING = 'roc_auc'
 
+#%% 
+
 log = []
 
 aucs_df = pd.DataFrame()
@@ -234,4 +277,35 @@ from matplotlib import pyplot as plt
 
 plt.figure(figsize=(14,7))
 box_plot = sb.boxplot(x="Classification", y="AUC", hue='Montage', data=aucs_df, palette=sb.color_palette("hls", 2))
-plt.title('Overall results (SVM & ANOVA)')
+
+#%% SVM with Hybrid Feature Selection
+# modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
+modes = ['DiagnosisYoung']
+montage = 'Bipolar'
+from MachineLearning import svm_overall_bst_fts
+
+log = []
+
+aucs_df = pd.DataFrame()
+
+for MODE in modes:
+
+    # Make array
+    bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
+    
+    labels, filenames = get_filenames_labels(mode=MODE)
+    
+    # Make array
+    data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+    fts_names = data.columns
+    labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+    dataset = dataset_split(data)
+    dataset['MODE'] = MODE
+    dataset['SCORING'] = SCORING
+
+    # ML
+    best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets= svm_overall_bst_fts(dataset, fts_names, labels_names, MODE, SCORING)
+    aucs = cv_results(reduced_datasets, best_estimators, 'SVM+Hybrid')
+    
+    aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
+    log.append((montage, MODE))

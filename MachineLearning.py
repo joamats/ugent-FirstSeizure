@@ -7,10 +7,76 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import cross_validate
-from imblearn.over_sampling import RandomOverSampler 
+from FeatureSelection import overall_best_fts
+import numpy as np
 
+#%% SVM + Overall Best Feature Selection
+def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
+    
+    X_train = dataset['X_tr']
+    y_train = dataset['y_tr']
+    
+    best_fts = []
+    validation_score = []
+    best_estimators = []
+    reduced_datasets = []
+    
+    # Feature Normalization
+    norm_scaler = StandardScaler(with_mean=True, with_std=True)
+    
+    # SVC Model
+    svc = SVC(C=0.1, gamma=0.01, kernel = 'rbf', random_state=42, probability=True)
+    model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler), ('classifier', svc)])
+    
+    # Cross-Validation
+    skf = StratifiedKFold(n_splits=5)
+    
+    for train_index, test_index in skf.split(X_train, y_train):
+        print(1)
+        X_tr, X_val = X_train[train_index], X_train[test_index]
+        y_tr, y_val = y_train[train_index], y_train[test_index]
+        
+        X_tr_pre_selected, X_val, reduced_dataset, best_fts_temp=overall_best_fts(X_tr,y_tr, X_val, X_train, y_train, fts_names,
+                                                               estimator=model_SVC, mode=mode,
+                                                               k_features_bdp=20,
+                                                                 k_features_graph=150,
+                                                                 k_features_asy=50,
+                                                                 k_features_conn=50,
+                                                                 n_features_to_select=25,
+                                                                 scoring=scoring,
+                                                                 cv=5)
+        
+        print(2)
+        
+        best_fts.append(best_fts_temp)
+        reduced_datasets.append(reduced_dataset)
+        
+        space = dict({
+        'classifier__C': [0.01, 0.1, 1, 10, 100],
+        'classifier__gamma': [0.01, 0.1, 1, 10, 100],
+        'classifier__kernel': ['rbf', 'sigmoid']
+        })
+        
+        clf = GridSearchCV( estimator=model_SVC,
+                            param_grid=space,
+                            scoring=scoring, 
+                            n_jobs=-1,
+                            cv=skf )
+        
+        clf.fit(X_tr_pre_selected, y_tr)
+        
+        best_estimators.append(clf.best_estimator_)
+        
+        validation_score.append(clf.best_estimator_.score(X_val, y_val))
+        
+        
+        print(3)
+        
+    mean_validation_score=np.mean(validation_score)
+    std_validation_score=np.std(validation_score)
+        
+    return best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets
 
 #%% SVM + SelectKBest
 def grid_search_svm_anova(dataset, labels_names):
