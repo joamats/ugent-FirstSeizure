@@ -43,7 +43,7 @@ def eliminate_corr_fts(dataset, fts_names, th=0.95):
     return dataset, fts_names_new
 
 #%% ANOVA for Feature Pre-Selection + Sequential Feature Selection
-def overall_best_fts(X_tr, y_tr, X_val, whole_X_tr, whole_y_tr, fts_names, estimator, mode, k_features_bdp=20,
+def overall_best_fts(X_tr, y_tr, X_val, fts_names, estimator, mode, k_features_bdp=20,
                      k_features_graph=150, k_features_asy=50,
                      k_features_conn=50, n_features_to_select=50,
                      scoring='roc_auc', cv=5):
@@ -134,30 +134,18 @@ def overall_best_fts(X_tr, y_tr, X_val, whole_X_tr, whole_y_tr, fts_names, estim
         k_features_conn = np.shape(X_tr_conn)[1]
     best_ranked_features_conn = best_ranked_features(dataset_conn, fts_names_conn, k_features_conn)
     
-    
     idx_brf = []
     for i, fts_name in enumerate(fts_names):
         if fts_name in best_ranked_features_bdp['fts_names'].tolist() or fts_name in best_ranked_features_graph['fts_names'].tolist() or fts_name in best_ranked_features_asy['fts_names'].tolist() or fts_name in best_ranked_features_conn['fts_names'].tolist():
             idx_brf.append(i)
         
-    fts_names_pre_selected= fts_names[idx_brf]
-    X_tr_pre_selected=X_tr[:, idx_brf]
-    X_val_pre_selected=X_val[:,idx_brf]
-    whole_X_tr=whole_X_tr[:,idx_brf]
-    
+    X_tr_presel = X_tr[:, idx_brf]
+    X_val_presel = X_val[:, idx_brf]
     
     selector = SequentialFeatureSelector(estimator=estimator,\
                                          n_features_to_select=n_features_to_select,\
                                          scoring=scoring, cv=cv, n_jobs=-1)
-    X_tr_pre_selected = selector.fit_transform(X_tr_pre_selected, y_tr)
     
-    idx = selector.get_support(indices=True)
-    X_val_pre_selected=X_val_pre_selected[:,idx]
-    whole_X_tr=whole_X_tr[:,idx]
-    best_fts = pd.DataFrame(data=fts_names_pre_selected[idx], index=idx, columns=['fts_names'])
-    
-    reduced_dataset={'X_tr': whole_X_tr, 'y_tr': whole_y_tr, 'MODE': mode, 'SCORING': scoring}
-    
-    return X_tr_pre_selected, X_val_pre_selected, reduced_dataset, best_fts
+    return selector.fit(X_tr_presel, y_tr), X_tr_presel, X_val_presel
 
 

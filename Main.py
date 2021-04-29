@@ -289,6 +289,7 @@ for montage in montages[0:1]:
 modes= ['DiagnosisYoung']
 montage = 'Bipolar'
 from MachineLearning import svm_overall_bst_fts
+from ScoringMetrics import cv_results_hybrid
 
 log = []
 
@@ -311,8 +312,7 @@ for MODE in modes:
 
     # ML
     best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets= svm_overall_bst_fts(dataset, fts_names, labels_names, MODE, SCORING)
-    aucs = cv_results(reduced_datasets, best_estimators, 'SVM+Hybrid')
-    
+    aucs = cv_results_hybrid(reduced_datasets, best_estimators, 'SVM+Hybrid')
     
     aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
     log.append((montage, MODE))
