@@ -44,7 +44,6 @@ def cv_results(dataset, estimators, model):
     
         # Confusion Matrix for optimal threshold
         y_pred = (y_prob > opti_th).astype('float')
-        # y_pred = e.predict(X_val)
         confusionMatrix = confusion_matrix(y_val, y_pred)
     
         sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])

@@ -183,9 +183,9 @@ def count_best_fts_types(best_fts, MODE):
         bst_type_1.append([i for i in fts_type_1 if i in fts][0])
         bst_type_2.append([i for i in fts_type_2 if i in fts][0])
         
-        conn = [i for i in fts_type_list_conn if i in fts[0]]
-        graph = [i for i in fts_type_list_graph if i in fts[0] and 'vs' not in fts[3]]
-        asymmetry = [i for i in fts_type_list_graph if i in fts[0] and 'vs' in fts[3]]
+        conn = [i for i in fts_type_list_conn if i == fts[0]]
+        graph = [i for i in fts_type_list_graph if i == fts[0] and 'vs' not in fts[3]]
+        asymmetry = [i for i in fts_type_list_graph if i == fts[0] and 'vs' in fts[3]]
         
         if conn != []:
             bst_type_3.append('Functional\nConnectivity')

@@ -9,6 +9,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import cross_validate
+from imblearn.over_sampling import RandomOverSampler 
+
 
 #%% SVM + SelectKBest
 def grid_search_svm_anova(dataset, labels_names):
@@ -22,9 +24,6 @@ def grid_search_svm_anova(dataset, labels_names):
     
     # SVC Model
     svc = SVC(random_state=42)
-    
-    # Cross-Validation
-    skf = StratifiedKFold(n_splits=5)
     
     # Parameters for Grid Search
     space = dict({
