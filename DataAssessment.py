@@ -93,7 +93,7 @@ def plot_data_distribution(dataset, labels_names, mode, title=None, xlabel=None,
 
 #%% t-SNE plot - assess separability
 
-def plot_tsne(dataset, labels_names, mode='Diagnosis'):
+def plot_tsne(dataset, labels_names, mode='Diagnosis', p=30):
       
     num_labels = len(labels_names) 
     
@@ -107,7 +107,7 @@ def plot_tsne(dataset, labels_names, mode='Diagnosis'):
             if y_i == i:
                 labels.append(lb)
     
-    tsne= TSNE(n_components=2, random_state=42, perplexity=10, early_exaggeration=12, learning_rate=200)
+    tsne= TSNE(n_components=2, random_state=42, perplexity=p, early_exaggeration=12, learning_rate=200)
     X_embedded  = tsne.fit_transform(X_tr)
     df = pd.DataFrame()
     df['component1'] = X_embedded[:, 0]
