@@ -195,6 +195,14 @@ aucs = cv_results(dataset, estimators_svm_anova, model)
 best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
 count_best_fts_types(best_features, MODE)
 
+#%% MLP & SelectKBest
+from MachineLearning import grid_search_mlp_anova, mlp_anova_estimators,
+gs_mlp_anova, model, clf = grid_search_mlp_anova(dataset, labels_names)
+estimators_mlp_anova = mlp_anova_estimators(dataset, gs_mlp_anova, model)
+aucs = cv_results(dataset, estimators_mlp_anova, model)
+best_features = model_best_fts(dataset, fts_names, estimators_mlp_anova)
+count_best_fts_types(best_features, MODE)
+
 #%% SVM & PCA
 from MachineLearning import grid_search_svm_pca, svm_pca_estimators
 gs_svm_pca, model, clf = grid_search_svm_pca(dataset, labels_names)
@@ -203,9 +211,12 @@ aucs = cv_results(dataset, estimators_svm_pca, model)
 
 #%% Compare models and boxplot 
 from ScoringMetrics import compare_models_montages
+modes = ['FocalSymptomaticVSNon-Epileptic', 
+         'FocalSymptomaticVSNon-EpilepticYoung', 
+         'FocalSymptomaticVSNon-EpilepticOld', 
+         'FocalSymptomaticVSNon-EpilepticMale', 
+         'FocalSymptomaticVSNon-EpilepticFemale']
 
-# modes = ['Diagnosis', 'DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
-modes = ['FocalSymptomaticVSNon-Epileptic', 'FocalSymptomaticVSNon-EpilepticYoung', 'FocalSymptomaticVSNon-EpilepticOld', 'FocalSymptomaticVSNon-EpilepticMale', 'FocalSymptomaticVSNon-EpilepticFemale']
 montages = ['Bipolar']
 SCORING = 'roc_auc'
 
@@ -214,5 +225,3 @@ aucs_df = compare_models_montages(modes, montages)
 #%% Boxplot with all models information
 from ScoringMetrics import boxplot_models
 boxplot_models(aucs_df)
-
-

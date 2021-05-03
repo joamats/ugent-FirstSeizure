@@ -224,7 +224,7 @@ def svm_pca_estimators(dataset, gs_svm_pca, model):
 
 #%% MLP + SelectKBest
 
-def mlp_anova(dataset, labels_names):
+def grid_search_mlp_anova(dataset, labels_names):
     
     model = 'MLP + ANOVA'
     mode = dataset['MODE']
@@ -239,23 +239,21 @@ def mlp_anova(dataset, labels_names):
                         max_iter=500,
                         early_stopping=True,
                         activation='relu',
-                        solver='adam',
-                        learning_rate='adaptive')
-    
-    # Cross-Validation
-    skf = StratifiedKFold(n_splits=5)
+                        solver='adam')
     
     # Parameters for Grid Search
     space = dict({
         'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
-                                          (100,100), (150,150),(200,200)],
-        'classifier__alpha':[0.001, 0.01, 0.1, 1],
+                                          (100,100), (150,150),(200,200),
+                                          (100,100,100), (200,200,200)],
+        'classifier__alpha':[0.0001, 0.001, 0.01, 0.1, 0.5, 1],
+        'classifier__learning_rate': ['constant', 'invscaling', 'adaptive']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40]
+    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
     
     # Pipeline
     model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -267,7 +265,7 @@ def mlp_anova(dataset, labels_names):
                         param_grid=space,
                         scoring=scoring, 
                         n_jobs=-1,
-                        cv=skf,
+                        cv=5,
                         return_train_score=True )
     
     X_tr = dataset['X_tr']
@@ -280,7 +278,28 @@ def mlp_anova(dataset, labels_names):
     print('BEST SCORE')
     print(clf.best_score_, '\n')
     
-    return clf, model
+    return clf.best_params_, model, clf
+
+def mlp_anova_estimators(dataset, gs_mlp_anova, model):
+    
+    model = 'MLP & ANOVA'
+    
+    pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
+                            ('min_max', MinMaxScaler()),
+                            ('dim_red', SelectKBest(score_func=f_classif)),
+                            ('classifier', MLPClassifier(random_state=42, max_iter=500, early_stopping=True, activation='relu', solver='adam'))])
+    
+    pipe.set_params(**gs_mlp_anova)
+    
+    scores_pipe = cross_validate(   estimator=pipe,
+                                    X=dataset['X_tr'],
+                                    y=dataset['y_tr'],
+                                    scoring=['roc_auc'],
+                                    cv=5,
+                                    return_train_score=True,
+                                    return_estimator=True)
+    
+    return scores_pipe['estimator']
 
 #%% MLP + PCA
 

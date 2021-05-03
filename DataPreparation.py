@@ -46,7 +46,7 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
     for filename in filenames:
         
         features_row = pd.DataFrame()
-        # # concatenate bandpowers
+        # concatenate bandpowers
         ft_df = bdp_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
         
@@ -57,6 +57,7 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
         # concatenate graph measures
         ft_df = gr_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
+        
         # concatenate asymmetry measures
         ft_df = asy_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
