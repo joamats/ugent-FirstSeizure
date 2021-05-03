@@ -93,15 +93,15 @@ def grid_search_svm_anova(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 10],
-        'classifier__gamma': [0.005, 0.01, 0.05, 0.1, 0.5, 1, 10, 100],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
+        'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
         'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    space['dim_red__k'] = np.arange(10,20,1)
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -122,9 +122,11 @@ def grid_search_svm_anova(dataset, labels_names):
     print('MODE:  ' + mode + '\nMODEL: ' + model)
     print('\nHYPERPARAMETERS')
     print(clf.best_params_, '\n')
-    print('BEST SCORE')
+    print('TRAIN SCORE')
+    print(clf.cv_results_['mean_train_score'][clf.best_index_], '\n')
+    print('VALIDATION SCORE')
     print(clf.best_score_, '\n')
-    
+
     return clf.best_params_, model, clf
 
 def svm_anova_estimators(dataset, gs_svm_anova, model):
@@ -149,7 +151,7 @@ def svm_anova_estimators(dataset, gs_svm_anova, model):
 
 #%% SVM + PCA
 
-def svm_pca(dataset, labels_names):
+def grid_search_svm_pca(dataset, labels_names):
 
     model = 'SVM + PCA'
     mode = dataset['MODE']
@@ -161,23 +163,21 @@ def svm_pca(dataset, labels_names):
     # SVC Model
     svc = SVC(random_state=42)
     
-    # Cross-Validation
-    skf = StratifiedKFold(n_splits=5)
-    
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.01, 0.1, 1, 10, 100],
-        'classifier__gamma': [0.01, 0.1, 1, 10, 100],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
+        'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5],
         'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
-    # Dimensionality Reductionlabels_names
+    # Dimensionality Reduction
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = [10, 15, 20]
+    space['dim_red__n_components'] = np.arange(10,20,1)
     
     # Pipeline
-    model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
+    model_SVC = Pipeline(steps=[
+                                ('norm_scaler', norm_scaler),
                                 ('dim_red', dim_red),
                                 ('classifier', svc)])
     
@@ -185,14 +185,42 @@ def svm_pca(dataset, labels_names):
                         param_grid=space,
                         scoring=scoring, 
                         n_jobs=-1,
-                        cv=skf,
+                        cv=5,
                         return_train_score=True )
     
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     clf.fit(X_tr, y_tr)
    
-    return clf
+    print('MODE:  ' + mode + '\nMODEL: ' + model)
+    print('\nHYPERPARAMETERS')
+    print(clf.best_params_, '\n')
+    print('TRAIN SCORE')
+    print(clf.cv_results_['mean_train_score'][clf.best_index_], '\n')
+    print('VALIDATION SCORE')
+    print(clf.best_score_, '\n')
+
+    return clf.best_params_, model, clf
+
+def svm_pca_estimators(dataset, gs_svm_pca, model):
+    
+    model = 'SVM & PCA'
+    
+    pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
+                            ('dim_red', PCA(random_state=42)),
+                            ('classifier', SVC(random_state=42, probability=True))])
+    
+    pipe.set_params(**gs_svm_pca)
+    
+    scores_pipe = cross_validate(   estimator=pipe,
+                                    X=dataset['X_tr'],
+                                    y=dataset['y_tr'],
+                                    scoring=['roc_auc'],
+                                    cv=5,
+                                    return_train_score=True,
+                                    return_estimator=True)
+    
+    return scores_pipe['estimator']
 
 #%% MLP + SelectKBest
 

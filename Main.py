@@ -64,48 +64,7 @@ for i, filename in enumerate(filenames):
     createPickleFile(PLV, '../2_Features_Data/Bipolar/' + 'plv')
     createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
     createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')  
-
-#%% Extraction of Bandpower and Connectivity Features 
-from EpochSelection import epochs_selection_bandpower
-from FeatureExtraction import extract_bandpowers, extract_features
-from PreProcessing import resample_epochs
-
-# BDP = {}
-# IMCOH = {}
-# PLV = {}
-# MI = {}
-# PDC = {}
-
-BDP = getPickleFile('../2_Features_Data/Bipolar/' + 'bdp_256')
-IMCOH = getPickleFile('../2_Features_Data/Bipolar/' + 'imcoh')
-PLV = getPickleFile('../2_Features_Data/Bipolar/' + 'plv')
-MI = getPickleFile('../2_Features_Data/Bipolar/' + 'mi')
-PDC = getPickleFile('../2_Features_Data/Bipolar/' + 'pdc')
-
-# over all subjects
-for i, filename in enumerate(filenames[[152]]):
-    
-    # bandpower extraction
-    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/5s/256Hz/' + filename)
-    _, s_epochs = epochs_selection_bandpower(saved_epochs)
-    
-    BDP[filename] = extract_bandpowers(s_epochs, filename)
-    
-    # functional connectivity
-    saved_epochs = getPickleFile('../1_PreProcessed_Data/Bipolar/2.5s/256Hz/' + filename)
-    saved_epochs = resample_epochs(saved_epochs, sfreq=128)
-    bd_names, s_epochs = epochs_selection_bandpower(saved_epochs)
-    
-    IMCOH[filename], PLV[filename], MI[filename],\
-    PDC[filename] = extract_features(bd_names, s_epochs)
-    
-    # save features in pickle
-    createPickleFile(BDP, '../2_Features_Data/Bipolar/' + 'bdp_256')
-    createPickleFile(IMCOH, '../2_Features_Data/Bipolar/' + 'imcoh')
-    createPickleFile(PLV, '../2_Features_Data/Bipolar/' + 'plv')
-    createPickleFile(MI, '../2_Features_Data/Bipolar/' + 'mi')
-    createPickleFile(PDC, '../2_Features_Data/Bipolar/' + 'pdc')          
-
+  
 #%% From connectivity matrices, compute subgroups' measures
 #Subgroups Connectivity Features
 from FeatureExtraction import compute_connectivity_measures
@@ -207,7 +166,7 @@ fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)
 
 # Plot TSNE
 #%config InlineBackend.figure_format='retina'
-fig_tsne = plot_tsne(dataset, labels_names, MODE)
+fig_tsne = plot_tsne(dataset, labels_names, MODE, p=30)
     
 # Best Ranked Features
 best_fts = best_ranked_features(dataset,fts_names, k_features=100)
@@ -225,16 +184,22 @@ dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_t
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)   
 
 #%% Machine Learning (run current line with F9)
-from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_anova, mlp_pca
 from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
 
-# SVM & SelectKBest
+#%% SVM & SelectKBest
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators
 gs_svm_anova, model, clf = grid_search_svm_anova(dataset, labels_names)
 estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
 aucs = cv_results(dataset, estimators_svm_anova, model)
 best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
 count_best_fts_types(best_features, MODE)
+
+#%% SVM & PCA
+from MachineLearning import grid_search_svm_pca, svm_pca_estimators
+gs_svm_pca, model, clf = grid_search_svm_pca(dataset, labels_names)
+estimators_svm_pca = svm_pca_estimators(dataset, gs_svm_pca, model)
+aucs = cv_results(dataset, estimators_svm_pca, model)
 
 #%% Compare models and boxplot 
 from ScoringMetrics import compare_models_montages

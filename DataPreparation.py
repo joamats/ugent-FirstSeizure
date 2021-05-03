@@ -47,19 +47,19 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
         
         features_row = pd.DataFrame()
         # # concatenate bandpowers
-        # ft_df = bdp_ms[filename].T
-        # features_row = pd.concat([features_row, ft_df], axis=1)
+        ft_df = bdp_ms[filename].T
+        features_row = pd.concat([features_row, ft_df], axis=1)
         
-        # # concatenate connectivity measures
-        # ft_df = conn_ms[filename].T
-        # features_row = pd.concat([features_row, ft_df], axis=1)
+        # concatenate connectivity measures
+        ft_df = conn_ms[filename].T
+        features_row = pd.concat([features_row, ft_df], axis=1)
         
         # concatenate graph measures
         ft_df = gr_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
         # concatenate asymmetry measures
-        # ft_df = asy_ms[filename].T
-        # features_row = pd.concat([features_row, ft_df], axis=1)
+        ft_df = asy_ms[filename].T
+        features_row = pd.concat([features_row, ft_df], axis=1)
         
         # to eliminate some specific feature
         # features_row[features_row.columns.drop(list(features_row.filter(regex='mi')))]
