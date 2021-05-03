@@ -43,18 +43,37 @@ def cv_results(dataset, estimators, model):
         max_idxs = np.argmax(tpr - fpr)
         opti_fpr, opti_tpr, opti_th = fpr[max_idxs], tpr[max_idxs], thresholds[max_idxs]
         
+        # ROC surrogates
+        nsurro = 100
+        fpr_surros, tpr_surros, auc_surros = [], [], []
+        for j in range(nsurro):
+            fpr_IEA_su, tpr_IEA_su, _ = roc_curve(y_val, np.random.permutation(y_prob))
+            fpr_surros.append(fpr_IEA_su)
+            tpr_surros.append(tpr_IEA_su)
+            auc_surros.append(auc(fpr_IEA_su, tpr_IEA_su))
+            
+        # To check for statistical significance, we take percentile 95%
+        auc_95 = np.percentile(auc_surros, 95)
+        idx_95 = (np.abs(auc_surros - auc_95)).argmin()
+        auc_05 = np.percentile(auc_surros, 5)
+        idx_05 = (np.abs(auc_surros - auc_05)).argmin()
+        
         # Display ROC curve
         display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=aucs[i], estimator_name=model)
         display.plot(axs[1,i])
-        axs[1,i].scatter(opti_fpr, opti_tpr, s=50, c='orange', alpha=1)
+        axs[1,i].scatter(opti_fpr, opti_tpr, s=50, c='green', alpha=1, label='Optimal Cut-Off Point')
         axs[1,i].plot([0,1], [0,1], '--k')
-    
+        
+        # Add Surrogates to plot
+        display_surros = RocCurveDisplay(fpr=fpr_surros[idx_95], tpr=tpr_surros[idx_95], roc_auc=auc_95, estimator_name="Surrogates")
+        display_surros.plot(axs[1,i])
+
         # Confusion Matrix for optimal threshold
         y_pred = (y_prob > opti_th).astype('float')
         confusionMatrix = confusion_matrix(y_val, y_pred)
     
         sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
-        axs[0,i].title.set_text('Threshold: {:.2f}'.format(opti_th))
+        axs[0,i].title.set_text('Optimal Cut-Off Point: {:.2f}'.format(opti_th))
         axs[0,i].set_xlabel('Target Class')
         axs[0,i].set_ylabel('Predicted Class')
         

@@ -46,20 +46,20 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
     for filename in filenames:
         
         features_row = pd.DataFrame()
-        # concatenate bandpowers
-        ft_df = bdp_ms[filename].T
-        features_row = pd.concat([features_row, ft_df], axis=1)
+        # # concatenate bandpowers
+        # ft_df = bdp_ms[filename].T
+        # features_row = pd.concat([features_row, ft_df], axis=1)
         
-        # concatenate connectivity measures - NOT ANYMORE
-        ft_df = conn_ms[filename].T
-        features_row = pd.concat([features_row, ft_df], axis=1)
+        # # concatenate connectivity measures
+        # ft_df = conn_ms[filename].T
+        # features_row = pd.concat([features_row, ft_df], axis=1)
         
         # concatenate graph measures
         ft_df = gr_ms[filename].T
         features_row = pd.concat([features_row, ft_df], axis=1)
         # concatenate asymmetry measures
-        ft_df = asy_ms[filename].T
-        features_row = pd.concat([features_row, ft_df], axis=1)
+        # ft_df = asy_ms[filename].T
+        # features_row = pd.concat([features_row, ft_df], axis=1)
         
         # to eliminate some specific feature
         # features_row[features_row.columns.drop(list(features_row.filter(regex='mi')))]
@@ -467,8 +467,8 @@ def dataset_split(data):
     return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts}
 
 
-#Example of modes_list:
-#MODE=["AntecedentFamilyEpileptic", "AntecedentFamilyNonEpileptic","AntecedentFamilyOther"]
+# Example of modes_list:
+# MODE=["AntecedentFamilyEpileptic", "AntecedentFamilyNonEpileptic","AntecedentFamilyOther"]
 def several_modes_data_and_labels(modes_list):
     
     bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)

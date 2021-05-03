@@ -3,7 +3,7 @@ from Pickle import getPickleFile, createPickleFile
 from DataPreparation import get_saved_features
 
 '''
-    Bipolar montage
+    Focal Symptomatic RULES
 '''
 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
@@ -153,11 +153,18 @@ AntecedentChildDevelopDisorder
 AntecedentChildFebrileSeizure   
 AntecedentChildMyoclonus        
 AntecedentChildNone             
-AntecedentChildOther            
+AntecedentChildOther  
+
+'FocalSymptomaticVSNon-Epileptic'
+'FocalSymptomaticVSNon-EpilepticYoung'
+'FocalSymptomaticVSNon-EpilepticOld'
+'FocalSymptomaticVSNon-EpilepticMale'
+'FocalSymptomaticVSNon-EpilepticFemale'
+          
 '''
 
 global MODE, SCORING
-MODE = 'DiagnosisFemale'
+MODE = 'FocalSymptomaticVSNon-Epileptic'
 SCORING = 'roc_auc'
 
 #%% Make features array
@@ -223,9 +230,9 @@ from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
 
 # SVM & SelectKBest
-gs_svm_anova, model = grid_search_svm_anova(dataset, labels_names)
+gs_svm_anova, model, clf = grid_search_svm_anova(dataset, labels_names)
 estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
-cv_results(dataset, estimators_svm_anova, model)
+aucs = cv_results(dataset, estimators_svm_anova, model)
 best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
 count_best_fts_types(best_features, MODE)
 
