@@ -149,9 +149,11 @@ def svm_anova_estimators(dataset, gs_svm_anova, model):
 
 #%% SVM + PCA
 
-def svm_pca(dataset, labels_names, mode, scoring):
+def svm_pca(dataset, labels_names):
 
     model = 'SVM + PCA'
+    mode = dataset['MODE']
+    scoring = dataset['SCORING']    
     
     # Feature Normalization
     norm_scaler = StandardScaler(with_mean=True, with_std=True)

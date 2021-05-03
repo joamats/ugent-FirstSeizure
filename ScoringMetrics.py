@@ -43,18 +43,37 @@ def cv_results(dataset, estimators, model):
         max_idxs = np.argmax(tpr - fpr)
         opti_fpr, opti_tpr, opti_th = fpr[max_idxs], tpr[max_idxs], thresholds[max_idxs]
         
+        # ROC surrogates
+        nsurro = 100
+        fpr_surros, tpr_surros, auc_surros = [], [], []
+        for j in range(nsurro):
+            fpr_IEA_su, tpr_IEA_su, _ = roc_curve(y_val, np.random.permutation(y_prob))
+            fpr_surros.append(fpr_IEA_su)
+            tpr_surros.append(tpr_IEA_su)
+            auc_surros.append(auc(fpr_IEA_su, tpr_IEA_su))
+            
+        # To check for statistical significance, we take percentile 95%
+        auc_95 = np.percentile(auc_surros, 95)
+        idx_95 = (np.abs(auc_surros - auc_95)).argmin()
+        auc_05 = np.percentile(auc_surros, 5)
+        idx_05 = (np.abs(auc_surros - auc_05)).argmin()
+        
         # Display ROC curve
         display = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=aucs[i], estimator_name=model)
         display.plot(axs[1,i])
-        axs[1,i].scatter(opti_fpr, opti_tpr, s=50, c='orange', alpha=1)
+        axs[1,i].scatter(opti_fpr, opti_tpr, s=50, c='green', alpha=1, label='Optimal Cut-Off Point')
         axs[1,i].plot([0,1], [0,1], '--k')
-    
+        
+        # Add Surrogates to plot
+        display_surros = RocCurveDisplay(fpr=fpr_surros[idx_95], tpr=tpr_surros[idx_95], roc_auc=auc_95, estimator_name="Surrogates")
+        display_surros.plot(axs[1,i])
+
         # Confusion Matrix for optimal threshold
         y_pred = (y_prob > opti_th).astype('float')
         confusionMatrix = confusion_matrix(y_val, y_pred)
     
         sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
-        axs[0,i].title.set_text('Threshold: {:.2f}'.format(opti_th))
+        axs[0,i].title.set_text('Optimal Cut-Off Point: {:.2f}'.format(opti_th))
         axs[0,i].set_xlabel('Target Class')
         axs[0,i].set_ylabel('Predicted Class')
         
@@ -129,3 +148,52 @@ def model_best_fts(dataset, fts_names, estimators):
         allBestFts = pd.concat([allBestFts, _best_fts(selector, fts_names)], axis=0)
         
     return allBestFts.sort_values(by='score', ascending=False)
+
+#%% Compare different modes' models
+
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators, mlp_anova, mlp_pca, svm_pca
+from ScoringMetrics import cv_results, model_best_fts
+from DataAssessment import count_best_fts_types
+from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
+
+def compare_modes_montages(modes, montages):
+    
+    for montage in montages:
+        for MODE in modes:
+            # Make array
+            bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True, montage=montage)
+            
+            labels, filenames = get_filenames_labels(mode=MODE)
+            
+            # Make array
+            data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
+            fts_names = data.columns
+            labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+            dataset = dataset_split(data)
+            dataset['MODE'] = MODE
+            dataset['SCORING'] = SCORING
+            
+            # ML
+            clf_pca = svm_pca(dataset, labels_names)
+            gs_svm_anova, model, gs = grid_search_svm_anova(dataset, labels_names)
+            estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
+            aucs = cv_results(dataset, estimators_svm_anova, model)
+            best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+            count_best_fts_types(best_features, MODE)
+            
+            aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
+        
+    return aucs_df
+
+#%% Boxplot best models
+import seaborn as sb
+from matplotlib import pyplot as plt
+
+def boxplot_models(aucs_df):
+    plt.figure(figsize=(14,7))
+    box_plot = sb.boxplot(x="Classification", y="AUC", hue='Montage', data=aucs_df, palette=sb.color_palette("hls", 2))
+    plt.title('Overall results for Focal Symptomatic Epilepsy (SVM & ANOVA)')
+    plt.xticks(range(0,5),['All', 'Young', 'Old', 'Male', 'Female'])
+    
+    
+    
