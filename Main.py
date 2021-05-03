@@ -225,7 +225,7 @@ dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_t
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)   
 
 #%% Machine Learning (run current line with F9)
-from MachineLearning import grid_search_svm_anova, svm_anova_estimators, grid_search_mlp_anova, mlp_anova_estimators, mlp_pca
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators, grid_search_mlp_anova, mlp_anova_estimators, grid_search_mlp_pca, mlp_pca_estimators, grid_search_rfc_anova, rfc_anova_estimators, grid_search_rfc_pca, rfc_pca_estimators, grid_search_logReg_anova, logReg_anova_estimators, grid_search_logReg_pca, logReg_pca_estimators
 from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
 
@@ -236,12 +236,41 @@ from DataAssessment import count_best_fts_types
 # best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
 # count_best_fts_types(best_features, MODE)
 
-# MLP & SelectKBest
-gs_mlp_anova, model, clf = grid_search_mlp_anova(dataset, labels_names)
-estimators_mlp_anova = mlp_anova_estimators(dataset, gs_mlp_anova, model)
-aucs = cv_results(dataset, estimators_mlp_anova, model)
-best_features = model_best_fts(dataset, fts_names, estimators_mlp_anova)
-count_best_fts_types(best_features, MODE)
+# # MLP & SelectKBest
+# gs_mlp_anova, model, clf = grid_search_mlp_anova(dataset, labels_names)
+# estimators_mlp_anova = mlp_anova_estimators(dataset, gs_mlp_anova, model)
+# aucs = cv_results(dataset, estimators_mlp_anova, model)
+# best_features = model_best_fts(dataset, fts_names, estimators_mlp_anova)
+# count_best_fts_types(best_features, MODE)
+
+# # MLP & PCA
+# gs_mlp_pca, model, clf = grid_search_mlp_pca(dataset, labels_names)
+# estimators_mlp_pca = mlp_pca_estimators(dataset, gs_mlp_pca, model)
+# aucs = cv_results(dataset, estimators_mlp_pca, model)
+
+# # RFC & SelectKBest
+# gs_rfc_anova, model, clf = grid_search_rfc_anova(dataset, labels_names)
+# estimators_rfc_anova = rfc_anova_estimators(dataset, gs_rfc_anova, model)
+# aucs = cv_results(dataset, estimators_rfc_anova, model)
+# best_features = model_best_fts(dataset, fts_names, estimators_rfc_anova)
+# count_best_fts_types(best_features, MODE)
+
+# # RFC & PCA
+# gs_rfc_pca, model, clf = grid_search_rfc_pca(dataset, labels_names)
+# estimators_rfc_pca = rfc_pca_estimators(dataset, gs_rfc_pca, model)
+# aucs = cv_results(dataset, estimators_rfc_pca, model)
+
+# # LogReg & SelectKBest
+# gs_logReg_anova, model, clf = grid_search_logReg_anova(dataset, labels_names)
+# estimators_logReg_anova = logReg_anova_estimators(dataset, gs_logReg_anova, model)
+# aucs = cv_results(dataset, estimators_logReg_anova, model)
+# best_features = model_best_fts(dataset, fts_names, estimators_logReg_anova)
+# count_best_fts_types(best_features, MODE)
+
+# LogReg & PCA
+gs_logReg_pca, model, clf = grid_search_logReg_pca(dataset, labels_names)
+estimators_logReg_pca = logReg_pca_estimators(dataset, gs_logReg_pca, model)
+aucs = cv_results(dataset, estimators_logReg_pca, model)
 
 #%% Compare models and boxplot 
 from ScoringMetrics import compare_models_montages

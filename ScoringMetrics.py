@@ -151,7 +151,7 @@ def model_best_fts(dataset, fts_names, estimators):
 
 #%% Compare different modes' models
 
-from MachineLearning import grid_search_svm_anova, svm_anova_estimators, grid_search_mlp_anova, mlp_anova_estimators, mlp_pca, svm_pca
+from MachineLearning import grid_search_svm_anova, svm_anova_estimators, grid_search_mlp_anova, mlp_anova_estimators, grid_search_mlp_pca, mlp_pca_estimators, grid_search_rfc_anova, rfc_anova_estimators, grid_search_rfc_pca, rfc_pca_estimators, grid_search_logReg_anova, logReg_anova_estimators, grid_search_logReg_pca, logReg_pca_estimators
 from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
 from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
