@@ -37,7 +37,7 @@ def compute_asymmetry_measures(graph_ms):
         allPairs = pd.DataFrame()
         
         for pair in pairs:
-            # get this subjects' graph measures
+
             gr_df = graph_ms[filename]
             
             # get features' of interest
@@ -50,7 +50,7 @@ def compute_asymmetry_measures(graph_ms):
             sub2_fts = gr_df.copy().filter(items=sub2_names, axis=0).values
             
             # build new ratio names
-            ratios_names = [i.replace(pair[0], pair[0]  + 'vs' + pair[1]) for i in sub1_names]
+            ratios_names = [i.replace(pair[0], pair[0] + 'vs' + pair[1]) for i in sub1_names]
             
             # compute asymmetry ratios
             ratios_vals = [_compute_ratio(s1, s2) for s1, s2 in zip(sub1_fts, sub2_fts)]

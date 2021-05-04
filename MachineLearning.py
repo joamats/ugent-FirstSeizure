@@ -80,7 +80,7 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
     return best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets
 
 #%% SVM + SelectKBest
-def grid_search_svm_anova(dataset, labels_names):
+def grid_search_svm_anova(dataset):
     
     model = 'ANOVA + SVM'
     mode = dataset['MODE']
@@ -94,15 +94,15 @@ def grid_search_svm_anova(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10],
         'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
-        'classifier__kernel': ['rbf', 'linear', 'sigmoid']
+        'classifier__kernel': ['linear']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = np.arange(10,20,1)
+    space['dim_red__k'] = np.arange(5,20,1)
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -539,7 +539,7 @@ def rfc_pca_estimators(dataset, gs_rfc_pca, model):
 
 #%% LogReg + SelectKBest
 
-def grid_search_logReg_anova(dataset, labels_names):
+def grid_search_logReg_anova(dataset):
     
     model = 'LogReg + ANOVA'
     mode = dataset['MODE']
@@ -555,14 +555,13 @@ def grid_search_logReg_anova(dataset, labels_names):
     # Parameters for Grid Search
     space = dict({
         'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2],
-        'classifier__class_weight': ['balanced', None],
         'classifier__solver':['newton-cg', 'lbfgs']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = np.arange(5,30,1)
+    space['dim_red__k'] = np.arange(2,30,1)
     
     # Pipeline
     model_logReg = Pipeline(steps=[('norm_scaler', norm_scaler),
@@ -610,7 +609,7 @@ def logReg_anova_estimators(dataset, gs_logReg_anova, model):
 
 #%% LogReg + PCA
 
-def grid_search_logReg_pca(dataset, labels_names):
+def grid_search_logReg_pca(dataset):
     
     model = 'LogReg + PCA'
     mode = dataset['MODE']
