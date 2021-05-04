@@ -12,7 +12,7 @@ def cv_results(dataset, estimators, model):
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
     MODE = dataset['MODE']
-
+    
     # Cross-Validation
     skf = StratifiedKFold(n_splits=5)
     
@@ -20,7 +20,7 @@ def cv_results(dataset, estimators, model):
     plt.figure()
     fig, axs = plt.subplots(nrows=2, ncols=5, figsize=(30,10))
     
-    aucs, y_probs, roc_aucs = [], [], []
+    aucs, accuracies, sensitivities, specificities  = [], [], [], []
     
     for i, (e, (train_index, test_index)) in enumerate(zip(estimators, skf.split(X_tr, y_tr))):
         X_val, y_val = X_tr[test_index], y_tr[test_index]
@@ -38,9 +38,9 @@ def cv_results(dataset, estimators, model):
             y_prob = e.predict_proba(X_val)[:,0]
             fpr, tpr, thresholds = roc_curve(y_val, y_prob)
             _auc = auc(fpr, tpr)
-
+        
         aucs.append(_auc)
-                
+        
         # Optimal cut-off point
         max_idxs = np.argmax(tpr - fpr)
         opti_fpr, opti_tpr, opti_th = fpr[max_idxs], tpr[max_idxs], thresholds[max_idxs]
@@ -69,10 +69,24 @@ def cv_results(dataset, estimators, model):
         # Add Surrogates to plot
         display_surros = RocCurveDisplay(fpr=fpr_surros[idx_95], tpr=tpr_surros[idx_95], roc_auc=auc_95, estimator_name="Surrogates")
         display_surros.plot(axs[1,i])
-
+    
         # Confusion Matrix for optimal threshold
         y_pred = (y_prob > opti_th).astype('float')
         confusionMatrix = confusion_matrix(y_val, y_pred)
+        
+        TN = confusionMatrix[0][0]
+        TP = confusionMatrix[1][1]
+        FN = confusionMatrix[0][1]
+        FP = confusionMatrix[1][0]
+        
+        #Accuracy computation
+        accuracies.append((TP + TN)/(TP + TN + FP + FN))
+        
+        #Sensitivity computation
+        sensitivities.append(TP / (TP + FN))
+        
+        #Specificity computation
+        specificities.append(TN / (TN + FP))
     
         sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
         axs[0,i].title.set_text('Optimal Cut-Off Point: {:.2f}'.format(opti_th))
@@ -80,6 +94,11 @@ def cv_results(dataset, estimators, model):
         axs[0,i].set_ylabel('Predicted Class')
         
     plt.suptitle(MODE + ' 5-Fold CV ROC Curves & Confusion Matrices (AUC = {:.3f} ± {:.3f})'.format(np.mean(aucs), np.std(aucs)), va='center', fontsize=30)
+    
+    print('AUC = {:.3f} ± {:.3f}'.format(np.mean(aucs), np.std(aucs)))
+    print('ACCURACY = {:.3f} ± {:.3f}'.format(np.mean(accuracies), np.std(accuracies)))
+    print('SENSITIVITY = {:.3f} ± {:.3f}'.format(np.mean(sensitivities), np.std(sensitivities)))
+    print('SPECIFICITY = {:.3f} ± {:.3f}'.format(np.mean(specificities), np.std(specificities)))
 
     return aucs
 
