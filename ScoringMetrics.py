@@ -26,9 +26,6 @@ def cv_results(dataset, estimators, model):
         # Probabilities
         y_prob = e.predict_proba(X_val)[:,1]
         
-        # Prediction
-        y_pred = e.predict(X_val)
-        
         # ROC curve
         fpr, tpr, thresholds = roc_curve(y_val, y_prob)
         
@@ -77,8 +74,8 @@ def cv_results(dataset, estimators, model):
         
         TN = confusionMatrix[0][0]
         TP = confusionMatrix[1][1]
-        FN = confusionMatrix[1][0]
-        FP = confusionMatrix[0][1]
+        FN = confusionMatrix[0][1]
+        FP = confusionMatrix[1][0]
         
         #Accuracy computation
         accuracies.append((TP + TN)/(TP + TN + FP + FN))
