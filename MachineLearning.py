@@ -446,10 +446,7 @@ def grid_search_rfc_anova(dataset, labels_names):
 
 def rfc_anova_estimators(dataset, gs_rfc_anova, model):
     
-    model = 'RFC & ANOVA'
-    
     pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
-                            ('min_max', MinMaxScaler()),
                             ('dim_red', SelectKBest(score_func=f_classif)),
                             ('classifier', RandomForestClassifier(random_state=42))])
     
@@ -524,10 +521,7 @@ def grid_search_rfc_pca(dataset, labels_names):
 
 def rfc_pca_estimators(dataset, gs_rfc_pca, model):
     
-    model = 'RFC & ANOVA'
-    
     pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
-                            ('min_max', MinMaxScaler()),
                             ('dim_red', PCA(random_state=42)),
                             ('classifier', RandomForestClassifier(random_state=42))])
     
@@ -560,18 +554,18 @@ def grid_search_logReg_anova(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.01, 0.1, 1, 1.5, 2, 10],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2],
         'classifier__class_weight': ['balanced', None],
-        'classifier__solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
+        'classifier__solver':['newton-cg', 'lbfgs']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [10, 20, 25, 30, 40, 50]
+    space['dim_red__k'] = np.arange(5,30,1)
     
     # Pipeline
-    model_logReg = Pipeline(steps=[('norm_scaler',norm_scaler),
+    model_logReg = Pipeline(steps=[('norm_scaler', norm_scaler),
                                 ('dim_red', dim_red),
                                 ('classifier', logReg)])
     
@@ -598,10 +592,7 @@ def grid_search_logReg_anova(dataset, labels_names):
 
 def logReg_anova_estimators(dataset, gs_logReg_anova, model):
     
-    model = 'RFC & ANOVA'
-    
     pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
-                            ('min_max', MinMaxScaler()),
                             ('dim_red', SelectKBest(score_func=f_classif)),
                             ('classifier', LogisticRegression(random_state=42, max_iter=300))])
     
@@ -672,10 +663,7 @@ def grid_search_logReg_pca(dataset, labels_names):
 
 def logReg_pca_estimators(dataset, gs_logReg_pca, model):
     
-    model = 'RFC & ANOVA'
-    
     pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
-                            ('min_max', MinMaxScaler()),
                             ('dim_red', PCA(random_state=42)),
                             ('classifier', LogisticRegression(random_state=42))])
     
