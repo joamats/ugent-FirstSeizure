@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
+from Pickle import getPickleFile, createPickleFile
+
     
 def cv_results(dataset, estimators, model):
     # Dataset
@@ -186,9 +188,11 @@ def model_best_fts(fts_names, estimators, model = 'not_rfc'):
 from MachineLearning import grid_search_svm_anova, svm_anova_estimators, grid_search_mlp_anova, mlp_anova_estimators, grid_search_mlp_pca, mlp_pca_estimators, grid_search_rfc_anova, rfc_anova_estimators, grid_search_rfc_pca, rfc_pca_estimators, grid_search_logReg_anova, logReg_anova_estimators, grid_search_logReg_pca, logReg_pca_estimators
 from ScoringMetrics import cv_results, model_best_fts
 from DataAssessment import count_best_fts_types
-from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
+from DataPreparation import get_saved_features, make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
 
-def compare_modes_montages(modes, montages):
+def compare_modes_montages(dataset, modes, montages):
+    
+    aucs_df = pd.DataFrame()
     
     for montage in montages:
         for MODE in modes:
@@ -214,18 +218,50 @@ def compare_modes_montages(modes, montages):
             count_best_fts_types(best_features, MODE)
             
             aucs_df = pd.concat([aucs_df, pd.DataFrame([[MODE]*5, [montage]*5, aucs], index=['Classification', 'Montage', 'AUC']).transpose()], axis=0)
-        
+       
     return aucs_df
-
-#%% Boxplot best models
-import seaborn as sb
-from matplotlib import pyplot as plt
-
-def boxplot_models(aucs_df):
+ 
+       
+def boxplot_models(auc_df):
     plt.figure(figsize=(14,7))
     box_plot = sb.boxplot(x="Classification", y="AUC", hue='Montage', data=aucs_df, palette=sb.color_palette("hls", 2))
     plt.title('Overall results for Focal Symptomatic Epilepsy (SVM & ANOVA)')
     plt.xticks(range(0,5),['All', 'Young', 'Old', 'Male', 'Female'])
+        
+
+#%% Optimize correlated features elimination
+from FeatureSelection import eliminate_corr_fts   
+
+def optimize_eliminate_corr(gs=grid_search_logReg_anova):
+    ths = np.arange(0.5,1, 0.01)
+    tr_scores, val_scores = [], []
+    for k in ths:
+        dataset = getPickleFile('../3_ML_Data/Bipolar/dataset')
+        fts_names = getPickleFile('../3_ML_Data/Bipolar/featuresNames')
+        dataset, _ = eliminate_corr_fts(dataset, fts_names, th=k)
+        _, _, clf = gs(dataset)
+        tr_scores.append(clf.cv_results_['mean_train_score'][clf.best_index_])
+        val_scores.append(clf.best_score_)
+    
+    plt.figure()
+    plt.plot(ths, tr_scores)
+    plt.plot(ths, val_scores)
+    plt.plot([0.5, 1], [0.734, 0.734], '--k')
+    plt.legend(['Train Score', 'Validation Score', 'Baseline Score'])
+    plt.xlabel('AUC ROC')
+    plt.ylabel('Correlation-based Elimination Threshold')
+    plt.title('Score vs. Elimination Threshold on Logistic Regression')
+    
+    opti_idx = np.argmax(val_scores)
+    opti_th = ths[opti_idx]
+    best_score = val_scores[opti_idx] 
+    
+    return ths, tr_scores, val_scores, opti_th, best_score
+    
+    
+    
+        
+
     
     
     

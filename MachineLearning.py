@@ -80,7 +80,7 @@ def svm_overall_bst_fts(dataset, fts_names, labels_names, mode, scoring):
     return best_fts, best_estimators, validation_score, mean_validation_score, std_validation_score, reduced_datasets
 
 #%% SVM + SelectKBest
-def grid_search_svm_anova(dataset, labels_names):
+def grid_search_svm_anova(dataset):
     
     model = 'ANOVA + SVM'
     mode = dataset['MODE']
@@ -98,11 +98,12 @@ def grid_search_svm_anova(dataset, labels_names):
         'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 0.7, 1],
         'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
-    
+
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
-    
+
     space['dim_red__k'] = np.arange(5,30,1)
+
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -478,23 +479,13 @@ def grid_search_rfc(dataset, labels_names):
     rfc = RandomForestClassifier(random_state=42)
     
     # Parameters for Grid Search
-    # space = dict({
-    #     'classifier__bootstrap': [True],
-    #     'classifier__max_depth': [5, 10, 25, 50, None],
-    #     'classifier__max_features': np.arange(3,20,1),
-    #     'classifier__min_samples_leaf': [1, 5],
-    #     'classifier__min_samples_split': [2, 5],
-    #     'classifier__n_estimators': [175, 185, 200, 220, 275],
-    #     'classifier__criterion': ['gini']
-    # })
-    
     space = dict({
         'classifier__bootstrap': [True],
-        'classifier__max_depth': [5],
-        'classifier__max_features': [5],
-        'classifier__min_samples_leaf': [1],
-        'classifier__min_samples_split': [2],
-        'classifier__n_estimators': [220],
+        'classifier__max_depth': [5, 10, 25, 50, None],
+        'classifier__max_features': np.arange(3,20,1),
+        'classifier__min_samples_leaf': [1, 5],
+        'classifier__min_samples_split': [2, 5],
+        'classifier__n_estimators': [175, 185, 200, 220, 275],
         'classifier__criterion': ['gini']
     })
     
@@ -617,7 +608,7 @@ def rfc_pca_estimators(dataset, gs_rfc_pca, model):
 
 #%% LogReg + SelectKBest
 
-def grid_search_logReg_anova(dataset, labels_names):
+def grid_search_logReg_anova(dataset):
     
     model = 'LogReg + ANOVA'
     mode = dataset['MODE']
@@ -640,7 +631,7 @@ def grid_search_logReg_anova(dataset, labels_names):
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = np.arange(5,30,1)
+    space['dim_red__k'] = np.arange(2,30,1)
     
     # Pipeline
     model_logReg = Pipeline(steps=[('norm_scaler', norm_scaler),
@@ -688,7 +679,7 @@ def logReg_anova_estimators(dataset, gs_logReg_anova, model):
 
 #%% LogReg + PCA
 
-def grid_search_logReg_pca(dataset, labels_names):
+def grid_search_logReg_pca(dataset):
     
     model = 'LogReg + PCA'
     mode = dataset['MODE']

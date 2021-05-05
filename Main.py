@@ -78,7 +78,7 @@ fts = get_saved_features(bdp=False, rawConn=True, conn=False, graphs=False, asy=
 graph_ms = compute_graph_subgroup_measures(fts)
 createPickleFile(graph_ms, '../2_Features_Data/Bipolar/' + 'graphMeasures')
 
-#% Subgroups Graph Asymmetry Ratios
+#%% Subgroups Graph Asymmetry Ratios
 from Asymmetry import compute_asymmetry_measures
 fts = get_saved_features(bdp=False, rawConn=False, conn=False, graphs=True, asy=False)
 asymmetry_ms = compute_asymmetry_measures(fts)
@@ -149,7 +149,7 @@ createPickleFile(labels_names, '../3_ML_Data/Bipolar/' + 'labelsNames')
 
 #%% Eliminate highly correlated features
 from FeatureSelection import eliminate_corr_fts   
-dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=1)
+dataset, fts_names = eliminate_corr_fts(dataset, fts_names, th=0.92)
 
 #%% TRAIN Machine Learning - get data from Pickle
 dataset = getPickleFile('../3_ML_Data/Bipolar/dataset')
@@ -172,7 +172,7 @@ fig_tsne = plot_tsne(dataset, labels_names, MODE, p=30)
 best_fts = best_ranked_features(dataset,fts_names, k_features=100)
     
 # Features Correlation Matrix
-corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=['bdp', 'Delta', 'Median'], ms_exclude=[], k_best_features=0)
+corr_df = fts_correlation_matrix(dataset, fts_names, ms_keep=[], ms_exclude=[], k_best_features=9)
 
 # Most and Least Correlated Features
 corr_most, corr_least = most_least_correlated_fts(dataset, fts_names, n=-1)
@@ -190,7 +190,7 @@ from DataAssessment import count_best_fts_types
 #%% SVM & SelectKBest
 from MachineLearning import grid_search_svm_anova, svm_anova_estimators
 
-gs_svm_anova, model, clf = grid_search_svm_anova(dataset, labels_names)
+gs_svm_anova, model, clf = grid_search_svm_anova(dataset)
 estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
 aucs = cv_results(dataset, estimators_svm_anova, model)
 best_features = model_best_fts(fts_names, estimators_svm_anova)
@@ -247,7 +247,7 @@ aucs = cv_results(dataset, estimators_rfc_pca, model)
 #%% LogReg & SelectKBest
 from MachineLearning import grid_search_logReg_anova, logReg_anova_estimators
 
-gs_logReg_anova, model, clf = grid_search_logReg_anova(dataset, labels_names)
+gs_logReg_anova, model, clf = grid_search_logReg_anova(dataset)
 estimators_logReg_anova = logReg_anova_estimators(dataset, gs_logReg_anova, model)
 aucs = cv_results(dataset, estimators_logReg_anova, model)
 best_features = model_best_fts(fts_names, estimators_logReg_anova)
@@ -260,9 +260,8 @@ gs_logReg_pca, model, clf = grid_search_logReg_pca(dataset, labels_names)
 estimators_logReg_pca = logReg_pca_estimators(dataset, gs_logReg_pca, model)
 aucs = cv_results(dataset, estimators_logReg_pca, model)
 
-
 #%% Compare models and boxplot 
-from ScoringMetrics import compare_models_montages
+from ScoringMetrics import compare_models_montages, boxplot_models
 modes = ['FocalSymptomaticVSNon-Epileptic', 
          'FocalSymptomaticVSNon-EpilepticYoung', 
          'FocalSymptomaticVSNon-EpilepticOld', 
@@ -272,8 +271,14 @@ modes = ['FocalSymptomaticVSNon-Epileptic',
 montages = ['Bipolar']
 SCORING = 'roc_auc'
 
-aucs_df = compare_models_montages(modes, montages)
-
-#%% Boxplot with all models information
-from ScoringMetrics import boxplot_models
+aucs_df = compare_models_montages(dataset, modes, montages)
 boxplot_models(aucs_df)
+
+#%% Optimize correlation-based elimination threshold
+from ScoringMetrics import optimize_eliminate_corr
+from MachineLearning import grid_search_logReg_anova
+from MachineLearning import grid_search_svm_anova
+
+ths, tr_scores, val_scores, opti_th, best_score = optimize_eliminate_corr(grid_search_svm_anova)
+
+
