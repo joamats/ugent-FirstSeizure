@@ -94,15 +94,15 @@ def grid_search_svm_anova(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5],
-        'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+        'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 0.7, 1],
         'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = np.arange(10,20,1)
+    space['dim_red__k'] = np.arange(5,30,1)
     
     # Pipeline
     model_SVC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -166,15 +166,15 @@ def grid_search_svm_pca(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
-        'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 2, 5],
+        'classifier__gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.2, 0.5, 0.7, 1],
         'classifier__kernel': ['rbf', 'linear', 'sigmoid']
     })
     
     # Dimensionality Reduction
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = np.arange(10,20,1)
+    space['dim_red__n_components'] = np.arange(3,20,1)
     
     # Pipeline
     model_SVC = Pipeline(steps=[
@@ -244,17 +244,17 @@ def grid_search_mlp_anova(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
-                                          (100,100), (150,150),(200,200),
-                                          (100,100,100), (200,200,200)],
-        'classifier__alpha':[0.0001, 0.001, 0.01, 0.1, 0.5, 1],
-        'classifier__learning_rate': ['constant', 'invscaling', 'adaptive']
+        'classifier__hidden_layer_sizes':[(50),(75),(100),(125),(150),(175),(200),(250),(300),(500), 
+                                          (100,100),(125,125),(150,150),(175,175),(200,200),
+                                          (100,100,100), (150,150,150),(200,200,200)],
+        'classifier__alpha':[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
+        'classifier__learning_rate': ['adaptive']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    space['dim_red__k'] = np.arange(5,30,1)
     
     # Pipeline
     model_MLP = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -326,17 +326,17 @@ def grid_search_mlp_pca(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__hidden_layer_sizes':[(100), (150), (200), (500), 
-                                          (100,100), (150,150),(200,200),
-                                          (100,100,100), (200,200,200)],
-        'classifier__alpha':[0.0001, 0.001, 0.01, 0.1, 0.5, 1],
-        'classifier__learning_rate': ['constant', 'invscaling', 'adaptive']
+        'classifier__hidden_layer_sizes':[(50),(75),(100),(125),(150),(175),(200),(250),(300),(500), 
+                                          (100,100),(125,125),(150,150),(175,175),(200,200),
+                                          (100,100,100), (150,150,150),(200,200,200)],
+        'classifier__alpha':[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
+        'classifier__learning_rate': ['adaptive']
     })
     
     # Dimensionality Reduction
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = [5, 10, 15, 20]
+    space['dim_red__n_components'] = np.arange(3,20,1)
     
     
     # Pipeline
@@ -405,18 +405,18 @@ def grid_search_rfc_anova(dataset, labels_names):
     # Parameters for Grid Search
     space = dict({
         'classifier__bootstrap': [True],
-        'classifier__max_depth': [50, 70, 90, None],
-        'classifier__max_features': ['auto'],
+        'classifier__max_depth': [5, 10, 25, 50, 90, None],
+        'classifier__max_features': [None],
         'classifier__min_samples_leaf': [1, 5],
         'classifier__min_samples_split': [2, 5],
-        'classifier__n_estimators': [500, 1000, 1500],
+        'classifier__n_estimators': [50, 75, 100, 150, 250, 500],
         'classifier__criterion': ['gini']
     })
     
     # Feature Selection
     dim_red = SelectKBest(score_func=f_classif)
     
-    space['dim_red__k'] = [10, 20, 25, 30, 40, 50]
+    space['dim_red__k'] = np.arange(5,30,1)
     
     # Pipeline
     model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -462,6 +462,84 @@ def rfc_anova_estimators(dataset, gs_rfc_anova, model):
     
     return scores_pipe['estimator']
 
+#%% RFC + Built-in Feature Selection
+
+def grid_search_rfc(dataset, labels_names):
+    
+    model = 'RFC + BUILT-IN FEATURE SELECTION'
+    mode = dataset['MODE']
+    scoring = dataset['SCORING']
+    
+    
+    # Feature Normalization
+    norm_scaler = StandardScaler(with_mean=True, with_std=True)
+    
+    # RFC Model
+    rfc = RandomForestClassifier(random_state=42)
+    
+    # Parameters for Grid Search
+    # space = dict({
+    #     'classifier__bootstrap': [True],
+    #     'classifier__max_depth': [5, 10, 25, 50, None],
+    #     'classifier__max_features': np.arange(3,20,1),
+    #     'classifier__min_samples_leaf': [1, 5],
+    #     'classifier__min_samples_split': [2, 5],
+    #     'classifier__n_estimators': [175, 185, 200, 220, 275],
+    #     'classifier__criterion': ['gini']
+    # })
+    
+    space = dict({
+        'classifier__bootstrap': [True],
+        'classifier__max_depth': [5],
+        'classifier__max_features': [5],
+        'classifier__min_samples_leaf': [1],
+        'classifier__min_samples_split': [2],
+        'classifier__n_estimators': [220],
+        'classifier__criterion': ['gini']
+    })
+    
+    # Pipeline
+    model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
+                                ('classifier', rfc)])
+    
+    clf = GridSearchCV( estimator=model_RFC,
+                        param_grid=space,
+                        scoring=scoring, 
+                        n_jobs=-1,
+                        cv=5,
+                        return_train_score=True )
+    
+    X_tr = dataset['X_tr']
+    y_tr = dataset['y_tr']
+    clf.fit(X_tr, y_tr)
+    
+    print('MODE:  ' + mode + '\nMODEL: ' + model)
+    print('\nHYPERPARAMETERS')
+    print(clf.best_params_, '\n')
+    print('TRAIN SCORE')
+    print(clf.cv_results_['mean_train_score'][clf.best_index_], '\n')
+    print('VALIDATION SCORE')
+    print(clf.best_score_, '\n')
+    
+    return clf.best_params_, model, clf
+
+def rfc_estimators(dataset, gs_rfc, model):
+    
+    pipe = Pipeline(steps=[('norm_scaler', StandardScaler(with_mean=True, with_std=True)),
+                            ('classifier', RandomForestClassifier(random_state=42))])
+    
+    pipe.set_params(**gs_rfc)
+    
+    scores_pipe = cross_validate(   estimator=pipe,
+                                    X=dataset['X_tr'],
+                                    y=dataset['y_tr'],
+                                    scoring=['roc_auc'],
+                                    cv=5,
+                                    return_train_score=True,
+                                    return_estimator=True)
+    
+    return scores_pipe['estimator']
+
 
 #%% RFC + PCA
 
@@ -480,18 +558,18 @@ def grid_search_rfc_pca(dataset, labels_names):
     # Parameters for Grid Search
     space = dict({
         'classifier__bootstrap': [True],
-        'classifier__max_depth': [50, 70, 90, None],
-        'classifier__max_features': ['auto'],
+        'classifier__max_depth': [5, 10, 25, 50, 90, None],
+        'classifier__max_features': [None],
         'classifier__min_samples_leaf': [1, 5],
         'classifier__min_samples_split': [2, 5],
-        'classifier__n_estimators': [500, 1000, 1500],
+        'classifier__n_estimators': [50, 75, 100, 150, 250, 500],
         'classifier__criterion': ['gini']
     })
     
     # Dimensionality Reduction
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = [5, 10, 15, 20]
+    space['dim_red__n_components'] = np.arange(3,20,1)
     
     # Pipeline
     model_RFC = Pipeline(steps=[('norm_scaler',norm_scaler),
@@ -554,9 +632,9 @@ def grid_search_logReg_anova(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2, 10],
         'classifier__class_weight': ['balanced', None],
-        'classifier__solver':['newton-cg', 'lbfgs']
+        'classifier__solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     })
     
     # Feature Selection
@@ -625,7 +703,7 @@ def grid_search_logReg_pca(dataset, labels_names):
     
     # Parameters for Grid Search
     space = dict({
-        'classifier__C': [0.01, 0.1, 1, 1.5, 2, 10],
+        'classifier__C': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 1.5, 2, 10],
         'classifier__class_weight': ['balanced', None],
         'classifier__solver':['newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga']
     })
@@ -633,7 +711,7 @@ def grid_search_logReg_pca(dataset, labels_names):
     # Feature Selection
     dim_red = PCA(random_state=42)
     
-    space['dim_red__n_components'] = [2, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50]
+    space['dim_red__n_components'] = np.arange(3,20,1)
     
     # Pipeline
     model_logReg = Pipeline(steps=[('norm_scaler',norm_scaler),

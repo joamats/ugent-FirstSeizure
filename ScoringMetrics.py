@@ -158,9 +158,22 @@ def cv_results_hybrid(datasets, estimators, model):
 
 from DataAssessment import _best_fts
 
-def model_best_fts(dataset, fts_names, estimators):
-    
+def model_best_fts(fts_names, estimators, model = 'not_rfc'):
     allBestFts = pd.DataFrame()
+    
+    if model == 'rfc_builtIn':
+        bestFts = pd.DataFrame()
+        bestFtsNames = []
+        best_features_indexes = []
+        
+        for e in estimators:
+            for ind in e.steps[-1][1].feature_importances_.argsort()[-5:][::-1]:
+                best_features_indexes.append(ind)
+        for ft_index in best_features_indexes:
+            bestFtsNames.append(fts_names[ft_index])
+        bestFts['fts_names']=bestFtsNames
+        allBestFts = pd.concat([allBestFts, bestFts], axis=0)
+        return allBestFts
     
     for e in estimators:
         selector = e.steps[-2][1]

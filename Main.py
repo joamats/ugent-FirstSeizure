@@ -193,7 +193,7 @@ from MachineLearning import grid_search_svm_anova, svm_anova_estimators
 gs_svm_anova, model, clf = grid_search_svm_anova(dataset, labels_names)
 estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
 aucs = cv_results(dataset, estimators_svm_anova, model)
-best_features = model_best_fts(dataset, fts_names, estimators_svm_anova)
+best_features = model_best_fts(fts_names, estimators_svm_anova)
 count_best_fts_types(best_features, MODE)
 
 #%% SVM & PCA
@@ -209,7 +209,7 @@ from MachineLearning import grid_search_mlp_anova, mlp_anova_estimators
 gs_mlp_anova, model, clf = grid_search_mlp_anova(dataset, labels_names)
 estimators_mlp_anova = mlp_anova_estimators(dataset, gs_mlp_anova, model)
 aucs = cv_results(dataset, estimators_mlp_anova, model)
-best_features = model_best_fts(dataset, fts_names, estimators_mlp_anova)
+best_features = model_best_fts(fts_names, estimators_mlp_anova)
 count_best_fts_types(best_features, MODE)
 
 #%% MLP & PCA
@@ -225,7 +225,16 @@ from MachineLearning import grid_search_rfc_anova, rfc_anova_estimators
 gs_rfc_anova, model, clf = grid_search_rfc_anova(dataset, labels_names)
 estimators_rfc_anova = rfc_anova_estimators(dataset, gs_rfc_anova, model)
 aucs = cv_results(dataset, estimators_rfc_anova, model)
-best_features = model_best_fts(dataset, fts_names, estimators_rfc_anova)
+best_features = model_best_fts(fts_names, estimators_rfc_anova)
+count_best_fts_types(best_features, MODE)
+
+#%% RFC & Built-In Feature Selection
+from MachineLearning import grid_search_rfc, rfc_estimators
+
+gs_rfc, model, clf = grid_search_rfc(dataset, labels_names)
+estimators_rfc = rfc_estimators(dataset, gs_rfc, model)
+aucs = cv_results(dataset, estimators_rfc, model)
+best_features = model_best_fts(fts_names, estimators_rfc, model='rfc_builtIn')
 count_best_fts_types(best_features, MODE)
 
 #%% RFC & PCA
@@ -241,7 +250,7 @@ from MachineLearning import grid_search_logReg_anova, logReg_anova_estimators
 gs_logReg_anova, model, clf = grid_search_logReg_anova(dataset, labels_names)
 estimators_logReg_anova = logReg_anova_estimators(dataset, gs_logReg_anova, model)
 aucs = cv_results(dataset, estimators_logReg_anova, model)
-best_features = model_best_fts(dataset, fts_names, estimators_logReg_anova)
+best_features = model_best_fts(fts_names, estimators_logReg_anova)
 count_best_fts_types(best_features, MODE)
 
 #%% LogReg & PCA
