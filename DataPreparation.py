@@ -73,6 +73,8 @@ def make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms):
 # Get filenames and labels from metadata
 def get_filenames_labels(mode='Diagnosis'):
     
+    gts = []
+    
     if mode == 'Diagnosis':
         meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state']]
         labels = meta_labels[~ meta_labels.isnull()]
@@ -300,7 +302,7 @@ def get_filenames_labels(mode='Diagnosis'):
         filenames = labels.index
         
     elif mode == 'FocalSymptomaticVSNon-Epileptic':
-        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Epilepsy type']]
+        meta_labels = pd.read_excel('Metadata_train.xlsx', index_col='Filename')[['Diagnosis','Sleep state', 'Epilepsy type', 'EEG result']]
         labels1 = meta_labels[meta_labels['Sleep state'] == 'wake']
         labels1 = labels1[labels1['Epilepsy type'] != 'cryptogenic']
         labels1 = labels1[labels1['Epilepsy type'] != 'focal cryptogenic']
@@ -313,6 +315,7 @@ def get_filenames_labels(mode='Diagnosis'):
         labels2 = labels2[labels2['Diagnosis'] != 'undetermined']
         
         labels = pd.concat([labels1, labels2], axis=0)['Diagnosis']
+        gts = pd.concat([labels1, labels2], axis=0)['EEG result']
         
         filenames = labels.index
         
@@ -388,7 +391,7 @@ def get_filenames_labels(mode='Diagnosis'):
         
         filenames = labels.index
 
-    return labels, filenames
+    return labels, filenames, gts
 
 # Make Data Array: Features + Labels
 def add_labels_to_data_array(data, labels, mode='Diagnosis'):
@@ -456,16 +459,27 @@ def add_labels_to_data_array(data, labels, mode='Diagnosis'):
     
     return labels_names
 
+# Add ground truths to data array
+
+def add_gts_to_data_array(data, gts):
+    gts[gts != 'abnormal'] = 0
+    gts[gts == 'abnormal'] = 1
+    data.insert(loc=0, column='gt', value=gts)
+
 
 # 5-fold cross-validation
 def dataset_split(data):
+    
+    # data = data[data['y'] == data['gt']]
 
     y = data['y'].to_numpy(dtype=float)
-    X = data.drop('y', axis=1).to_numpy()
+    gt = data['gt'].to_numpy(dtype=float)
+    X = data.drop(['y', 'gt'], axis=1).to_numpy()
         
     X_tr, X_ts, y_tr, y_ts = train_test_split(X, y, test_size=0.20, shuffle=True, random_state=42)
+    X_tr, X_ts, gt_tr, gt_ts = train_test_split(X, gt, test_size=0.20, shuffle=True, random_state=42)
         
-    return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts}
+    return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts, 'gt_tr': gt_tr, 'gt_ts': gt_ts}
 
 
 # Example of modes_list:

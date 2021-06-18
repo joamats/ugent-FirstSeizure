@@ -3,6 +3,7 @@ import seaborn as sb
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import axes as ax
+from collections import Counter
 
 from sklearn.manifold import TSNE
 from sklearn.feature_selection import SelectKBest
@@ -173,6 +174,7 @@ def count_best_fts_types(best_fts, MODE):
     bst_type_1, bst_type_2, bst_type_3, = [], [], []
     fts_type_1 = ['bdp', 'imcoh', 'plv', 'mi', 'pdc']
     fts_type_2 = ['Global', 'Alpha', 'Theta', 'Delta', 'Beta']
+    fts_type_3 = ['Functional\nConnectivity', 'Band\nPowers', 'Graph\nMeasures', 'Asymmetry\nRatios']
     
     # Auxiliar for bst_type_3
     fts_type_list_conn = ['imcoh', 'plv', 'mi', 'pdc']
@@ -190,29 +192,46 @@ def count_best_fts_types(best_fts, MODE):
         if conn != []:
             bst_type_3.append('Functional\nConnectivity')
         elif fts[0]=='bdp':
-            bst_type_3.append('Bandpowers')
+            bst_type_3.append('Band\nPowers')
         elif graph != []:
             bst_type_3.append('Graph\nMeasures')
         elif asymmetry != []:
             bst_type_3.append('Asymmetry\nRatios')
         
-    df_1 = pd.DataFrame(bst_type_1, columns=['Bandpower and Functional Connectivity'])
-    df_2 = pd.DataFrame(bst_type_2, columns=['Frequency Band'])
-    df_3 = pd.DataFrame(bst_type_3, columns=['Type of Measure'])
+    l1, l2, l3 = [], [], []
+    for i in fts_type_1:
+        l1.append(bst_type_1.count(i))
     
+    for j in fts_type_2:
+        l2.append(bst_type_2.count(j))
+        
+    for k in fts_type_3:
+        l3.append(bst_type_3.count(k))
+        
+    df_1 = pd.DataFrame(l1, columns=['Bandpower and Functional Connectivity'], index=fts_type_1)
+    df_2 = pd.DataFrame(l2, columns=['Frequency Band'], index=fts_type_2)
+    df_3 = pd.DataFrame(l3, columns=['Type of Measure'], index=fts_type_3)
+    
+
     # Initialize figure
+    plt.rc('xtick',labelsize=14)
+    plt.rc('ytick',labelsize=14)
+
     plt.figure()
-    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18,5), sharey=True)
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(20,5), sharey=True)
     
-    sb.countplot(x='Bandpower and Functional Connectivity', data=df_1, ax=axs[0]).set(xlabel=None)
-    axs[0].title.set_text('Bandpower and Functional Connectivity')
-    sb.countplot(x='Frequency Band', data=df_2, ax=axs[1]).set(xlabel=None)
-    axs[1].title.set_text('Frequency Band')
-    sb.countplot(x='Type of Measure', data=df_3, ax=axs[2]).set(xlabel=None)
-    axs[2].title.set_text('Type of Measure')
+    axs[0].bar(df_1['Bandpower and Functional Connectivity'].keys(), df_1['Bandpower and Functional Connectivity'].values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple'])
+    axs[0].set_title('Bandpower and Functional Connectivity', fontsize=16)
+    axs[1].bar(df_2['Frequency Band'].keys(), df_2['Frequency Band'].values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple'])
+    axs[1].set_title('Frequency Band', fontsize=16)
+    axs[2].bar(df_3['Type of Measure'].keys(), df_3['Type of Measure'].values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple'])
+    axs[2].set_title('Type of Measure', fontsize=16)
+
+
+
+    plt.suptitle('Most important features in the 17 components of final SVM model', fontsize=18, va='center')
     
-    plt.suptitle(MODE + ' Most Selected Features through 5-Fold CV', fontsize=18, va='center')
-    
+    return df_1, df_2, df_3
 
 #%% Features Correlation Matrix
 

@@ -24,6 +24,8 @@ def epochs_selection_bandpower(epochs, allVars=False):
     
     for i in range (n_epochs):
         # compute bandpowers
+        # sf is 128Hz for connectivity, but 256 for bandpowers!
+        # sf should be an input variable
         bd, _, _ = bandpower_1f_correction(data=epochs._data[i,:,:], sf=128, ch_names=ch,
                             hypno=None, relative=True, bands=bands)
         

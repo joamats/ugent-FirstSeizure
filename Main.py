@@ -8,15 +8,29 @@ from DataPreparation import get_saved_features
 
 filenames = pd.read_excel('Metadata_train.xlsx')['Filename']
 
+#%% EEG average time
+from PreProcessing import import_eeg
+import numpy as np
+
+times = []
+
+for filename in filenames:
+    raw = import_eeg(filename)
+    t = raw._raw_lengths
+    times.append(t[0]/256/60)
+    
+print(np.mean(times))
+print(np.std(times))
+
 #%% EEG Pre-Processing 256Hz 5s
 from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
 
 icas = get_ica_template(filenames[0])
 
 for filename in filenames:
-    epochs = eeg_preprocessing(filename, icas, epoch_length=5, plot=False)
+    epochs = eeg_preprocessing(filename, icas, epoch_length=5, plot=True)
     epochs, _ = clean_epochs(filename, epochs, plot=False)
-    createPickleFile(epochs, '../1_PreProcessed_Data/Monopolar/5s/256Hz/' + filename)
+    # createPickleFile(epochs, '../1_PreProcessed_Data/Monopolar/5s/256Hz/' + filename)
 
 #%% EEG Bipolar montage
 from PreProcessing import set_bipolar
@@ -127,10 +141,10 @@ MODE = 'FocalSymptomaticVSNon-Epileptic'
 SCORING = 'roc_auc'
 
 #%% Make features array
-from DataPreparation import make_features_array, add_labels_to_data_array, dataset_split, get_filenames_labels
+from DataPreparation import make_features_array, add_labels_to_data_array, add_gts_to_data_array, dataset_split, get_filenames_labels
 bdp_ms, conn_ms, gr_ms, asy_ms = get_saved_features(bdp=True, rawConn=False, conn=True, graphs=True, asy=True)
 
-labels, filenames = get_filenames_labels(mode=MODE)
+labels, filenames, gts = get_filenames_labels(mode=MODE)
 
 # Make array
 data = make_features_array(filenames, bdp_ms, conn_ms, gr_ms, asy_ms)
@@ -140,6 +154,7 @@ createPickleFile(data, '../2_Features_Data/Bipolar/' + 'allFeatures')
 createPickleFile(fts_names, '../3_ML_Data/Bipolar/' + 'featuresNames')
 
 labels_names = add_labels_to_data_array(data, labels, mode=MODE)
+add_gts_to_data_array(data, gts)
 dataset = dataset_split(data)
 dataset['MODE'] = MODE
 dataset['SCORING'] = SCORING
@@ -184,7 +199,7 @@ dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_t
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)   
 
 #%% Machine Learning (run current line with F9)
-from ScoringMetrics import cv_results, model_best_fts
+from ScoringMetrics import cv_results, model_best_fts, test_score, test_rfc_best_fts, best_features_from_pca, gts_score, test_logReg_best_fts
 from DataAssessment import count_best_fts_types
 
 #%% SVM & SelectKBest
@@ -193,8 +208,10 @@ from MachineLearning import grid_search_svm_anova, svm_anova_estimators
 gs_svm_anova, model, clf = grid_search_svm_anova(dataset)
 estimators_svm_anova = svm_anova_estimators(dataset, gs_svm_anova, model)
 aucs = cv_results(dataset, estimators_svm_anova, model)
-best_features = model_best_fts(fts_names, estimators_svm_anova)
-count_best_fts_types(best_features, MODE)
+# best_features = model_best_fts(fts_names, estimators_svm_anova)
+# count_best_fts_types(best_features, MODE)
+# test_score(dataset, clf, "SVM + ANOVA")
+
 
 #%% SVM & PCA
 from MachineLearning import grid_search_svm_pca, svm_pca_estimators
@@ -202,31 +219,38 @@ from MachineLearning import grid_search_svm_pca, svm_pca_estimators
 gs_svm_pca, model, clf = grid_search_svm_pca(dataset, labels_names)
 estimators_svm_pca = svm_pca_estimators(dataset, gs_svm_pca, model)
 aucs = cv_results(dataset, estimators_svm_pca, model)
+test_score(dataset, clf, "SVM & PCA")
+best_fts = best_features_from_pca(clf.best_estimator_, fts_names)
+count_best_fts_types(best_fts, MODE)
+gts_score(dataset)
 
 #%% MLP & SelectKBest
 from MachineLearning import grid_search_mlp_anova, mlp_anova_estimators
 
 gs_mlp_anova, model, clf = grid_search_mlp_anova(dataset, labels_names)
-estimators_mlp_anova = mlp_anova_estimators(dataset, gs_mlp_anova, model)
-aucs = cv_results(dataset, estimators_mlp_anova, model)
-best_features = model_best_fts(fts_names, estimators_mlp_anova)
-count_best_fts_types(best_features, MODE)
+# estimators_mlp_anova = mlp_anova_estimators(dataset, gs_mlp_anova, model)
+# aucs = cv_results(dataset, estimators_mlp_anova, model)
+# best_features = model_best_fts(fts_names, estimators_mlp_anova)
+# count_best_fts_types(best_features, MODE)
+print(test_score(dataset, clf))
 
 #%% MLP & PCA
 from MachineLearning import grid_search_mlp_pca, mlp_pca_estimators
 
 gs_mlp_pca, model, clf = grid_search_mlp_pca(dataset, labels_names)
-estimators_mlp_pca = mlp_pca_estimators(dataset, gs_mlp_pca, model)
-aucs = cv_results(dataset, estimators_mlp_pca, model)
+# estimators_mlp_pca = mlp_pca_estimators(dataset, gs_mlp_pca, model)
+# aucs = cv_results(dataset, estimators_mlp_pca, model)
+test_score(dataset, clf, "MLP & PCA")
 
 #%% RFC & SelectKBest
 from MachineLearning import grid_search_rfc_anova, rfc_anova_estimators
 
 gs_rfc_anova, model, clf = grid_search_rfc_anova(dataset, labels_names)
-estimators_rfc_anova = rfc_anova_estimators(dataset, gs_rfc_anova, model)
-aucs = cv_results(dataset, estimators_rfc_anova, model)
-best_features = model_best_fts(fts_names, estimators_rfc_anova)
-count_best_fts_types(best_features, MODE)
+# estimators_rfc_anova = rfc_anova_estimators(dataset, gs_rfc_anova, model)
+# aucs = cv_results(dataset, estimators_rfc_anova, model)
+# best_features = model_best_fts(fts_names, estimators_rfc_anova)
+# count_best_fts_types(best_features, MODE)
+print(test_score(dataset, clf))
 
 #%% RFC & Built-In Feature Selection
 from MachineLearning import grid_search_rfc, rfc_estimators
@@ -234,15 +258,19 @@ from MachineLearning import grid_search_rfc, rfc_estimators
 gs_rfc, model, clf = grid_search_rfc(dataset, labels_names)
 estimators_rfc = rfc_estimators(dataset, gs_rfc, model)
 aucs = cv_results(dataset, estimators_rfc, model)
-best_features = model_best_fts(fts_names, estimators_rfc, model='rfc_builtIn')
-count_best_fts_types(best_features, MODE)
+# best_features = model_best_fts(fts_names, estimators_rfc, model='rfc_builtIn')
+# count_best_fts_types(best_features, MODE)
+test_score(dataset, clf, "RFC")
+best_fts = test_rfc_best_fts(clf.best_estimator_, fts_names, k=20)
+count_best_fts_types(best_fts, MODE)
 
 #%% RFC & PCA
-from MachineLearning import grid_search_rfc_pca, rfc_pca_estimators
+from MachineLearning import grid_search_rfc_pca#, rfc_pca_estimators
 
 gs_rfc_pca, model, clf = grid_search_rfc_pca(dataset, labels_names)
-estimators_rfc_pca = rfc_pca_estimators(dataset, gs_rfc_pca, model)
-aucs = cv_results(dataset, estimators_rfc_pca, model)
+# estimators_rfc_pca = rfc_pca_estimators(dataset, gs_rfc_pca, model)
+# aucs = cv_results(dataset, estimators_rfc_pca, model)
+# test_score(dataset, clf, model="RFC & PCA")
 
 #%% LogReg & SelectKBest
 from MachineLearning import grid_search_logReg_anova, logReg_anova_estimators
@@ -250,28 +278,29 @@ from MachineLearning import grid_search_logReg_anova, logReg_anova_estimators
 gs_logReg_anova, model, clf = grid_search_logReg_anova(dataset)
 estimators_logReg_anova = logReg_anova_estimators(dataset, gs_logReg_anova, model)
 aucs = cv_results(dataset, estimators_logReg_anova, model)
-best_features = model_best_fts(fts_names, estimators_logReg_anova)
-count_best_fts_types(best_features, MODE)
+# best_features = model_best_fts(fts_names, estimators_logReg_anova)
+# count_best_fts_types(best_features, MODE)
+test_score(dataset, clf, model="LogReg & Corr-ANOVA")
+best_features = test_logReg_best_fts(clf.best_estimator_, fts_names, k=9)
+df1, df2, df3 = count_best_fts_types(best_features, MODE)
 
 #%% LogReg & PCA
 from MachineLearning import grid_search_logReg_pca, logReg_pca_estimators
 
-gs_logReg_pca, model, clf = grid_search_logReg_pca(dataset, labels_names)
-estimators_logReg_pca = logReg_pca_estimators(dataset, gs_logReg_pca, model)
-aucs = cv_results(dataset, estimators_logReg_pca, model)
+gs_logReg_pca, model, clf = grid_search_logReg_pca(dataset)
+# estimators_logReg_pca = logReg_pca_estimators(dataset, gs_logReg_pca, model)
+# aucs = cv_results(dataset, estimators_logReg_pca, model)
+# test_score(dataset, clf, "LogReg & PCA")
+
 
 #%% Compare models and boxplot 
-from ScoringMetrics import compare_models_montages, boxplot_models
-modes = ['FocalSymptomaticVSNon-Epileptic', 
-         'FocalSymptomaticVSNon-EpilepticYoung', 
-         'FocalSymptomaticVSNon-EpilepticOld', 
-         'FocalSymptomaticVSNon-EpilepticMale', 
-         'FocalSymptomaticVSNon-EpilepticFemale']
+from ScoringMetrics import compare_modes_montages, boxplot_models
+modes = ['Diagnosis','DiagnosisYoung', 'DiagnosisOld', 'DiagnosisMale', 'DiagnosisFemale']
 
 montages = ['Bipolar']
 SCORING = 'roc_auc'
 
-aucs_df = compare_models_montages(dataset, modes, montages)
+aucs_df = compare_modes_montages(dataset, modes, montages)
 boxplot_models(aucs_df)
 
 #%% Optimize correlation-based elimination threshold
