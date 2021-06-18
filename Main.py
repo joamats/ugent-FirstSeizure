@@ -137,7 +137,7 @@ AntecedentChildOther
 '''
 
 global MODE, SCORING
-MODE = 'FocalSymptomaticVSNon-Epileptic'
+MODE = 'Diagnosis'
 SCORING = 'roc_auc'
 
 #%% Make features array
@@ -154,7 +154,7 @@ createPickleFile(data, '../2_Features_Data/Bipolar/' + 'allFeatures')
 createPickleFile(fts_names, '../3_ML_Data/Bipolar/' + 'featuresNames')
 
 labels_names = add_labels_to_data_array(data, labels, mode=MODE)
-add_gts_to_data_array(data, gts)
+# add_gts_to_data_array(data, gts)
 dataset = dataset_split(data)
 dataset['MODE'] = MODE
 dataset['SCORING'] = SCORING

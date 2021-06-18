@@ -4,10 +4,26 @@ import pandas as pd
 import numpy as np
 import seaborn as sb
 import matplotlib.pyplot as plt
+import matplotlib.pylab as pylab
 from Pickle import getPickleFile, createPickleFile
 
     
 def cv_results(dataset, estimators, model):
+    # Initialize figure
+    # plt.rc('xtick',labelsize=14)
+    # plt.rc('ytick',labelsize=14)
+    # plt.rc('xlabel',labelsize=14)
+    # plt.rc('ylabel',labelsize=14)
+    # plt.rc('title',labelsize=14)
+    # plt.rc('label',labelsize=14)
+    
+    params = {'legend.fontsize': 'large',
+              'axes.labelsize': 'xx-large',
+              'axes.titlesize':'xx-large',
+              'xtick.labelsize':'x-large',
+              'ytick.labelsize':'x-large'}
+    pylab.rcParams.update(params)
+    
     # Dataset
     X_tr = dataset['X_tr']
     y_tr = dataset['y_tr']
@@ -88,7 +104,7 @@ def cv_results(dataset, estimators, model):
         #Specificity computation
         specificities.append(TN / (TN + FP))
     
-        sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
+        sb.heatmap(confusionMatrix, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=axs[0,i])
         axs[0,i].title.set_text('Optimal Cut-Off Point: {:.2f}'.format(opti_th))
         axs[0,i].set_xlabel('Target Class')
         axs[0,i].set_ylabel('Predicted Class')

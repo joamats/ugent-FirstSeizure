@@ -473,13 +473,14 @@ def dataset_split(data):
     # data = data[data['y'] == data['gt']]
 
     y = data['y'].to_numpy(dtype=float)
-    gt = data['gt'].to_numpy(dtype=float)
-    X = data.drop(['y', 'gt'], axis=1).to_numpy()
+    # gt = data['gt'].to_numpy(dtype=float)
+    # X = data.drop(['y', 'gt'], axis=1).to_numpy()
+    X = data.drop(['y'], axis=1).to_numpy()
         
     X_tr, X_ts, y_tr, y_ts = train_test_split(X, y, test_size=0.20, shuffle=True, random_state=42)
-    X_tr, X_ts, gt_tr, gt_ts = train_test_split(X, gt, test_size=0.20, shuffle=True, random_state=42)
+    # X_tr, X_ts, gt_tr, gt_ts = train_test_split(X, gt, test_size=0.20, shuffle=True, random_state=42)
         
-    return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts, 'gt_tr': gt_tr, 'gt_ts': gt_ts}
+    return {'X_tr': X_tr, 'X_ts': X_ts, 'y_tr': y_tr, 'y_ts': y_ts} #, 'gt_tr': gt_tr, 'gt_ts': gt_ts}
 
 
 # Example of modes_list:
