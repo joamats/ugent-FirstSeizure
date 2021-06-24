@@ -165,7 +165,7 @@ def best_ranked_features(dataset, fts_names, k_features=200):
 #%% Histograms of best ranked features types
 
 def count_best_fts_types(best_fts, MODE):
-
+    
     fts_split = []
     fts_names = best_fts['fts_names'].unique()
     for fts in fts_names:
@@ -214,23 +214,21 @@ def count_best_fts_types(best_fts, MODE):
     
 
     # Initialize figure
-    plt.rc('xtick',labelsize=14)
-    plt.rc('ytick',labelsize=14)
+    plt.rc('xtick',labelsize=16)
+    plt.rc('ytick',labelsize=16)
 
     plt.figure()
-    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(20,5), sharey=True)
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(21,5), sharey=True)
     
     axs[0].bar(df_1['Bandpower and Functional Connectivity'].keys(), df_1['Bandpower and Functional Connectivity'].values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple'])
-    axs[0].set_title('Bandpower and Functional Connectivity', fontsize=16)
+    axs[0].set_title('Bandpower and Functional Connectivity', fontsize=20)
     axs[1].bar(df_2['Frequency Band'].keys(), df_2['Frequency Band'].values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple'])
-    axs[1].set_title('Frequency Band', fontsize=16)
+    axs[1].set_title('Frequency Band', fontsize=20)
     axs[2].bar(df_3['Type of Measure'].keys(), df_3['Type of Measure'].values, color=['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple'])
-    axs[2].set_title('Type of Measure', fontsize=16)
+    axs[2].set_title('Type of Measure', fontsize=20)
 
-
-
-    plt.suptitle('Most important features in the 17 components of final SVM model', fontsize=18, va='center')
-    
+    plt.suptitle('9 Most important selected features in final LogReg model', fontsize=22, va='center')
+        
     return df_1, df_2, df_3
 
 #%% Features Correlation Matrix

@@ -92,8 +92,8 @@ def cv_results(dataset, estimators, model):
         
         TN = confusionMatrix[0][0]
         TP = confusionMatrix[1][1]
-        FN = confusionMatrix[0][1]
-        FP = confusionMatrix[1][0]
+        FP = confusionMatrix[0][1]
+        FN = confusionMatrix[1][0]
         
         #Accuracy computation
         accuracies.append((TP + TN)/(TP + TN + FP + FN))
@@ -106,8 +106,8 @@ def cv_results(dataset, estimators, model):
     
         sb.heatmap(confusionMatrix, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=axs[0,i])
         axs[0,i].title.set_text('Optimal Cut-Off Point: {:.2f}'.format(opti_th))
-        axs[0,i].set_xlabel('Target Class')
-        axs[0,i].set_ylabel('Predicted Class')
+        axs[0,i].set_ylabel('Target Class')
+        axs[0,i].set_xlabel('Predicted Class')
         
     plt.suptitle(MODE + ' 5-Fold CV ROC Curves & Confusion Matrices (AUC = {:.3f} ± {:.3f})'.format(np.mean(aucs), np.std(aucs)), va='center', fontsize=30)
     
@@ -164,8 +164,8 @@ def cv_results_hybrid(datasets, estimators, model):
         
             sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[0,i])
             axs[0,i].title.set_text('Threshold: {:.2f}'.format(opti_th))
-            axs[0,i].set_xlabel('Target Class')
-            axs[0,i].set_ylabel('Predicted Class')
+            axs[0,i].set_ylabel('Target Class')
+            axs[0,i].set_xlabel('Predicted Class')
             
         plt.suptitle(MODE + ' 5-Fold CV ROC Curves & Confusion Matrices (AUC = {:.3f} ± {:.3f})'.format(np.mean(aucs), np.std(aucs)), va='center', fontsize=30)
 
@@ -277,12 +277,19 @@ def optimize_eliminate_corr(gs=grid_search_logReg_anova):
 #%% Test Scores
 def test_score(dataset, clf, model):
     
+    params = {'legend.fontsize': 'large',
+              'axes.labelsize': 'xx-large',
+              'axes.titlesize':'xx-large',
+              'xtick.labelsize':'x-large',
+              'ytick.labelsize':'x-large'}
+    pylab.rcParams.update(params)
+    
     # Initialize figure
     plt.figure()
     fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12,5))
     
     estimator = clf.best_estimator_
-    y_prob = estimator.predict_proba(dataset['X_ts'])[:,1]
+    y_prob = estimator.predict_proba(dataset['X_ts'])[:,0]
     y_true = dataset['y_ts']
     
     fpr, tpr, thresholds = roc_curve(y_true, y_prob)
@@ -327,21 +334,23 @@ def test_score(dataset, clf, model):
     y_pred = (y_prob > opti_th).astype('float')
     confusionMatrix = confusion_matrix(y_true, y_pred)
     
-    sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=axs[1])
+    sb.heatmap(confusionMatrix, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=axs[1])
     axs[1].set_title('Confusion Matrix', fontsize=18)
-    axs[1].set_xlabel('Target Class')
-    axs[1].set_ylabel('Predicted Class')
+    axs[1].set_ylabel('Target Class')
+    axs[1].set_xlabel('Predicted Class')
 
     TN = confusionMatrix[0][0]
     TP = confusionMatrix[1][1]
-    FN = confusionMatrix[0][1]
-    FP = confusionMatrix[1][0]
+    FP = confusionMatrix[0][1]
+    FN = confusionMatrix[1][0]
     
     print('\nTEST SCORES')
     print('AUC = {:.3f}'.format(roc_auc_score(y_true, y_prob)))
     print('ACCURACY = {:.3f}'.format((TP + TN)/(TP + TN + FP + FN)))
     print('SENSITIVITY = {:.3f}'.format(TP / (TP + FN)))
     print('SPECIFICITY = {:.3f}'.format(TN / (TN + FP)))
+    
+    return y_pred
     
 #%%
 
@@ -399,6 +408,14 @@ def best_features_from_pca(estimator, fts_names):
 #%%
 
 def gts_score(dataset):
+    
+    params = {'legend.fontsize': 'large',
+              'axes.labelsize': 'xx-large',
+              'axes.titlesize':'xx-large',
+              'xtick.labelsize':'x-large',
+              'ytick.labelsize':'x-large'}
+    pylab.rcParams.update(params)
+    
     y_true = dataset['y_ts']
     y_pred = dataset['gt_ts']
     
@@ -407,20 +424,71 @@ def gts_score(dataset):
     plt.figure()
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6,5))
 
-    sb.heatmap(confusionMatrix, annot=True, cmap='Blues', fmt='g', ax=ax)
+    sb.heatmap(confusionMatrix, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=ax)
     ax.title.set_text('Confusion Matrix EEG Results')
     ax.set_xlabel('Target Class')
     ax.set_ylabel('Predicted Class')
 
     TN = confusionMatrix[0][0]
     TP = confusionMatrix[1][1]
-    FN = confusionMatrix[0][1]
-    FP = confusionMatrix[1][0]
+    FP = confusionMatrix[0][1]
+    FN = confusionMatrix[1][0]
     
     print('MEDICAL PREDICTIONS BASED ON EEG')
     print('ACCURACY = {:.3f}'.format((TP + TN)/(TP + TN + FP + FN)))
     print('SENSITIVITY = {:.3f}'.format(TP / (TP + FN)))
     print('SPECIFICITY = {:.3f}'.format(TN / (TN + FP)))
+    
+    return y_pred, y_true
+
+def combined_score(y_ml, y_gt, y_ts):
+    
+    y_and = [i and j for i, j in zip(y_ml, y_gt)]
+    y_or = [i or j for i, j in zip(y_ml, y_gt)]
+    
+    confusionMatrix = confusion_matrix(y_ts, y_gt)
+    cm_and = confusion_matrix(y_ts, y_and)
+    cm_or = confusion_matrix(y_ts, y_or)
+        
+    TN_and = cm_and[0][0]
+    TP_and = cm_and[1][1]
+    FP_and = cm_and[0][1]
+    FN_and = cm_and[1][0]
+    
+    TN_or = cm_or[0][0]
+    TP_or = cm_or[1][1]
+    FP_or = cm_or[0][1]
+    FN_or = cm_or[1][0]
+    
+    print('AND OPERATOR')
+    print('ACCURACY = {:.3f}'.format((TP_and + TN_and)/(TP_and + TN_and + FP_and + FN_and)))
+    print('SENSITIVITY = {:.3f}'.format(TP_and / (TP_and + FN_and)))
+    print('SPECIFICITY = {:.3f}'.format(TN_and / (TN_and + FP_and)))
+    
+    print('\nOR OPERATOR')
+    print('ACCURACY = {:.3f}'.format((TP_or + TN_or)/(TP_or + TN_or + FP_or + FN_or)))
+    print('SENSITIVITY = {:.3f}'.format(TP_or / (TP_or + FN_or)))
+    print('SPECIFICITY = {:.3f}'.format(TN_or / (TN_or + FP_or)))
+    
+    plt.figure()
+    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(18,5), sharex=True, sharey=True)
+    sb.heatmap(confusionMatrix, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=axs[0])
+    sb.heatmap(cm_and, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=axs[1])
+    sb.heatmap(cm_or, annot=True, annot_kws={"size": 20}, cmap='Blues', fmt='g', ax=axs[2])
+
+    axs[0].title.set_text('Medical EEG Result')
+    axs[1].title.set_text('AND Operator')
+    axs[2].title.set_text('OR Operator')
+    axs[0].set_ylabel('Target Class')
+    axs[0].set_xlabel('Predicted Class')
+    axs[1].set_ylabel('Target Class')
+    axs[1].set_xlabel('Predicted Class')
+    axs[2].set_ylabel('Target Class')
+    axs[2].set_xlabel('Predicted Class')
+    
+    
+    
+
     
     
     

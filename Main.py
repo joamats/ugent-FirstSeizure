@@ -28,8 +28,8 @@ from PreProcessing import get_ica_template, eeg_preprocessing, clean_epochs
 icas = get_ica_template(filenames[0])
 
 for filename in filenames:
-    epochs = eeg_preprocessing(filename, icas, epoch_length=5, plot=True)
-    epochs, _ = clean_epochs(filename, epochs, plot=False)
+    epochs = eeg_preprocessing(filename, icas, epoch_length=2.5, plot=False)
+    epochs, _ = clean_epochs(filename, epochs, plot=True)
     # createPickleFile(epochs, '../1_PreProcessed_Data/Monopolar/5s/256Hz/' + filename)
 
 #%% EEG Bipolar montage
@@ -199,7 +199,7 @@ dataset['X_tr'], dataset['y_tr'] = bl.fit_resample(dataset['X_tr'], dataset['y_t
 fig_data_dist = plot_data_distribution(dataset, labels_names, MODE)   
 
 #%% Machine Learning (run current line with F9)
-from ScoringMetrics import cv_results, model_best_fts, test_score, test_rfc_best_fts, best_features_from_pca, gts_score, test_logReg_best_fts
+from ScoringMetrics import cv_results, model_best_fts, test_score, test_rfc_best_fts, best_features_from_pca, gts_score, test_logReg_best_fts, combined_score
 from DataAssessment import count_best_fts_types
 
 #%% SVM & SelectKBest
@@ -219,10 +219,11 @@ from MachineLearning import grid_search_svm_pca, svm_pca_estimators
 gs_svm_pca, model, clf = grid_search_svm_pca(dataset, labels_names)
 estimators_svm_pca = svm_pca_estimators(dataset, gs_svm_pca, model)
 aucs = cv_results(dataset, estimators_svm_pca, model)
-test_score(dataset, clf, "SVM & PCA")
+y_ml = test_score(dataset, clf, "SVM & PCA")
 best_fts = best_features_from_pca(clf.best_estimator_, fts_names)
 count_best_fts_types(best_fts, MODE)
-gts_score(dataset)
+y_gt, y_ts = gts_score(dataset)
+combined_score(y_ml, y_gt, y_ts)
 
 #%% MLP & SelectKBest
 from MachineLearning import grid_search_mlp_anova, mlp_anova_estimators
